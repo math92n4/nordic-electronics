@@ -39,11 +39,6 @@ public class Warehouse {
     @Column(nullable = false)
     private String phone;
 
-    @ManyToMany
-    @JoinTable(
-            name = "warehouse_product",
-            joinColumns = @JoinColumn(name = "warehouse_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id")
-    )
-    private Set<Product> products = new HashSet<>();
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 }
