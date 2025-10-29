@@ -1,15 +1,11 @@
 package com.example.nordicelectronics.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.UUID;
 
 @Entity
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

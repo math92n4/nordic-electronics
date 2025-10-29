@@ -17,28 +17,21 @@ public class Address {
     @Id
     @GeneratedValue
     @Column(name = "address_id", updatable = false, nullable = false)
-    private UUID address_id;
+    private UUID addressId;
+
+    @Column(nullable = false)
+    private String street;
+
+    @Column(nullable = false)
+    private String streetNumber;
+
+    @Column(nullable = false)
+    private String zip;
+
+    @Column(nullable = false)
+    private String city;
 
     @OneToOne
-    @JoinColumn(name = "user_id")
-    @MapsId
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(nullable = false)
-    private String lastName;
-
-    @Column(nullable = false)
-    private String email;
-
-    @Column(nullable = false)
-    private String phoneNumber;
-
-    @Column(nullable = false)
-    private String dateOfBirth;
-
-    @Column(nullable = false)
-    private String password;
-
-    @Column(nullable = false)
-    private boolean isAdmin;
 }
