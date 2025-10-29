@@ -30,7 +30,7 @@ CREATE TABLE warehouse (
 -- User
 -- ======================
 
-CREATE TABLE user (
+CREATE TABLE "user" (
                           user_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                           email         TEXT NOT NULL UNIQUE,
                           password      TEXT NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE productvariant (
 
 CREATE TYPE order_type_enum AS ENUM ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned');
 
-CREATE TABLE order (
+CREATE TABLE "order" (
                          order_id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                          user_id      UUID NOT NULL REFERENCES user(user_id),
                          payment_method_id UUID,
