@@ -27,11 +27,11 @@ CREATE TABLE warehouse (
 );
 
 -- ======================
--- Customer
+-- User
 -- ======================
 
-CREATE TABLE customer (
-                          customer_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE user (
+                          user_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                           email         TEXT NOT NULL UNIQUE,
                           password      TEXT NOT NULL,
                           first_name    TEXT NOT NULL,
@@ -102,9 +102,9 @@ CREATE TABLE productvariant (
 
 CREATE TYPE order_type_enum AS ENUM ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned');
 
-CREATE TABLE "order" (
+CREATE TABLE order (
                          order_id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                         customer_id      UUID NOT NULL REFERENCES customer(customer_id),
+                         user_id      UUID NOT NULL REFERENCES user(user_id),
                          payment_method_id UUID,
                          shipping_address_id UUID,
                          order_date       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -139,8 +139,8 @@ CREATE TABLE payment (
 CREATE TABLE review (
                         review_id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                         product_id          UUID NOT NULL REFERENCES product(product_id),
-                        customer_id         UUID NOT NULL REFERENCES customer(customer_id),
-                        order_item_id       UUID,
+                        user_id         UUID NOT NULL REFERENCES user(user_id),
+                        order_id            UUID NOT NULL REFERENCES order(order_id),
                         review_value        INTEGER CHECK (review_value >= 1 AND review_value <= 5),
                         title               TEXT,
                         comment             TEXT,
@@ -154,7 +154,7 @@ CREATE TABLE review (
 
 CREATE TABLE wishlist (
                           wishlist_id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-                          customer_id         UUID NOT NULL REFERENCES customer(customer_id),
+                          user_id         UUID NOT NULL REFERENCES user(user_id),
                           wishlist_product_id UUID NOT NULL REFERENCES product(product_id),
                           name                TEXT NOT NULL
 );
@@ -392,7 +392,7 @@ END;
 $$;
 
 
-CREATE OR REPLACE FUNCTION fn_CalculateCustomerLifetimeValue(p_customer_id UUID)
+CREATE OR REPLACE FUNCTION fn_CalculateUserLifetimeValue(p_user_id UUID)
 RETURNS NUMERIC(12,2)
 LANGUAGE plpgsql
 AS $$
@@ -402,7 +402,7 @@ BEGIN
 SELECT COALESCE(SUM(total_amount), 0)
 INTO total_spent
 FROM "order"
-WHERE customer_id = p_customer_id;
+WHERE user_id = p_user_id;
 
 RETURN total_spent;
 END;
