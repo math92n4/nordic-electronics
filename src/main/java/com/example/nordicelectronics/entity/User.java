@@ -3,10 +3,10 @@ package com.example.nordicelectronics.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -25,22 +25,21 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
     private String phoneNumber;
 
     @Column(nullable = false)
-    private String dateOfBirth;
+    private LocalDate dateOfBirth;
 
     @Column(nullable = false)
     private String password;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    @PrimaryKeyJoinColumn
-    private Address address;
-
     @Column(nullable = false)
     private boolean isAdmin;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Address address;
 }

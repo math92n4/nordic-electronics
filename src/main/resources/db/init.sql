@@ -27,21 +27,35 @@ CREATE TABLE warehouse (
 );
 
 -- ======================
--- User
+-- Users
 -- ======================
 
-CREATE TABLE user (
-                          user_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                          email         TEXT NOT NULL UNIQUE,
-                          password      TEXT NOT NULL,
-                          first_name    TEXT NOT NULL,
-                          last_name     TEXT NOT NULL,
-                          phone_number  TEXT NOT NULL,
-                          date_of_birth DATE NOT NULL
+CREATE TABLE "user" (
+      user_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      email         TEXT NOT NULL UNIQUE,
+      password      TEXT NOT NULL,
+      first_name    TEXT NOT NULL,
+      last_name     TEXT NOT NULL,
+      phone_number  TEXT NOT NULL,
+      date_of_birth DATE NOT NULL,
+      is_admin BOOLEAN DEFAULT FALSE
 );
 
 -- ======================
--- Coupons
+-- Address
+-- ======================
+
+    CREATE TABLE address (
+        address_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        street TEXT NOT NULL,
+        street_number TEXT NOT NULL,
+        zip TEXT NOT NULL,
+        city TEXT NOT NULL,
+        user_id UUID NOT NULL REFERENCES "user"(user_id)
+    );
+
+-- ======================
+-- Coupon
 -- ======================
 
 CREATE TYPE discount_type_enum AS ENUM ('percentage', 'fixed_amount');
@@ -70,11 +84,11 @@ CREATE TABLE warranty (
 );
 
 -- ======================
--- Products
+-- Product
 -- ======================
 
 CREATE TABLE product (
-                         product_id     UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+                         product_id     UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
                          brand_id       UUID NOT NULL REFERENCES brand(brand_id),
                          warranty_id     UUID NOT NULL REFERENCES warranty(warranty_id),
                          sku            TEXT UNIQUE NOT NULL,
@@ -85,7 +99,7 @@ CREATE TABLE product (
                          weight         NUMERIC(8,2)
 );
 
-CREATE TABLE productvariant (
+CREATE TABLE product_variants (
                                 variant_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                                 product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
                                 name           TEXT NOT NULL,
@@ -102,9 +116,9 @@ CREATE TABLE productvariant (
 
 CREATE TYPE order_type_enum AS ENUM ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned');
 
-CREATE TABLE order (
+CREATE TABLE "order" (
                          order_id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                         user_id      UUID NOT NULL REFERENCES user(user_id),
+                         user_id      UUID NOT NULL REFERENCES "user"(user_id),
                          payment_method_id UUID,
                          shipping_address_id UUID,
                          order_date       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -123,7 +137,7 @@ CREATE TABLE order (
 CREATE TYPE payment_type_enum AS ENUM('credit_card', 'paypal', 'bank', 'klarna', 'cash');
 CREATE TYPE status_type_enum AS ENUM('pending', 'completed', 'failed', 'refunded');
 
-CREATE TABLE payment (
+CREATE TABLE payments (
                          payment_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                          order_id       UUID NOT NULL REFERENCES "order"(order_id),
                          payment_method payment_type_enum NOT NULL,
@@ -133,14 +147,14 @@ CREATE TABLE payment (
 );
 
 -- ======================
--- Reviews
+-- Review
 -- ======================
 
 CREATE TABLE review (
                         review_id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                         product_id          UUID NOT NULL REFERENCES product(product_id),
-                        user_id         UUID NOT NULL REFERENCES user(user_id),
-                        order_id            UUID NOT NULL REFERENCES order(order_id),
+                        user_id         UUID NOT NULL REFERENCES "user"(user_id),
+                        order_id            UUID NOT NULL REFERENCES "order"(order_id),
                         review_value        INTEGER CHECK (review_value >= 1 AND review_value <= 5),
                         title               TEXT,
                         comment             TEXT,
@@ -149,13 +163,13 @@ CREATE TABLE review (
 );
 
 -- ======================
--- Wishlists
+-- Wishlist
 -- ======================
 
 CREATE TABLE wishlist (
-                          wishlist_id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-                          user_id         UUID NOT NULL REFERENCES user(user_id),
-                          wishlist_product_id UUID NOT NULL REFERENCES product(product_id),
+                          wishlist_id         UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                          user_id         UUID NOT NULL REFERENCES "user"(user_id),
+                          wishlist_product_id UUID NOT NULL REFERENCES "product"(product_id),
                           name                TEXT NOT NULL
 );
 
@@ -164,7 +178,7 @@ CREATE TABLE wishlist (
 -- ======================
 
 -- Order-Coupon many-to-many relationship
-CREATE TABLE ordercoupon (
+CREATE TABLE order_coupon (
                              order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
                              coupon_id   UUID NOT NULL REFERENCES coupon(coupon_id) ON DELETE CASCADE,
                              applied_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -172,7 +186,7 @@ CREATE TABLE ordercoupon (
 );
 
 -- Order-Product many-to-many relationship (order line items)
-CREATE TABLE orderproduct (
+CREATE TABLE order_product (
                               order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
                               product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE RESTRICT,
                               quantity    INTEGER NOT NULL CHECK (quantity > 0),
@@ -182,7 +196,7 @@ CREATE TABLE orderproduct (
 );
 
 -- Wishlist-Product many-to-many relationship
-CREATE TABLE wishlistproduct (
+CREATE TABLE wishlist_product (
                                  wishlist_id UUID NOT NULL REFERENCES wishlist(wishlist_id) ON DELETE CASCADE,
                                  product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
                                  added_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -190,12 +204,20 @@ CREATE TABLE wishlistproduct (
 );
 
 -- Warehouse-Product many-to-many relationship with stock tracking
-CREATE TABLE warehouseproduct (
+CREATE TABLE warehouse_product (
                                   warehouse_id   UUID NOT NULL REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
                                   product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
                                   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
                                   last_updated   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                   PRIMARY KEY (warehouse_id, product_id)
+);
+
+CREATE TABLE product_category (
+                                  product_id  UUID NOT NULL,
+                                  category_id UUID NOT NULL,
+                                  PRIMARY KEY (product_id, category_id),
+                                  FOREIGN KEY (product_id) REFERENCES product(product_id) ON DELETE CASCADE,
+                                  FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE CASCADE
 );
 
 -- =========================================
@@ -213,7 +235,7 @@ BEGIN
     -- Loop through each product in the order
 FOR rec IN
 SELECT product_id, quantity
-FROM orderproduct
+FROM order_product
 WHERE order_id = p_order_id
     LOOP
 -- Check stock
@@ -237,7 +259,7 @@ SET status = 'confirmed'
 WHERE order_id = p_order_id;
 
 -- Process payment: mark as completed (simplified)
-UPDATE payment
+UPDATE payments
 SET status = 'completed', payment_date = CURRENT_TIMESTAMP
 WHERE order_id = p_order_id;
 
@@ -256,7 +278,7 @@ DECLARE
 total_weight NUMERIC := 0;
 BEGIN
 SELECT COALESCE(SUM(p.weight * op.quantity),0) INTO total_weight
-FROM orderproduct op
+FROM order_product op
          JOIN product p ON op.product_id = p.product_id
 WHERE op.order_id = p_order_id;
 
@@ -284,20 +306,20 @@ AS $$
 BEGIN
     -- Update warehouse stock
     IF EXISTS (
-        SELECT 1 FROM warehouseproduct
+        SELECT 1 FROM warehouse_product
         WHERE warehouse_id = p_warehouse_id AND product_id = p_product_id
     ) THEN
-UPDATE warehouseproduct
+UPDATE warehouse_product
 SET stock_quantity = stock_quantity + p_quantity,
     last_updated = CURRENT_TIMESTAMP
 WHERE warehouse_id = p_warehouse_id AND product_id = p_product_id;
 ELSE
-        INSERT INTO warehouseproduct(warehouse_id, product_id, stock_quantity)
+        INSERT INTO warehouse_product(warehouse_id, product_id, stock_quantity)
         VALUES (p_warehouse_id, p_product_id, p_quantity);
 END IF;
 
     -- Update global product stock
-UPDATE product
+UPDATE products
 SET stock_quantity = stock_quantity + p_quantity
 WHERE product_id = p_product_id;
 
@@ -326,35 +348,6 @@ $$;
 
 
 
-CREATE OR REPLACE VIEW vw_LowStockProducts AS
-SELECT
-    p.product_id,
-    p.name AS product_name,
-    p.stock_quantity,
-    b.name AS brand_name,
-    c.name AS category_name
-FROM product p
-         JOIN brand b ON p.brand_id = b.brand_id
-         JOIN category c ON p.category_id = c.category_id
-WHERE p.stock_quantity <= 10
-ORDER BY p.stock_quantity ASC;
-
-
-CREATE OR REPLACE VIEW vw_BestSellingProducts AS
-SELECT
-    p.product_id,
-    p.name AS product_name,
-    COUNT(op.order_id) AS total_orders,
-    COALESCE(SUM(p.price), 0) AS total_revenue,
-    b.name AS brand_name,
-    c.name AS category_name
-FROM product p
-         JOIN orderproduct op ON p.product_id = op.product_id
-         JOIN brand b ON p.brand_id = b.brand_id
-         JOIN category c ON p.category_id = c.category_id
-GROUP BY p.product_id, p.name, b.name, c.name
-ORDER BY total_orders DESC;
-
 -- 6. Update product rankings based on total orders
 CREATE OR REPLACE PROCEDURE evt_UpdateProductRankings()
 LANGUAGE plpgsql
@@ -364,7 +357,7 @@ UPDATE product p
 SET stock_quantity = p.stock_quantity -- just placeholder, you could add popularity_score column
     FROM (
         SELECT op.product_id, SUM(op.quantity) AS total_sold
-        FROM orderproduct op
+        FROM order_product op
         GROUP BY op.product_id
     ) AS sub
 WHERE p.product_id = sub.product_id;
@@ -424,7 +417,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_increment_coupon_usage
-    AFTER INSERT ON ordercoupon
+    AFTER INSERT ON order_coupon
     FOR EACH ROW
     EXECUTE FUNCTION increment_coupon_usage();
 
@@ -470,7 +463,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_validate_coupon
-    BEFORE INSERT ON ordercoupon
+    BEFORE INSERT ON order_coupon
     FOR EACH ROW
     EXECUTE FUNCTION validate_coupon();
 
@@ -493,7 +486,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_update_product_stock
-    AFTER INSERT ON orderproduct
+    AFTER INSERT ON order_product
     FOR EACH ROW
     EXECUTE FUNCTION update_product_stock();
 
@@ -505,7 +498,7 @@ BEGIN
   IF NEW.status IN ('cancelled', 'returned') AND OLD.status NOT IN ('cancelled', 'returned') THEN
 UPDATE product p
 SET stock_quantity = stock_quantity + op.quantity
-    FROM orderproduct op
+    FROM order_product op
 WHERE op.order_id = NEW.order_id
   AND p.product_id = op.product_id;
 END IF;

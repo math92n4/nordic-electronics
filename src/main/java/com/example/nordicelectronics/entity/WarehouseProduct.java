@@ -6,7 +6,8 @@ import lombok.*;
 import java.io.Serializable;
 import java.util.UUID;
 
-@Embeddable
+@Entity
+@Table(name = "warehouse_product")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

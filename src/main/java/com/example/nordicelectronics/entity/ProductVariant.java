@@ -3,6 +3,7 @@ package com.example.nordicelectronics.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -14,11 +15,12 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
+@Table(name = "product_variants")
 public class ProductVariant {
 
     @Id
     @GeneratedValue
-    @Column(name = "product_variant_id", updatable = false, nullable = false)
+    @Column(name = "variant_id", updatable = false, nullable = false)
     private UUID productVariantId;
 
     @Column(nullable = false)
@@ -30,10 +32,10 @@ public class ProductVariant {
     private int stock_quantity;
 
     @Column(name = "price", nullable = false)
-    private double price;
+    private BigDecimal price;
 
     @Column(name = "weight", nullable = false)
-    private double weight;
+    private BigDecimal weight;
 
     @Column(name = "sku", nullable = false, unique = true)
     private String sku;

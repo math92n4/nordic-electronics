@@ -3,12 +3,12 @@ package com.example.nordicelectronics.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -34,10 +34,10 @@ public class Product {
     private int stock_quantity;
 
     @Column(name = "price", nullable = false)
-    private double price;
+    private BigDecimal price;
 
     @Column(name = "weight", nullable = false)
-    private double weight;
+    private BigDecimal weight;
 
     @ManyToMany
     @JoinTable(
@@ -55,8 +55,8 @@ public class Product {
     @JoinColumn(name="brand_id", nullable = false)
     private Brand brand;
 
-    @ManyToMany(mappedBy = "products")
-    private Set<Warehouse> warehouses = new HashSet<>();
+    @OneToMany(mappedBy = "product")
+    private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ProductVariant> productVariants = new HashSet<>();
