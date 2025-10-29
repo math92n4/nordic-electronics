@@ -76,7 +76,7 @@ CREATE TABLE warranty (
 CREATE TABLE product (
                          product_id     UUID DEFAULT gen_random_uuid() PRIMARY KEY,
                          brand_id       UUID NOT NULL REFERENCES brand(brand_id),
-                         category_id    UUID NOT NULL REFERENCES category(category_id),
+                         warranty_id     UUID NOT NULL REFERENCES warranty(warranty_id),
                          sku            TEXT UNIQUE NOT NULL,
                          name           TEXT NOT NULL,
                          description    TEXT NOT NULL,
