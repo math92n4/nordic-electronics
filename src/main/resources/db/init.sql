@@ -90,7 +90,7 @@ CREATE TABLE warranty (
 CREATE TABLE product (
                          product_id     UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
                          brand_id       UUID NOT NULL REFERENCES brand(brand_id),
-                         category_id    UUID NOT NULL REFERENCES category(category_id),
+                         warranty_id     UUID NOT NULL REFERENCES warranty(warranty_id),
                          sku            TEXT UNIQUE NOT NULL,
                          name           TEXT NOT NULL,
                          description    TEXT NOT NULL,
@@ -210,6 +210,14 @@ CREATE TABLE warehouse_product (
                                   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
                                   last_updated   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                   PRIMARY KEY (warehouse_id, product_id)
+);
+
+CREATE TABLE product_category (
+                                  product_id  UUID NOT NULL,
+                                  category_id UUID NOT NULL,
+                                  PRIMARY KEY (product_id, category_id),
+                                  FOREIGN KEY (product_id) REFERENCES product(product_id) ON DELETE CASCADE,
+                                  FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE CASCADE
 );
 
 -- =========================================
@@ -338,36 +346,38 @@ RAISE NOTICE 'Month: %, Total Orders: %, Total Revenue: %', p_month, total_order
 END;
 $$;
 
-
-
+-- VIEWS
 CREATE OR REPLACE VIEW vw_LowStockProducts AS
 SELECT
     p.product_id,
     p.name AS product_name,
-    p.stock_quantity,
+    p.sku,
+    p.stock_quantity AS product_stock,
+    COALESCE(SUM(wp.stock_quantity), 0) AS total_stock_across_warehouses,
     b.name AS brand_name,
-    c.name AS category_name
+    p.price,
+    p.description
 FROM product p
-         JOIN brand b ON p.brand_id = b.brand_id
-         JOIN category c ON p.category_id = c.category_id
-WHERE p.stock_quantity <= 10
-ORDER BY p.stock_quantity ASC;
+LEFT JOIN warehouse_product wp ON p.product_id = wp.product_id
+LEFT JOIN brand b ON p.brand_id = b.brand_id
+GROUP BY p.product_id, p.name, p.sku, p.stock_quantity, b.name, p.price, p.description
+HAVING COALESCE(SUM(wp.stock_quantity), 0) < 10
+ORDER BY total_stock_across_warehouses ASC;
 
 
 CREATE OR REPLACE VIEW vw_BestSellingProducts AS
 SELECT
     p.product_id,
     p.name AS product_name,
-    COUNT(op.order_id) AS total_orders,
-    COALESCE(SUM(p.price), 0) AS total_revenue,
     b.name AS brand_name,
-    c.name AS category_name
-FROM product p
-         JOIN order_product op ON p.product_id = op.product_id
-         JOIN brand b ON p.brand_id = b.brand_id
-         JOIN category c ON p.category_id = c.category_id
-GROUP BY p.product_id, p.name, b.name, c.name
-ORDER BY total_orders DESC;
+    SUM(op.quantity) AS total_units_sold,
+    SUM(op.total_price) AS total_revenue,
+    COUNT(DISTINCT op.order_id) AS total_orders
+FROM order_product op
+JOIN product p ON op.product_id = p.product_id
+JOIN brand b ON p.brand_id = b.brand_id
+GROUP BY p.product_id, p.name, b.name
+ORDER BY total_units_sold DESC;
 
 -- 6. Update product rankings based on total orders
 CREATE OR REPLACE PROCEDURE evt_UpdateProductRankings()
