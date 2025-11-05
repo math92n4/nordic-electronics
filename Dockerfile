@@ -1,13 +1,20 @@
-# 1️⃣ Build stage
-FROM maven:3.9.6-eclipse-temurin-17 AS builder
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
-
-# 2️⃣ Runtime stage
 FROM eclipse-temurin:17-jdk
+
+# Set work directory
 WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
+
+# Copy pom.xml and download dependencies (cached)
+COPY pom.xml .
+COPY mvnw ./
+COPY .mvn .mvn/
+RUN chmod +x ./mvnw
+RUN ./mvnw dependency:go-offline
+
+# Copy the entire source code
+COPY src ./src
+
+# Expose port 8080
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Run Spring Boot in dev mode (restart + live reload)
+ENTRYPOINT ["./mvnw", "spring-boot:run"]
