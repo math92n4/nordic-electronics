@@ -1,5 +1,6 @@
 package com.example.nordicelectronics.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,6 +35,7 @@ public class User {
     @Column(nullable = false)
     private LocalDate dateOfBirth;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 

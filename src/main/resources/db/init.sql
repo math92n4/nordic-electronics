@@ -31,28 +31,28 @@ CREATE TABLE warehouse (
 -- ======================
 
 CREATE TABLE "user" (
-      user_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      email         TEXT NOT NULL UNIQUE,
-      password      TEXT NOT NULL,
-      first_name    TEXT NOT NULL,
-      last_name     TEXT NOT NULL,
-      phone_number  TEXT NOT NULL,
-      date_of_birth DATE NOT NULL,
-      is_admin BOOLEAN DEFAULT FALSE
+                        user_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                        email         TEXT NOT NULL UNIQUE,
+                        password      TEXT NOT NULL,
+                        first_name    TEXT NOT NULL,
+                        last_name     TEXT NOT NULL,
+                        phone_number  TEXT NOT NULL,
+                        date_of_birth DATE NOT NULL,
+                        is_admin BOOLEAN DEFAULT FALSE
 );
 
 -- ======================
 -- Address
 -- ======================
 
-    CREATE TABLE address (
-        address_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        street TEXT NOT NULL,
-        street_number TEXT NOT NULL,
-        zip TEXT NOT NULL,
-        city TEXT NOT NULL,
-        user_id UUID NOT NULL REFERENCES "user"(user_id)
-    );
+CREATE TABLE address (
+                         address_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                         street TEXT NOT NULL,
+                         street_number TEXT NOT NULL,
+                         zip TEXT NOT NULL,
+                         city TEXT NOT NULL,
+                         user_id UUID NOT NULL REFERENCES "user"(user_id)
+);
 
 -- ======================
 -- Coupon
@@ -90,7 +90,7 @@ CREATE TABLE warranty (
 CREATE TABLE product (
                          product_id     UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
                          brand_id       UUID NOT NULL REFERENCES brand(brand_id),
-                         category_id    UUID NOT NULL REFERENCES category(category_id),
+                         warranty_id     UUID NOT NULL REFERENCES warranty(warranty_id),
                          sku            TEXT UNIQUE NOT NULL,
                          name           TEXT NOT NULL,
                          description    TEXT NOT NULL,
@@ -100,14 +100,14 @@ CREATE TABLE product (
 );
 
 CREATE TABLE product_variants (
-                                variant_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                name           TEXT NOT NULL,
-                                description    TEXT,
-                                stock_quantity INTEGER DEFAULT 0,
-                                price          NUMERIC(12,2),
-                                weight         NUMERIC(8,2),
-                                sku            TEXT UNIQUE NOT NULL
+                                  variant_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                  product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
+                                  name           TEXT NOT NULL,
+                                  description    TEXT,
+                                  stock_quantity INTEGER DEFAULT 0,
+                                  price          NUMERIC(12,2),
+                                  weight         NUMERIC(8,2),
+                                  sku            TEXT UNIQUE NOT NULL
 );
 
 -- ======================
@@ -138,12 +138,12 @@ CREATE TYPE payment_type_enum AS ENUM('credit_card', 'paypal', 'bank', 'klarna',
 CREATE TYPE status_type_enum AS ENUM('pending', 'completed', 'failed', 'refunded');
 
 CREATE TABLE payments (
-                         payment_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                         order_id       UUID NOT NULL REFERENCES "order"(order_id),
-                         payment_method payment_type_enum NOT NULL,
-                         amount         NUMERIC(12,2) NOT NULL,
-                         status         status_type_enum DEFAULT 'pending',
-                         payment_date   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          payment_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                          order_id       UUID NOT NULL REFERENCES "order"(order_id),
+                          payment_method payment_type_enum NOT NULL,
+                          amount         NUMERIC(12,2) NOT NULL,
+                          status         status_type_enum DEFAULT 'pending',
+                          payment_date   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ======================
@@ -179,37 +179,45 @@ CREATE TABLE wishlist (
 
 -- Order-Coupon many-to-many relationship
 CREATE TABLE order_coupon (
-                             order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
-                             coupon_id   UUID NOT NULL REFERENCES coupon(coupon_id) ON DELETE CASCADE,
-                             applied_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                             PRIMARY KEY (order_id, coupon_id)
+                              order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
+                              coupon_id   UUID NOT NULL REFERENCES coupon(coupon_id) ON DELETE CASCADE,
+                              applied_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              PRIMARY KEY (order_id, coupon_id)
 );
 
 -- Order-Product many-to-many relationship (order line items)
 CREATE TABLE order_product (
-                              order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
-                              product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE RESTRICT,
-                              quantity    INTEGER NOT NULL CHECK (quantity > 0),
-                              unit_price  NUMERIC(12,2) NOT NULL,
-                              total_price NUMERIC(12,2) NOT NULL,
-                              PRIMARY KEY (order_id, product_id)
+                               order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
+                               product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE RESTRICT,
+                               quantity    INTEGER NOT NULL CHECK (quantity > 0),
+                               unit_price  NUMERIC(12,2) NOT NULL,
+                               total_price NUMERIC(12,2) NOT NULL,
+                               PRIMARY KEY (order_id, product_id)
 );
 
 -- Wishlist-Product many-to-many relationship
 CREATE TABLE wishlist_product (
-                                 wishlist_id UUID NOT NULL REFERENCES wishlist(wishlist_id) ON DELETE CASCADE,
-                                 product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                 added_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                 PRIMARY KEY (wishlist_id, product_id)
+                                  wishlist_id UUID NOT NULL REFERENCES wishlist(wishlist_id) ON DELETE CASCADE,
+                                  product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
+                                  added_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                  PRIMARY KEY (wishlist_id, product_id)
 );
 
 -- Warehouse-Product many-to-many relationship with stock tracking
 CREATE TABLE warehouse_product (
-                                  warehouse_id   UUID NOT NULL REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
-                                  product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                  stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
-                                  last_updated   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                  PRIMARY KEY (warehouse_id, product_id)
+                                   warehouse_id   UUID NOT NULL REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
+                                   product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
+                                   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+                                   last_updated   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                   PRIMARY KEY (warehouse_id, product_id)
+);
+
+CREATE TABLE product_category (
+                                  product_id  UUID NOT NULL,
+                                  category_id UUID NOT NULL,
+                                  PRIMARY KEY (product_id, category_id),
+                                  FOREIGN KEY (product_id) REFERENCES product(product_id) ON DELETE CASCADE,
+                                  FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE CASCADE
 );
 
 -- =========================================
@@ -338,36 +346,38 @@ RAISE NOTICE 'Month: %, Total Orders: %, Total Revenue: %', p_month, total_order
 END;
 $$;
 
-
-
+-- VIEWS
 CREATE OR REPLACE VIEW vw_LowStockProducts AS
 SELECT
     p.product_id,
     p.name AS product_name,
-    p.stock_quantity,
+    p.sku,
+    p.stock_quantity AS product_stock,
+    COALESCE(SUM(wp.stock_quantity), 0) AS total_stock_across_warehouses,
     b.name AS brand_name,
-    c.name AS category_name
+    p.price,
+    p.description
 FROM product p
-         JOIN brand b ON p.brand_id = b.brand_id
-         JOIN category c ON p.category_id = c.category_id
-WHERE p.stock_quantity <= 10
-ORDER BY p.stock_quantity ASC;
+         LEFT JOIN warehouse_product wp ON p.product_id = wp.product_id
+         LEFT JOIN brand b ON p.brand_id = b.brand_id
+GROUP BY p.product_id, p.name, p.sku, p.stock_quantity, b.name, p.price, p.description
+HAVING COALESCE(SUM(wp.stock_quantity), 0) < 10
+ORDER BY total_stock_across_warehouses ASC;
 
 
 CREATE OR REPLACE VIEW vw_BestSellingProducts AS
 SELECT
     p.product_id,
     p.name AS product_name,
-    COUNT(op.order_id) AS total_orders,
-    COALESCE(SUM(p.price), 0) AS total_revenue,
     b.name AS brand_name,
-    c.name AS category_name
-FROM product p
-         JOIN order_product op ON p.product_id = op.product_id
+    SUM(op.quantity) AS total_units_sold,
+    SUM(op.total_price) AS total_revenue,
+    COUNT(DISTINCT op.order_id) AS total_orders
+FROM order_product op
+         JOIN product p ON op.product_id = p.product_id
          JOIN brand b ON p.brand_id = b.brand_id
-         JOIN category c ON p.category_id = c.category_id
-GROUP BY p.product_id, p.name, b.name, c.name
-ORDER BY total_orders DESC;
+GROUP BY p.product_id, p.name, b.name
+ORDER BY total_units_sold DESC;
 
 -- 6. Update product rankings based on total orders
 CREATE OR REPLACE PROCEDURE evt_UpdateProductRankings()
