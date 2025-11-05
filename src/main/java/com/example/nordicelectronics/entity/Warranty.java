@@ -1,8 +1,8 @@
 package com.example.nordicelectronics.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -17,6 +17,7 @@ import java.util.UUID;
 public class Warranty {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "warranty_id", updatable = false, nullable = false)
     private UUID warrantyId;
 
@@ -29,4 +30,7 @@ public class Warranty {
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    @OneToOne(mappedBy = "warranty")
+    @JsonIgnore
+    private Product product;
 }

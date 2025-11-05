@@ -94,21 +94,10 @@ CREATE TABLE product (
                          sku            TEXT UNIQUE NOT NULL,
                          name           TEXT NOT NULL,
                          description    TEXT NOT NULL,
-                         stock_quantity INTEGER DEFAULT 0,
                          price          NUMERIC(12,2) NOT NULL,
                          weight         NUMERIC(8,2)
 );
 
-CREATE TABLE product_variants (
-                                  variant_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                  product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                  name           TEXT NOT NULL,
-                                  description    TEXT,
-                                  stock_quantity INTEGER DEFAULT 0,
-                                  price          NUMERIC(12,2),
-                                  weight         NUMERIC(8,2),
-                                  sku            TEXT UNIQUE NOT NULL
-);
 
 -- ======================
 -- Orders
@@ -352,15 +341,14 @@ SELECT
     p.product_id,
     p.name AS product_name,
     p.sku,
-    p.stock_quantity AS product_stock,
-    COALESCE(SUM(wp.stock_quantity), 0) AS total_stock_across_warehouses,
     b.name AS brand_name,
     p.price,
-    p.description
+    p.description,
+    COALESCE(SUM(wp.stock_quantity), 0) AS total_stock_across_warehouses
 FROM product p
-LEFT JOIN warehouse_product wp ON p.product_id = wp.product_id
-LEFT JOIN brand b ON p.brand_id = b.brand_id
-GROUP BY p.product_id, p.name, p.sku, p.stock_quantity, b.name, p.price, p.description
+         JOIN brand b ON p.brand_id = b.brand_id
+         LEFT JOIN warehouse_product wp ON p.product_id = wp.product_id
+GROUP BY p.product_id, p.name, p.sku, b.name, p.price, p.description
 HAVING COALESCE(SUM(wp.stock_quantity), 0) < 10
 ORDER BY total_stock_across_warehouses ASC;
 
