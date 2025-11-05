@@ -8,8 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 import com.example.nordicelectronics.service.UserService;
 import java.util.List;
@@ -27,7 +28,7 @@ public class AuthController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private SecurityContextRepository securityContextRepository;
 
     @GetMapping("/test")
     public String test(HttpServletRequest request, HttpServletResponse response) {
@@ -45,6 +46,35 @@ public class AuthController {
         return userService.getAllUsers();
     }
 
+    @GetMapping("/current-user")
+    public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("sessionId", request.getSession(false) != null ? request.getSession().getId() : "no-session");
+        response.put("authenticationExists", auth != null);
+        response.put("isAuthenticated", auth != null && auth.isAuthenticated());
+        response.put("principal", auth != null ? auth.getName() : "no-principal");
+        response.put("authorities", auth != null ? auth.getAuthorities() : "no-authorities");
+
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            response.put("user", null);
+            response.put("message", "Not authenticated");
+            return ResponseEntity.ok(response);
+        }
+
+        try {
+            User user = userService.findByEmail(auth.getName());
+            response.put("user", user);
+            response.put("message", "User found");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("user", null);
+            response.put("message", "User lookup failed: " + e.getMessage());
+            return ResponseEntity.ok(response);
+        }
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, Object> request) {
         try {
@@ -54,11 +84,9 @@ public class AuthController {
             String phoneNumber = (String) request.get("phoneNumber");
             String password = (String) request.get("password");
 
-            String encodedPassword = passwordEncoder.encode(password);
-
             boolean isAdmin = false;
 
-            User user = userService.registerUser(firstName, lastName, email, phoneNumber, encodedPassword, isAdmin);
+            User user = userService.registerUser(firstName, lastName, email, phoneNumber, password, isAdmin);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "User registered successfully");
@@ -73,7 +101,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         try {
             String email = request.get("email");
             String password = request.get("password");
@@ -81,13 +109,23 @@ public class AuthController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
             );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Create new SecurityContext and set the authentication
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+
+            // Save the SecurityContext to session using SecurityContextRepository
+            securityContextRepository.saveContext(context, httpRequest, httpResponse);
 
             User user = userService.findByEmail(email);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Login successful");
             response.put("user", user);
+            response.put("sessionId", httpRequest.getSession().getId());
+            response.put("authenticated", authentication.isAuthenticated());
+            response.put("authorities", authentication.getAuthorities());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
@@ -97,18 +135,20 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/current-user")
-    public ResponseEntity<?> getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
-            return ResponseEntity.ok("Anonymous user");
-        }
-
+    @DeleteMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
         try {
-            User user = userService.findByEmail(auth.getName());
-            return ResponseEntity.ok(user);
+            request.getSession().invalidate();
+            SecurityContextHolder.clearContext();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Logout successful");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.ok("Current user: " + auth.getName());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Logout failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
