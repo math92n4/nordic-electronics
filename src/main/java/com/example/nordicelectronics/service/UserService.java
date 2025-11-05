@@ -1,7 +1,7 @@
 package com.example.nordicelectronics.service;
 
 import com.example.nordicelectronics.entity.User;
-import com.example.nordicelectronics.repositories.UserRepository;
+import com.example.nordicelectronics.repositories.sql.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

@@ -1,7 +1,7 @@
 //package com.example.nordicelectronics.config;
 //
 //import com.example.nordicelectronics.entity.User;
-//import com.example.nordicelectronics.repositories.UserRepository;
+//import com.example.nordicelectronics.repositories.sql.UserRepository;
 //import lombok.RequiredArgsConstructor;
 //import org.springframework.boot.CommandLineRunner;
 //import org.springframework.security.crypto.password.PasswordEncoder;

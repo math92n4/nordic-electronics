@@ -1,4 +1,4 @@
-package com.example.nordicelectronics.repositories;
+package com.example.nordicelectronics.repositories.sql;
 
 import com.example.nordicelectronics.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;

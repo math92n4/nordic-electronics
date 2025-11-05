@@ -1,0 +1,9 @@
+package com.example.nordicelectronics.repositories.sql;
+
+import com.example.nordicelectronics.entity.WarehouseProduct;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface WarehouseProductRepository extends JpaRepository<WarehouseProduct, UUID> {
+}
