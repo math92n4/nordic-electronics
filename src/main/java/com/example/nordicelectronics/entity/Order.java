@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -14,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-@Table(name = "orders")  // "order" is a reserved keyword in SQL
+@Table(name = "order")  // "order" is a reserved keyword in SQL
 public class Order {
 
     @Id
@@ -31,16 +31,16 @@ public class Order {
     private Payment payment;
 
     @Column(name = "order_date", nullable = false)
-    private LocalDate orderDate;
+    private LocalDateTime orderDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "order_status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20)
     private OrderStatus orderStatus;
 
     @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "sub_total", nullable = false, precision = 19, scale = 2)
+    @Column(name = "subtotal", nullable = false, precision = 19, scale = 2)
     private BigDecimal subtotal;
 
     @Column(name = "tax_amount", nullable = false, precision = 19, scale = 2)
@@ -49,6 +49,6 @@ public class Order {
     @Column(name = "shipping_cost", nullable = false, precision = 19, scale = 2)
     private BigDecimal shippingCost;
 
-    @Column(name = "", precision = 19, scale = 2)
+    @Column(name = "discount_amount", precision = 19, scale = 2)
     private BigDecimal discountAmount;
 }

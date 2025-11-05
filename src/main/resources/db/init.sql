@@ -137,7 +137,7 @@ CREATE TABLE "order" (
 CREATE TYPE payment_type_enum AS ENUM('credit_card', 'paypal', 'bank', 'klarna', 'cash');
 CREATE TYPE status_type_enum AS ENUM('pending', 'completed', 'failed', 'refunded');
 
-CREATE TABLE payments (
+CREATE TABLE payment (
                          payment_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                          order_id       UUID NOT NULL REFERENCES "order"(order_id),
                          payment_method payment_type_enum NOT NULL,
@@ -259,7 +259,7 @@ SET status = 'confirmed'
 WHERE order_id = p_order_id;
 
 -- Process payment: mark as completed (simplified)
-UPDATE payments
+UPDATE payment
 SET status = 'completed', payment_date = CURRENT_TIMESTAMP
 WHERE order_id = p_order_id;
 
