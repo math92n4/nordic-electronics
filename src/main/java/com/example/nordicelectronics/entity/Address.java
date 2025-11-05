@@ -15,7 +15,7 @@ import java.util.UUID;
 
 public class Address {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "address_id", updatable = false, nullable = false)
     private UUID addressId;
 

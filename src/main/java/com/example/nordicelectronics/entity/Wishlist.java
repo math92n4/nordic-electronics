@@ -12,7 +12,7 @@ import java.util.UUID;
 public class Wishlist {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "wishlist_id", nullable = false, updatable = false)
     private UUID wishlistId;
 
