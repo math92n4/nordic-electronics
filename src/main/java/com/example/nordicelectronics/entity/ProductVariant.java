@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -43,7 +42,4 @@ public class ProductVariant {
     @ManyToOne
     @JoinColumn(name="product_id", nullable = false)
     private Product product;
-
-
-
 }

@@ -346,7 +346,38 @@ RAISE NOTICE 'Month: %, Total Orders: %, Total Revenue: %', p_month, total_order
 END;
 $$;
 
+-- VIEWS
+CREATE OR REPLACE VIEW vw_LowStockProducts AS
+SELECT
+    p.product_id,
+    p.name AS product_name,
+    p.sku,
+    p.stock_quantity AS product_stock,
+    COALESCE(SUM(wp.stock_quantity), 0) AS total_stock_across_warehouses,
+    b.name AS brand_name,
+    p.price,
+    p.description
+FROM product p
+LEFT JOIN warehouse_product wp ON p.product_id = wp.product_id
+LEFT JOIN brand b ON p.brand_id = b.brand_id
+GROUP BY p.product_id, p.name, p.sku, p.stock_quantity, b.name, p.price, p.description
+HAVING COALESCE(SUM(wp.stock_quantity), 0) < 10
+ORDER BY total_stock_across_warehouses ASC;
 
+
+CREATE OR REPLACE VIEW vw_BestSellingProducts AS
+SELECT
+    p.product_id,
+    p.name AS product_name,
+    b.name AS brand_name,
+    SUM(op.quantity) AS total_units_sold,
+    SUM(op.total_price) AS total_revenue,
+    COUNT(DISTINCT op.order_id) AS total_orders
+FROM order_product op
+JOIN product p ON op.product_id = p.product_id
+JOIN brand b ON p.brand_id = b.brand_id
+GROUP BY p.product_id, p.name, b.name
+ORDER BY total_units_sold DESC;
 
 -- 6. Update product rankings based on total orders
 CREATE OR REPLACE PROCEDURE evt_UpdateProductRankings()
