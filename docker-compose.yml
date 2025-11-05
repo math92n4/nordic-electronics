@@ -21,15 +21,29 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   spring-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: spring-app
     restart: always
+    volumes:
+      # Mount source code for instant hot reload
+      - ./src:/app/src
+    develop:
+      watch:
+        # Sync source files directly into the container (instant updates)
+        - action: sync+restart
+          path: ./src
+          target: /app/src
+        # If POM changes, rebuild the whole image
+        - action: rebuild
+          path: pom.xml
     depends_on:
       postgres:
         condition: service_healthy

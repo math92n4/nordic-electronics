@@ -14,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-@Table(name = "order")  // "order" is a reserved keyword in SQL
+@Table(name = "\"order\"")
 public class Order {
 
     @Id

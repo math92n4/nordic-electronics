@@ -1,5 +1,6 @@
 package com.example.nordicelectronics.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -7,6 +8,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
+@Table(name = "\"user\"")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -15,7 +17,7 @@ import java.util.UUID;
 
 public class User {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "user_id", updatable = false, nullable = false)
     private UUID userId;
 
@@ -34,6 +36,7 @@ public class User {
     @Column(nullable = false)
     private LocalDate dateOfBirth;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 

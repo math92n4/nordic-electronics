@@ -31,28 +31,28 @@ CREATE TABLE warehouse (
 -- ======================
 
 CREATE TABLE "user" (
-      user_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      email         TEXT NOT NULL UNIQUE,
-      password      TEXT NOT NULL,
-      first_name    TEXT NOT NULL,
-      last_name     TEXT NOT NULL,
-      phone_number  TEXT NOT NULL,
-      date_of_birth DATE NOT NULL,
-      is_admin BOOLEAN DEFAULT FALSE
+                        user_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                        email         TEXT NOT NULL UNIQUE,
+                        password      TEXT NOT NULL,
+                        first_name    TEXT NOT NULL,
+                        last_name     TEXT NOT NULL,
+                        phone_number  TEXT NOT NULL,
+                        date_of_birth DATE NOT NULL,
+                        is_admin BOOLEAN DEFAULT FALSE
 );
 
 -- ======================
 -- Address
 -- ======================
 
-    CREATE TABLE address (
-        address_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        street TEXT NOT NULL,
-        street_number TEXT NOT NULL,
-        zip TEXT NOT NULL,
-        city TEXT NOT NULL,
-        user_id UUID NOT NULL REFERENCES "user"(user_id)
-    );
+CREATE TABLE address (
+                         address_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                         street TEXT NOT NULL,
+                         street_number TEXT NOT NULL,
+                         zip TEXT NOT NULL,
+                         city TEXT NOT NULL,
+                         user_id UUID NOT NULL REFERENCES "user"(user_id)
+);
 
 -- ======================
 -- Coupon
@@ -100,14 +100,14 @@ CREATE TABLE product (
 );
 
 CREATE TABLE product_variants (
-                                variant_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                name           TEXT NOT NULL,
-                                description    TEXT,
-                                stock_quantity INTEGER DEFAULT 0,
-                                price          NUMERIC(12,2),
-                                weight         NUMERIC(8,2),
-                                sku            TEXT UNIQUE NOT NULL
+                                  variant_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                  product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
+                                  name           TEXT NOT NULL,
+                                  description    TEXT,
+                                  stock_quantity INTEGER DEFAULT 0,
+                                  price          NUMERIC(12,2),
+                                  weight         NUMERIC(8,2),
+                                  sku            TEXT UNIQUE NOT NULL
 );
 
 -- ======================
@@ -179,37 +179,37 @@ CREATE TABLE wishlist (
 
 -- Order-Coupon many-to-many relationship
 CREATE TABLE order_coupon (
-                             order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
-                             coupon_id   UUID NOT NULL REFERENCES coupon(coupon_id) ON DELETE CASCADE,
-                             applied_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                             PRIMARY KEY (order_id, coupon_id)
+                              order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
+                              coupon_id   UUID NOT NULL REFERENCES coupon(coupon_id) ON DELETE CASCADE,
+                              applied_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              PRIMARY KEY (order_id, coupon_id)
 );
 
 -- Order-Product many-to-many relationship (order line items)
 CREATE TABLE order_product (
-                              order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
-                              product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE RESTRICT,
-                              quantity    INTEGER NOT NULL CHECK (quantity > 0),
-                              unit_price  NUMERIC(12,2) NOT NULL,
-                              total_price NUMERIC(12,2) NOT NULL,
-                              PRIMARY KEY (order_id, product_id)
+                               order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
+                               product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE RESTRICT,
+                               quantity    INTEGER NOT NULL CHECK (quantity > 0),
+                               unit_price  NUMERIC(12,2) NOT NULL,
+                               total_price NUMERIC(12,2) NOT NULL,
+                               PRIMARY KEY (order_id, product_id)
 );
 
 -- Wishlist-Product many-to-many relationship
 CREATE TABLE wishlist_product (
-                                 wishlist_id UUID NOT NULL REFERENCES wishlist(wishlist_id) ON DELETE CASCADE,
-                                 product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                 added_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                 PRIMARY KEY (wishlist_id, product_id)
+                                  wishlist_id UUID NOT NULL REFERENCES wishlist(wishlist_id) ON DELETE CASCADE,
+                                  product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
+                                  added_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                  PRIMARY KEY (wishlist_id, product_id)
 );
 
 -- Warehouse-Product many-to-many relationship with stock tracking
 CREATE TABLE warehouse_product (
-                                  warehouse_id   UUID NOT NULL REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
-                                  product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                  stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
-                                  last_updated   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                  PRIMARY KEY (warehouse_id, product_id)
+                                   warehouse_id   UUID NOT NULL REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
+                                   product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
+                                   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+                                   last_updated   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                   PRIMARY KEY (warehouse_id, product_id)
 );
 
 CREATE TABLE product_category (
