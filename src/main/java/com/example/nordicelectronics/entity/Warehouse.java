@@ -16,7 +16,7 @@ import java.util.UUID;
 public class Warehouse {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "warehouse_id", updatable = false, nullable = false)
     private UUID warehouseId;
 

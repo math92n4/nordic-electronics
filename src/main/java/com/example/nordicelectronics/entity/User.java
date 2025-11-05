@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
+@Table(name = "\"user\"")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 public class User {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "user_id", updatable = false, nullable = false)
     private UUID userId;
 
