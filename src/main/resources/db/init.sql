@@ -137,13 +137,13 @@ CREATE TABLE "order" (
 CREATE TYPE payment_type_enum AS ENUM('credit_card', 'paypal', 'bank', 'klarna', 'cash');
 CREATE TYPE status_type_enum AS ENUM('pending', 'completed', 'failed', 'refunded');
 
-CREATE TABLE payments (
-                          payment_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                          order_id       UUID NOT NULL REFERENCES "order"(order_id),
-                          payment_method payment_type_enum NOT NULL,
-                          amount         NUMERIC(12,2) NOT NULL,
-                          status         status_type_enum DEFAULT 'pending',
-                          payment_date   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE payment (
+                         payment_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                         order_id       UUID NOT NULL REFERENCES "order"(order_id),
+                         payment_method payment_type_enum NOT NULL,
+                         amount         NUMERIC(12,2) NOT NULL,
+                         status         status_type_enum DEFAULT 'pending',
+                         payment_date   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ======================
@@ -259,7 +259,7 @@ SET status = 'confirmed'
 WHERE order_id = p_order_id;
 
 -- Process payment: mark as completed (simplified)
-UPDATE payments
+UPDATE payment
 SET status = 'completed', payment_date = CURRENT_TIMESTAMP
 WHERE order_id = p_order_id;
 
@@ -358,8 +358,8 @@ SELECT
     p.price,
     p.description
 FROM product p
-         LEFT JOIN warehouse_product wp ON p.product_id = wp.product_id
-         LEFT JOIN brand b ON p.brand_id = b.brand_id
+LEFT JOIN warehouse_product wp ON p.product_id = wp.product_id
+LEFT JOIN brand b ON p.brand_id = b.brand_id
 GROUP BY p.product_id, p.name, p.sku, p.stock_quantity, b.name, p.price, p.description
 HAVING COALESCE(SUM(wp.stock_quantity), 0) < 10
 ORDER BY total_stock_across_warehouses ASC;
@@ -374,8 +374,8 @@ SELECT
     SUM(op.total_price) AS total_revenue,
     COUNT(DISTINCT op.order_id) AS total_orders
 FROM order_product op
-         JOIN product p ON op.product_id = p.product_id
-         JOIN brand b ON p.brand_id = b.brand_id
+JOIN product p ON op.product_id = p.product_id
+JOIN brand b ON p.brand_id = b.brand_id
 GROUP BY p.product_id, p.name, b.name
 ORDER BY total_units_sold DESC;
 
