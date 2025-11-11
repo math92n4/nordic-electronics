@@ -1,5 +1,6 @@
 package com.example.nordicelectronics.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,5 +40,6 @@ public class Warehouse {
     private String phone;
 
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 }

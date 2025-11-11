@@ -1,5 +1,8 @@
 package com.example.nordicelectronics.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,9 +33,6 @@ public class Product {
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "stock_quantity", nullable = false)
-    private int stock_quantity;
-
     @Column(name = "price", nullable = false)
     private BigDecimal price;
 
@@ -45,7 +45,7 @@ public class Product {
             joinColumns = @JoinColumn(name = "product_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private Set<Category> categories;
+    private Set<Category> categories = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "warranty_id", referencedColumnName = "warranty_id")
@@ -56,10 +56,15 @@ public class Product {
     private Brand brand;
 
     @OneToMany(mappedBy = "product")
+    @JsonManagedReference
     private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ProductVariant> productVariants = new HashSet<>();
+    @Transient
+    public int getStockQuantity() {
+        return warehouseProducts.stream()
+                .mapToInt(WarehouseProduct::getStockQuantity)
+                .sum();
+    }
 
     // TODO ORDER PRODUCT RELATION
     // TODO WISHLIST PRODUCT
