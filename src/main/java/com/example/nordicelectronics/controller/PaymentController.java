@@ -5,6 +5,8 @@ import com.example.nordicelectronics.entity.dto.PaymentRequestDTO;
 import com.example.nordicelectronics.entity.dto.PaymentResponseDTO;
 import com.example.nordicelectronics.entity.mapper.PaymentMapper;
 import com.example.nordicelectronics.service.PaymentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name ="Payment Controller", description = "Handles operations related to payments")
 @RestController
 @RequestMapping("api/payments")
 public class PaymentController {
@@ -25,6 +28,7 @@ public class PaymentController {
         return paymentService.getAllPayments();
     }
 
+    @Operation(summary = "Get payment by order ID", description = "Fetches the payment associated with a specific order ID.")
     @GetMapping("/by-order")
     public ResponseEntity<PaymentResponseDTO> getPaymentsByOrder(@RequestParam UUID orderId) {
         Payment payment = paymentService.getPaymentByOrderId(orderId);
@@ -32,6 +36,7 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "Create a new payment", description = "Creates a new payment and returns the created payment as a DTO.")
     @PostMapping("/create")
     public ResponseEntity<PaymentResponseDTO> createPayment(@RequestBody PaymentRequestDTO paymentDTO) {
         Payment savedPayment = paymentService.createPayment(paymentDTO);
@@ -39,6 +44,7 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "Delete payment by ID", description = "Deletes a payment based on the provided payment ID.")
     @DeleteMapping("/delete")
     public void deletePaymentById(@RequestParam("paymentId") java.util.UUID paymentId)
     {
