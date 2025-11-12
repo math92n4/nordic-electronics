@@ -29,6 +29,7 @@
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "auth",
                 "register"
               ]
