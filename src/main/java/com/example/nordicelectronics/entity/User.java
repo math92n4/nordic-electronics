@@ -1,6 +1,7 @@
 package com.example.nordicelectronics.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -44,5 +45,6 @@ public class User {
     private boolean isAdmin;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private Address address;
 }
