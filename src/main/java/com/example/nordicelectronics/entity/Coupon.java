@@ -21,6 +21,10 @@ public class Coupon {
     @Column(name = "coupon_id", updatable = false, nullable = false)
     private UUID couponId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private Order order;
+
     @Column(name = "code", nullable = false)
     private String code;
 

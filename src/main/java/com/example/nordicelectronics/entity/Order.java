@@ -51,4 +51,7 @@ public class Order {
 
     @Column(name = "discount_amount", precision = 19, scale = 2)
     private BigDecimal discountAmount;
+
+    // TODO: Order_Product
+    // TODO: Order_Coupon
 }
