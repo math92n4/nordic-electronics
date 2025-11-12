@@ -3,6 +3,8 @@ package com.example.nordicelectronics.entity;
 import com.example.nordicelectronics.entity.enums.DiscountType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,7 +27,8 @@ public class Coupon {
     private String code;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "discount_type", nullable = false)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "discount_type", nullable = false, columnDefinition = "discount_type_enum_name") // Adjust columnDefinition if needed
     private DiscountType discountType;
 
     @Column(name = "discount_value", nullable = false, precision = 19, scale = 2)

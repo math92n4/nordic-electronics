@@ -2,8 +2,11 @@ package com.example.nordicelectronics.entity;
 
 import com.example.nordicelectronics.entity.enums.PaymentMethod;
 import com.example.nordicelectronics.entity.enums.PaymentStatus;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,14 +20,15 @@ import java.util.UUID;
 @Setter
 @Builder
 @Table(name = "payment")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "order"}) // Add "order" to prevent circular dependency with Order
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "payment_id", updatable = false, nullable = false)
     private UUID paymentId;
 
-    @OneToOne
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     // TODO: Missing in SQL
@@ -32,11 +36,13 @@ public class Payment {
     //private String currency;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "payment_method", nullable = false, columnDefinition = "payment_method_enum_name") // Adjust columnDefinition if needed
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "status", nullable = false, columnDefinition = "payment_status_enum_name") // Adjust columnDefinition if needed
     private PaymentStatus paymentStatus;
 
     @Column(name = "payment_date", nullable = false)

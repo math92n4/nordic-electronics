@@ -1,8 +1,12 @@
 package com.example.nordicelectronics.entity;
 
 import com.example.nordicelectronics.entity.enums.OrderStatus;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.annotations.Type;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,6 +19,7 @@ import java.util.UUID;
 @Setter
 @Builder
 @Table(name = "\"order\"")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "orderItems", "payment"})
 public class Order {
 
     @Id
@@ -33,8 +38,9 @@ public class Order {
     @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING) // Standard JPA for Java enum handling
+    @JdbcType(PostgreSQLEnumJdbcType.class) // Hibernate 6 way to bind to a custom JDBC type
+    @Column(name = "status", nullable = false, columnDefinition = "order_type_enum")
     private OrderStatus orderStatus;
 
     @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
@@ -51,4 +57,7 @@ public class Order {
 
     @Column(name = "discount_amount", precision = 19, scale = 2)
     private BigDecimal discountAmount;
+
+    // TODO: Order_Product
+    // TODO: Order_Coupon
 }
