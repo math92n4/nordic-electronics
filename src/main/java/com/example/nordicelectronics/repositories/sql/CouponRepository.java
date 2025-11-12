@@ -8,6 +8,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface CouponRepository extends JpaRepository<Coupon, UUID> {
-    List<Coupon> findAllByOrderId(UUID orderId);
-    List<Coupon> findAllByActive(boolean isActive);
+    List<Coupon> findAllByIsActive(boolean isActive);
 }

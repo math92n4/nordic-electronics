@@ -19,15 +19,15 @@ public class CouponService {
     }
 
     public List<Coupon> getAllCouponsByOrderId(UUID orderId) {
-        return couponRepository.findAllByOrderId(orderId);
+        return couponRepository.findAllByIsActive(true); // TODO: implement method to get coupons by order ID
     }
 
     public List<Coupon> getAllActiveCoupons() {
-        return couponRepository.findAllByActive(true);
+        return couponRepository.findAllByIsActive(true);
     }
 
     public List<Coupon> getAllInactiveCoupons() {
-        return couponRepository.findAllByActive(false);
+        return couponRepository.findAllByIsActive(false);
     }
 
     public Coupon save(Coupon coupon) {

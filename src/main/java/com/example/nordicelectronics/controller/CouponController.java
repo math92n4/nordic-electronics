@@ -3,10 +3,7 @@ package com.example.nordicelectronics.controller;
 import com.example.nordicelectronics.entity.Coupon;
 import com.example.nordicelectronics.service.CouponService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,12 +16,12 @@ public class CouponController {
     public CouponService couponService;
 
     @GetMapping("/get-by-order-id")
-    public List<Coupon> getCouponsByOrderId(UUID orderId) {
+    public List<Coupon> getCouponsByOrderId(@RequestParam UUID orderId) {
         return couponService.getAllCouponsByOrderId(orderId);
     }
 
     @GetMapping("/get-by-id")
-    public Coupon getCouponById(UUID couponId) {
+    public Coupon getCouponById(@RequestParam UUID couponId) {
         return couponService.getCouponById(couponId);
     }
 
@@ -39,7 +36,7 @@ public class CouponController {
     }
 
     @PostMapping("/create")
-    public Coupon createCoupon(Coupon coupon) {
+    public Coupon createCoupon(@RequestBody Coupon coupon) {
         return couponService.save(coupon);
     }
 

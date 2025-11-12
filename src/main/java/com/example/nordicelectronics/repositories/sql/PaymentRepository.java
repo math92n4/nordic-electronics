@@ -8,5 +8,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
-    List<Payment> findByOrderId(UUID orderId);
+    Payment findByOrder_OrderId(UUID orderId);
 }
