@@ -54,11 +54,6 @@ public class Seeder implements CommandLineRunner {
             log.info("Database already contains data. Skipping seeding.");
             return;
         }
-        
-        // If partial data exists, log warning
-        if (userRepository.count() > 0) {
-            log.warn("Partial data detected. Users exist but products don't. Continuing with seeding...");
-        }
 
         try {
             // 1. Create Users
@@ -196,7 +191,7 @@ public class Seeder implements CommandLineRunner {
                 .supply(field(User::getPhoneNumber), random -> "+45 " + random.intRange(10, 99) + " " + random.intRange(10, 99) + " " + random.intRange(10, 99) + " " + random.intRange(10, 99))
                 .supply(field(User::getDateOfBirth), random -> LocalDate.of(random.intRange(1960, 2003), random.intRange(1, 12), random.intRange(1, 28)))
                 .supply(field(User::getPassword), () -> passwordEncoder.encode("password123"))
-                .supply(field(User::isAdmin), random -> random.intRange(1, 10) > 8) // 20% chance of being admin
+                .set(field(User::isAdmin), false) // All random users are regular users
                 .create();
 
         users.addAll(userRepository.saveAll(randomUsers));
