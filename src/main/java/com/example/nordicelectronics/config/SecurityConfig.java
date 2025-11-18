@@ -36,7 +36,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         String[] swaggerPaths = {
-                "/",
+                "/swagger",
                 "/swagger-ui/**",
                 "/swagger-ui.html",
                 "/v3/api-docs/**",
@@ -44,11 +44,22 @@ public class SecurityConfig {
                 "/webjars/**"
         };
 
+        String[] staticPaths = {
+                "/",
+                "/index.html",
+                "/css/**",
+                "/js/**",
+                "/images/**",
+                "/favicon.ico"
+        };
+
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
+                        .requestMatchers("/api/products", "/api/categories", "/api/brands", "/api/warehouses").permitAll()
                         .requestMatchers(swaggerPaths).permitAll()
+                        .requestMatchers(staticPaths).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/v3/api-docs.yaml", "/v3/api-docs").permitAll()
                         .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                         .requestMatchers("/api/auth/current-user", "/api/auth/users", "/api/auth/test").authenticated()

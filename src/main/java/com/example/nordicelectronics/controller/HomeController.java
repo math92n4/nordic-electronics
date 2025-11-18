@@ -7,7 +7,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
 
     @GetMapping("/")
-    public String redirectToSwagger() {
+    public String home() {
+        return "redirect:/index.html";
+    }
+
+    @GetMapping("/swagger")
+    public String admin() {
         return "redirect:/swagger-ui/index.html";
     }
 }

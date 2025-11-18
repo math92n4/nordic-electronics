@@ -132,6 +132,7 @@ public class AuthController {
             boolean isAdmin = false;
 
             User user = userService.registerUser(firstName, lastName, email, phoneNumber, password, isAdmin);
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "User registered successfully");
@@ -195,6 +196,7 @@ public class AuthController {
             securityContextRepository.saveContext(context, httpRequest, httpResponse);
 
             User user = userService.findByEmail(email);
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Login successful");
