@@ -24,5 +24,8 @@ jobs:
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          projectKey: 'math92n4_nordic-electronics'
+          organization: 'math92n4'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
