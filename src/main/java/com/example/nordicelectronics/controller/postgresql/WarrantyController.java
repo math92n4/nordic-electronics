@@ -1,4 +1,4 @@
-package com.example.nordicelectronics.controller;
+package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.Warranty;
@@ -14,39 +14,39 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name = "Warranty Controller", description = "Handles operations related to warranties")
+@Tag(name = "PostgreSQL Warranty Controller", description = "Handles operations related to warranties in PostgreSQL")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/warranties")
+@RequestMapping("/api/postgresql/warranties")
 public class WarrantyController {
 
     private final WarrantyService warrantyService;
 
-    @Operation(summary = "Get all warranties", description = "Fetches a list of all warranties.")
+    @Operation(summary = "Get all PostgreSQL warranties", description = "Fetches a list of all warranties.")
     @GetMapping("")
     public ResponseEntity<List<Warranty>> getAll() {
         return new ResponseEntity<>(warrantyService.getAll(), HttpStatus.OK);
     }
 
-    @Operation(summary = "Get warranty by ID", description = "Fetches a warranty by its unique ID.")
+    @Operation(summary = "Get PostgreSQL warranty by ID", description = "Fetches a warranty by its unique ID.")
     @GetMapping("/{id}")
     public ResponseEntity<Warranty> getById(@PathVariable UUID id) {
         return new ResponseEntity<>(warrantyService.getById(id), HttpStatus.OK);
     }
 
-    @Operation(summary = "Create a new warranty", description = "Creates a new warranty and returns the created warranty.")
+    @Operation(summary = "Create a new PostgreSQL warranty", description = "Creates a new warranty and returns the created warranty.")
     @PostMapping("")
     public ResponseEntity<Warranty> save(@RequestBody Warranty warranty) {
         return new ResponseEntity<>(warrantyService.save(warranty), HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Update an existing warranty", description = "Updates an existing warranty by its ID and returns the updated warranty.")
+    @Operation(summary = "Update an existing PostgreSQL warranty", description = "Updates an existing warranty by its ID and returns the updated warranty.")
     @PutMapping("/{id}")
     public ResponseEntity<Warranty> update(@PathVariable UUID id, @RequestBody Warranty warranty) {
         return new ResponseEntity<>(warrantyService.update(id, warranty), HttpStatus.OK);
     }
 
-    @Operation(summary = "Delete a warranty", description = "Deletes a warranty by its unique ID.")
+    @Operation(summary = "Delete a PostgreSQL warranty", description = "Deletes a warranty by its unique ID.")
     @DeleteMapping("/{id}")
     public ResponseEntity<Product> delete(@PathVariable UUID id) {
         warrantyService.deleteById(id);

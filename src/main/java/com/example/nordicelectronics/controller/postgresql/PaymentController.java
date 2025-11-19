@@ -1,4 +1,4 @@
-package com.example.nordicelectronics.controller;
+package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.Payment;
 import com.example.nordicelectronics.entity.dto.PaymentRequestDTO;
@@ -15,20 +15,21 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name ="Payment Controller", description = "Handles operations related to payments")
+@Tag(name ="PostgreSQL Payment Controller", description = "Handles operations related to payments in PostgreSQL")
 @RestController
-@RequestMapping("api/payments")
+@RequestMapping("api/postgresql/payments")
 public class PaymentController {
 
     @Autowired
     private PaymentService paymentService;
 
+    @Operation(summary = "Get all PostgreSQL payments", description = "Fetches all payments.")
     @GetMapping("/get-all")
     public List<Payment> getAllPayments() {
         return paymentService.getAllPayments();
     }
 
-    @Operation(summary = "Get payment by order ID", description = "Fetches the payment associated with a specific order ID.")
+    @Operation(summary = "Get PostgreSQL payment by order ID", description = "Fetches the payment associated with a specific order ID.")
     @GetMapping("/by-order")
     public ResponseEntity<PaymentResponseDTO> getPaymentsByOrder(@RequestParam UUID orderId) {
         Payment payment = paymentService.getPaymentByOrderId(orderId);
@@ -36,7 +37,7 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "Create a new payment", description = "Creates a new payment and returns the created payment as a DTO.")
+    @Operation(summary = "Create a new PostgreSQL payment", description = "Creates a new payment and returns the created payment as a DTO.")
     @PostMapping("/create")
     public ResponseEntity<PaymentResponseDTO> createPayment(@RequestBody PaymentRequestDTO paymentDTO) {
         Payment savedPayment = paymentService.createPayment(paymentDTO);
@@ -44,7 +45,7 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "Delete payment by ID", description = "Deletes a payment based on the provided payment ID.")
+    @Operation(summary = "Delete PostgreSQL payment by ID", description = "Deletes a payment based on the provided payment ID.")
     @DeleteMapping("/delete")
     public void deletePaymentById(@RequestParam("paymentId") java.util.UUID paymentId)
     {
