@@ -56,13 +56,13 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
-                        .requestMatchers("/api/products", "/api/categories", "/api/brands", "/api/warehouses").permitAll()
+                        .requestMatchers("/api/postgresql/auth/register", "/api/postgresql/auth/login", "/api/postgresql/auth/logout").permitAll()
+                        .requestMatchers("/api/postgresql/**", "/api/mongodb/**").permitAll()
                         .requestMatchers(swaggerPaths).permitAll()
                         .requestMatchers(staticPaths).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/v3/api-docs.yaml", "/v3/api-docs").permitAll()
                         .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
-                        .requestMatchers("/api/auth/current-user", "/api/auth/users", "/api/auth/test").authenticated()
+                        .requestMatchers("/api/postgresql/auth/current-user", "/api/postgresql/auth/users", "/api/postgresql/auth/test").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
