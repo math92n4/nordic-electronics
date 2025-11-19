@@ -16,14 +16,23 @@ CREATE TABLE category (
                           description TEXT NOT NULL
 );
 
+-- ======================
+-- Address
+-- ======================
+
+CREATE TABLE address (
+                         address_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                         street TEXT NOT NULL,
+                         street_number TEXT NOT NULL,
+                         zip TEXT NOT NULL,
+                         city TEXT NOT NULL
+);
+
 CREATE TABLE warehouse (
                            warehouse_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                            name         TEXT NOT NULL,
-                           address      TEXT NOT NULL,
-                           city         TEXT NOT NULL,
-                           postal_code  TEXT NOT NULL,
-                           country      TEXT NOT NULL,
-                           phone        TEXT NOT NULL
+                           phone        TEXT NOT NULL,
+                           address_id UUID NOT NULL REFERENCES address(address_id)
 );
 
 -- ======================
@@ -38,21 +47,11 @@ CREATE TABLE "user" (
                         last_name     TEXT NOT NULL,
                         phone_number  TEXT NOT NULL,
                         date_of_birth DATE NOT NULL,
-                        is_admin BOOLEAN DEFAULT FALSE
+                        is_admin BOOLEAN DEFAULT FALSE,
+                        address_id UUID NOT NULL REFERENCES address(address_id)
 );
 
--- ======================
--- Address
--- ======================
 
-CREATE TABLE address (
-                         address_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                         street TEXT NOT NULL,
-                         street_number TEXT NOT NULL,
-                         zip TEXT NOT NULL,
-                         city TEXT NOT NULL,
-                         user_id UUID NOT NULL REFERENCES "user"(user_id)
-);
 
 -- ======================
 -- Coupon

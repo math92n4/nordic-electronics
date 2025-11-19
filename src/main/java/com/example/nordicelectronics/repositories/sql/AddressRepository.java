@@ -7,6 +7,4 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AddressRepository extends JpaRepository<Address, UUID> {
-    Optional<Address> findByUser_UserId(UUID userId);
-    boolean existsByUser_UserId(UUID userId);
 }
