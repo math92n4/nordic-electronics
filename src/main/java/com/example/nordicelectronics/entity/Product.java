@@ -45,6 +45,7 @@ public class Product {
             joinColumns = @JoinColumn(name = "product_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
+    @JsonIgnore
     private Set<Category> categories = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL)
@@ -71,6 +72,7 @@ public class Product {
     private Set<Wishlist> wishlists = new HashSet<>();
 
     @OneToMany(mappedBy = "product")
+    @JsonIgnore
     private Set<Review> reviews = new HashSet<>();
 
 }

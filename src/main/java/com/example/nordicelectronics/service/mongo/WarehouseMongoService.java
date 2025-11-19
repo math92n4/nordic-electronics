@@ -30,9 +30,6 @@ public class WarehouseMongoService {
         WarehouseDocument existing = getById(id);
         existing.setName(warehouse.getName());
         existing.setAddress(warehouse.getAddress());
-        existing.setCity(warehouse.getCity());
-        existing.setPostalCode(warehouse.getPostalCode());
-        existing.setCountry(warehouse.getCountry());
         existing.setPhone(warehouse.getPhone());
         if (warehouse.getProducts() != null) {
             existing.setProducts(warehouse.getProducts());

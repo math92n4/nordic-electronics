@@ -45,6 +45,7 @@ public class User {
     private boolean isAdmin;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "address_id", referencedColumnName = "address_id", nullable = false)
+    @JoinColumn(name = "address_id", referencedColumnName = "address_id")
+    @JsonIgnore
     private Address address;
 }

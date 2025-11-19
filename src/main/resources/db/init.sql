@@ -48,7 +48,7 @@ CREATE TABLE "user" (
                         phone_number  TEXT NOT NULL,
                         date_of_birth DATE NOT NULL,
                         is_admin BOOLEAN DEFAULT FALSE,
-                        address_id UUID NOT NULL REFERENCES address(address_id)
+                        address_id UUID REFERENCES address(address_id)
 );
 
 
