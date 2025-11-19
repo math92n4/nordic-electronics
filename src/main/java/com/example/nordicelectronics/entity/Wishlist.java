@@ -2,12 +2,15 @@ package com.example.nordicelectronics.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Builder
 public class Wishlist {
 
@@ -22,4 +25,13 @@ public class Wishlist {
 
     @Column(nullable = false)
     private String name;
+
+    @ManyToMany
+    @JoinTable(
+        name = "wishlist_product",
+        joinColumns = @JoinColumn(name = "wishlist_id"),
+        inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    @Builder.Default
+    private Set<Product> products = new HashSet<>();
 }
