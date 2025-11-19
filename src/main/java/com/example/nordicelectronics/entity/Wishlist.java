@@ -34,4 +34,6 @@ public class Wishlist {
     )
     @Builder.Default
     private Set<Product> products = new HashSet<>();
+
+
 }

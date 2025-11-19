@@ -66,7 +66,11 @@ public class Product {
                 .sum();
     }
 
-    // TODO ORDER PRODUCT RELATION
-    // TODO WISHLIST PRODUCT
-    // TODO REVIEW PRODUCT
+    @ManyToMany(mappedBy = "products")
+    @JsonIgnore
+    private Set<Wishlist> wishlists = new HashSet<>();
+
+    @OneToMany(mappedBy = "product")
+    private Set<Review> reviews = new HashSet<>();
+
 }

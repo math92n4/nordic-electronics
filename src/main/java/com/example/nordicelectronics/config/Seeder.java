@@ -533,7 +533,7 @@ public class Seeder implements CommandLineRunner {
 
             Review review = Review.builder()
                     .user(user)
-                    .productId(product.getProductId())
+                    .product(product)
                     .orderId(order.getOrderId())
                     .reviewValue(random.nextInt(5) + 1) // 1-5 stars
                     .title(titles[random.nextInt(titles.length)])
