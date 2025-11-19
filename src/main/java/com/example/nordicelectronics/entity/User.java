@@ -44,7 +44,8 @@ public class User {
     @Column(nullable = false)
     private boolean isAdmin;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id", referencedColumnName = "address_id")
+    @JsonIgnore
     private Address address;
 }

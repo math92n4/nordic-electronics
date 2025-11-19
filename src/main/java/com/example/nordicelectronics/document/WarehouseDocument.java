@@ -18,14 +18,20 @@ public class WarehouseDocument {
     private String id;
     
     private String name;
-    
-    private String address;
-    
-    private String city;
-    
-    private String postalCode;
-    
-    private String country;
+
+    // Embedded address
+    private WarehouseDocument.AddressInfo address;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class AddressInfo {
+        private String street;
+        private String streetNumber;
+        private String zip;
+        private String city;
+    }
     
     private String phone;
     

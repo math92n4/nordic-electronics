@@ -32,8 +32,4 @@ public class Address {
     @Column(nullable = false)
     private String city;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
-    private User user;
 }

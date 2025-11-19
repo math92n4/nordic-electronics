@@ -346,13 +346,21 @@ public class MigrationService {
                     }
                 }
             }
+            WarehouseDocument.AddressInfo addressInfo = null;
+
+            if (warehouse.getAddress() != null) {
+                Address address = warehouse.getAddress();
+                addressInfo = WarehouseDocument.AddressInfo.builder()
+                        .street(address.getStreet())
+                        .streetNumber(address.getStreetNumber())
+                        .zip(address.getZip())
+                        .city(address.getCity())
+                        .build();
+            }
 
             WarehouseDocument document = WarehouseDocument.builder()
                     .name(warehouse.getName())
-                    .address(warehouse.getAddress())
-                    .city(warehouse.getCity())
-                    .postalCode(warehouse.getPostalCode())
-                    .country(warehouse.getCountry())
+                    .address(addressInfo)
                     .phone(warehouse.getPhone())
                     .products(productInfoList)
                     .build();
@@ -442,7 +450,7 @@ public class MigrationService {
 
         for (Review review : reviews) {
             String userMongoId = userIdMap.get(review.getUser().getUserId().toString());
-            String productMongoId = productIdMap.get(review.getProductId().toString());
+            String productMongoId = productIdMap.get(review.getProduct().getProductId().toString());
 
             ReviewDocument document = ReviewDocument.builder()
                     .productId(productMongoId)

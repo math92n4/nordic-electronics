@@ -67,16 +67,6 @@ public class PostgresSeeder implements CommandLineRunner {
                 log.info("Using existing {} users", users.size());
             }
 
-            // 2. Create Addresses for Users
-            List<Address> addresses;
-            if (addressRepository.count() == 0) {
-                addresses = createAddresses(users);
-                log.info("Created {} addresses", addresses.size());
-            } else {
-                addresses = addressRepository.findAll();
-                log.info("Using existing {} addresses", addresses.size());
-            }
-
             // 3. Create Brands
             List<Brand> brands;
             if (brandRepository.count() == 0) {
@@ -158,6 +148,14 @@ public class PostgresSeeder implements CommandLineRunner {
         List<User> users = new ArrayList<>();
 
         // Create admin user
+        Address adminAddress = Address.builder()
+                .street("Vestergade")
+                .streetNumber("1")
+                .zip("1000")
+                .city("Copenhagen")
+                .build();
+        addressRepository.save(adminAddress);
+
         User admin = User.builder()
                 .firstName("Admin")
                 .lastName("User")
@@ -166,10 +164,19 @@ public class PostgresSeeder implements CommandLineRunner {
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
                 .password(passwordEncoder.encode("admin123"))
                 .isAdmin(true)
+                .address(adminAddress) // assign before saving
                 .build();
         users.add(userRepository.save(admin));
 
-        // Create regular test user
+        // Create test user
+        Address testAddress = Address.builder()
+                .street("Østergade")
+                .streetNumber("10")
+                .zip("2100")
+                .city("Copenhagen")
+                .build();
+        addressRepository.save(testAddress);
+
         User testUser = User.builder()
                 .firstName("Test")
                 .lastName("User")
@@ -178,44 +185,36 @@ public class PostgresSeeder implements CommandLineRunner {
                 .dateOfBirth(LocalDate.of(1995, 6, 15))
                 .password(passwordEncoder.encode("user123"))
                 .isAdmin(false)
+                .address(testAddress) // assign before saving
                 .build();
         users.add(userRepository.save(testUser));
 
-        // Create 20 random users using Instancio
-        List<User> randomUsers = Instancio.ofList(User.class)
-                .size(20)
-                .ignore(field(User::getUserId))
-                .ignore(field(User::getAddress))
-                .supply(field(User::getEmail), random -> "user" + random.intRange(1000, 9999) + "@example.com")
-                .supply(field(User::getFirstName), random -> random.oneOf("John", "Jane", "Michael", "Sarah", "David", "Emma", "Chris", "Lisa", "Mark", "Anna"))
-                .supply(field(User::getLastName), random -> random.oneOf("Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Martinez", "Anderson"))
-                .supply(field(User::getPhoneNumber), random -> "+45 " + random.intRange(10, 99) + " " + random.intRange(10, 99) + " " + random.intRange(10, 99) + " " + random.intRange(10, 99))
-                .supply(field(User::getDateOfBirth), random -> LocalDate.of(random.intRange(1960, 2003), random.intRange(1, 12), random.intRange(1, 28)))
-                .supply(field(User::getPassword), () -> passwordEncoder.encode("password123"))
-                .set(field(User::isAdmin), false) // All random users are regular users
-                .create();
+        // Random users
+        for (int i = 0; i < 20; i++) {
+            Address randomAddress = Address.builder()
+                    .street("Random Street " + i)
+                    .streetNumber(String.valueOf(i + 1))
+                    .zip(String.valueOf(1000 + i))
+                    .city("City " + i)
+                    .build();
+            addressRepository.save(randomAddress);
 
-        users.addAll(userRepository.saveAll(randomUsers));
+            int finalI = i;
+            User randomUser = Instancio.of(User.class)
+                    .ignore(field(User::getUserId)) // let JPA generate it
+                    .supply(field(User::getEmail), random -> "user" + finalI + "@example.com")
+                    .set(field(User::getAddress), randomAddress) // assign manually
+                    .set(field(User::isAdmin), false)
+                    .create();
+
+            users.add(userRepository.save(randomUser));
+        }
+
         return users;
     }
 
-    private List<Address> createAddresses(List<User> users) {
-        List<Address> addresses = new ArrayList<>();
 
-        for (User user : users) {
-            Address address = Instancio.of(Address.class)
-                    .ignore(field(Address::getAddressId))
-                    .set(field(Address::getUser), user)
-                    .supply(field(Address::getStreet), random -> random.oneOf("Vestergade", "Østergade", "Nørregade", "Søndergade", "Strandvejen", "Havnevej", "Skovvej", "Parkvej"))
-                    .supply(field(Address::getStreetNumber), random -> String.valueOf(random.intRange(1, 150)))
-                    .supply(field(Address::getZip), random -> String.valueOf(random.intRange(1000, 9999)))
-                    .supply(field(Address::getCity), random -> random.oneOf("Copenhagen", "Aarhus", "Odense", "Aalborg", "Esbjerg", "Randers", "Kolding", "Horsens", "Vejle", "Roskilde"))
-                    .create();
-            addresses.add(addressRepository.save(address));
-        }
 
-        return addresses;
-    }
 
     private List<Brand> createBrands() {
         String[] brandNames = {
@@ -361,23 +360,29 @@ public class PostgresSeeder implements CommandLineRunner {
         List<Warehouse> warehouses = new ArrayList<>();
 
         String[][] warehouseData = {
-            {"Copenhagen Central", "Østerbrogade 15", "Copenhagen", "2100", "Denmark", "+45 33 12 34 56"},
-            {"Aarhus Distribution", "Randersvej 89", "Aarhus", "8000", "Denmark", "+45 86 12 34 56"},
-            {"Odense Logistics", "Vestergade 45", "Odense", "5000", "Denmark", "+45 66 12 34 56"},
-            {"Aalborg Storage", "Nørregade 23", "Aalborg", "9000", "Denmark", "+45 98 12 34 56"},
-            {"Esbjerg Depot", "Havnegade 67", "Esbjerg", "6700", "Denmark", "+45 75 12 34 56"}
+                {"Copenhagen Central", "Østerbrogade", "15", "2100", "Copenhagen"},
+                {"Aarhus Distribution", "Randersvej", "89", "8000", "Aarhus"},
+                {"Odense Logistics", "Vestergade", "45", "5000", "Odense"}
         };
 
         for (String[] data : warehouseData) {
+            // 1. Create and save address first
+            Address address = Address.builder()
+                    .street(data[1])
+                    .streetNumber(data[2])
+                    .zip(data[3])
+                    .city(data[4])
+                    .build();
+            addressRepository.save(address);
+
+            // 2. Create warehouse and assign address
             Warehouse warehouse = Warehouse.builder()
                     .name(data[0])
-                    .address(data[1])
-                    .city(data[2])
-                    .postalCode(data[3])
-                    .country(data[4])
-                    .phone(data[5])
+                    .phone("+45 12 34 56 78")
+                    .address(address) // must assign before saving
                     .warehouseProducts(new HashSet<>())
                     .build();
+
             warehouses.add(warehouseRepository.save(warehouse));
         }
 
@@ -529,7 +534,7 @@ public class PostgresSeeder implements CommandLineRunner {
 
             Review review = Review.builder()
                     .user(user)
-                    .productId(product.getProductId())
+                    .product(product)
                     .orderId(order.getOrderId())
                     .reviewValue(random.nextInt(5) + 1) // 1-5 stars
                     .title(titles[random.nextInt(titles.length)])

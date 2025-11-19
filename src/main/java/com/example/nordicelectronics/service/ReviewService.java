@@ -1,5 +1,6 @@
 package com.example.nordicelectronics.service;
 
+import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.Review;
 import com.example.nordicelectronics.entity.User;
 import com.example.nordicelectronics.repositories.sql.ReviewRepository;
@@ -36,29 +37,30 @@ public class ReviewService {
     }
 
     public List<Review> getByProductId(UUID productId) {
-        return reviewRepository.findByProductId(productId);
+        Product product = productService.getById(productId);
+        return reviewRepository.findByProduct_ProductId(product.getProductId());
     }
 
     public Review save(Review review) {
         return reviewRepository.save(review);
     }
 
-    public Review saveForUser(String email, Review review) {
+    public Review saveForUser(String email, Review review, UUID productId) {
         User user = userService.findByEmail(email);
-        
-        productService.getById(review.getProductId());
-        
+        Product product = productService.getById(productId);
+
         review.setUser(user);
+        review.setProduct(product);
+        review.setCreatedAt(LocalDateTime.now());
+
         return reviewRepository.save(review);
     }
 
-    public Review update(UUID id, Review review) {
+    public Review update(UUID id, Review review, UUID productId) {
         Review existing = getById(id);
+        Product product = productService.getById(productId);
 
-        productService.getById(review.getProductId());
-
-        existing.setProductId(review.getProductId());
-        existing.setOrderId(review.getOrderId());
+        existing.setProduct(product);
         existing.setReviewValue(review.getReviewValue());
         existing.setTitle(review.getTitle());
         existing.setComment(review.getComment());
@@ -67,11 +69,11 @@ public class ReviewService {
         return reviewRepository.save(existing);
     }
 
-    public Review updateForUser(String email, UUID reviewId, Review review) {
+    public Review updateForUser(String email, UUID reviewId, Review review, UUID productId) {
         User user = userService.findByEmail(email);
         Review existing = reviewRepository.findByReviewIdAndUser_UserId(reviewId, user.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Review not found or you don't have permission to update it"));
-        return update(existing.getReviewId(), review);
+        return update(existing.getReviewId(), review, productId);
     }
 
     public void deleteById(UUID id) {

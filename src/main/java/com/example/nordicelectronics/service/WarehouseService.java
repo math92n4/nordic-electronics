@@ -35,9 +35,6 @@ public class WarehouseService {
 
         existing.setName(warehouse.getName());
         existing.setAddress(warehouse.getAddress());
-        existing.setCity(warehouse.getCity());
-        existing.setPostalCode(warehouse.getPostalCode());
-        existing.setCountry(warehouse.getCountry());
         existing.setPhone(warehouse.getPhone());
 
         return warehouseRepository.save(existing);

@@ -47,7 +47,7 @@ public class ReviewController {
     @PostMapping("")
     public ResponseEntity<Review> save(@AuthenticationPrincipal UserDetails userDetails,
                                        @RequestBody Review review) {
-        Review savedReview = reviewService.saveForUser(userDetails.getUsername(), review);
+        Review savedReview = reviewService.saveForUser(userDetails.getUsername(), review, review.getProduct().getProductId());
         return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
     }
 
@@ -56,7 +56,7 @@ public class ReviewController {
     public ResponseEntity<Review> update(@AuthenticationPrincipal UserDetails userDetails,
                                           @PathVariable UUID id,
                                           @RequestBody Review review) {
-        Review updatedReview = reviewService.updateForUser(userDetails.getUsername(), id, review);
+        Review updatedReview = reviewService.updateForUser(userDetails.getUsername(), id, review, review.getProduct().getProductId());
         return ResponseEntity.ok(updatedReview);
     }
 
