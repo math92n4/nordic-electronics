@@ -1,4 +1,4 @@
-package com.example.nordicelectronics.controller;
+package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.Brand;
 import com.example.nordicelectronics.entity.Product;
@@ -15,40 +15,40 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name = "Warehouse Controller", description = "Handles operations related to warehouses")
+@Tag(name = "PostgreSQL Warehouse Controller", description = "Handles operations related to warehouses in PostgreSQL")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/warehouses")
+@RequestMapping("/api/postgresql/warehouses")
 public class WarehouseController {
 
 
     private final WarehouseService warehouseService;
 
-    @Operation(summary = "Get all warehouses", description = "Fetches a list of all warehouses.")
+    @Operation(summary = "Get all PostgreSQL warehouses", description = "Fetches a list of all warehouses.")
     @GetMapping("")
     public ResponseEntity<List<Warehouse>> getAll() {
         return new ResponseEntity<>(warehouseService.getAll(), HttpStatus.OK);
     }
 
-    @Operation(summary = "Get warehouse by ID", description = "Fetches a warehouse by its unique ID.")
+    @Operation(summary = "Get PostgreSQL warehouse by ID", description = "Fetches a warehouse by its unique ID.")
     @GetMapping("/{id}")
     public ResponseEntity<Warehouse> getById(@PathVariable UUID id) {
         return new ResponseEntity<>(warehouseService.getById(id), HttpStatus.OK);
     }
 
-    @Operation(summary = "Create a new warehouse", description = "Creates a new warehouse and returns the created warehouse.")
+    @Operation(summary = "Create a new PostgreSQL warehouse", description = "Creates a new warehouse and returns the created warehouse.")
     @PostMapping("")
     public ResponseEntity<Warehouse> save(@RequestBody Warehouse warehouse) {
         return new ResponseEntity<>(warehouseService.save(warehouse), HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Update an existing warehouse", description = "Updates an existing warehouse by its ID and returns the updated warehouse.")
+    @Operation(summary = "Update an existing PostgreSQL warehouse", description = "Updates an existing warehouse by its ID and returns the updated warehouse.")
     @PutMapping("/{id}")
     public ResponseEntity<Warehouse> update(@PathVariable UUID id, @RequestBody Warehouse warehouse) {
         return new ResponseEntity<>(warehouseService.update(id, warehouse), HttpStatus.OK);
     }
 
-    @Operation(summary = "Delete a warehouse", description = "Deletes a warehouse by its unique ID.")
+    @Operation(summary = "Delete a PostgreSQL warehouse", description = "Deletes a warehouse by its unique ID.")
     @DeleteMapping("/{id}")
     public ResponseEntity<Product> delete(@PathVariable UUID id) {
         warehouseService.deleteById(id);

@@ -1,4 +1,4 @@
-package com.example.nordicelectronics.controller;
+package com.example.nordicelectronics.controller.postgresql;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-@Tag(name ="Authentication Controller", description = "Handles user authentication and registration. ")
+@Tag(name ="PostgreSQL Authentication Controller", description = "Handles user authentication and registration using PostgreSQL. ")
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/postgresql/auth")
 public class AuthController {
 
     @Autowired
@@ -35,7 +35,7 @@ public class AuthController {
     @Autowired
     private SecurityContextRepository securityContextRepository;
 
-    @Operation(summary = "Test endpoint", description = "Returns session and authentication details for testing purposes")
+    @Operation(summary = "Test PostgreSQL endpoint", description = "Returns session and authentication details for testing purposes")
     @GetMapping("/test")
     public String test(HttpServletRequest request, HttpServletResponse response) {
         var session = request.getSession(false);
@@ -47,13 +47,13 @@ public class AuthController {
                 + " | Status: " + response.getStatus();
     }
 
-    @Operation(summary = "Get all users", description = "Fetches a list of all registered users")
+    @Operation(summary = "Get all PostgreSQL users", description = "Fetches a list of all registered users")
     @GetMapping("/users")
     public List<User> getUsers() {
         return userService.getAllUsers();
     }
 
-    @Operation(summary = "Get current authenticated user", description = "Fetches details of the currently authenticated user")
+    @Operation(summary = "Get current authenticated PostgreSQL user", description = "Fetches details of the currently authenticated user")
     @GetMapping("/current-user")
     public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -84,7 +84,7 @@ public class AuthController {
     }
 
     @Operation(
-            summary = "Register a new user",
+            summary = "Register a new PostgreSQL user",
             description = "Registers a new user with the provided details",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
@@ -147,7 +147,7 @@ public class AuthController {
     }
 
     @Operation(
-            summary = "User login",
+            summary = "PostgreSQL user login",
             description = "Authenticates a user and establishes a session",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
@@ -213,7 +213,7 @@ public class AuthController {
         }
     }
 
-    @Operation(summary = "User logout", description = "Logs out the current user and invalidates the session")
+    @Operation(summary = "PostgreSQL user logout", description = "Logs out the current user and invalidates the session")
     @DeleteMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         try {

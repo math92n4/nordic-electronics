@@ -26,7 +26,8 @@ import static org.instancio.Select.field;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class Seeder implements CommandLineRunner {
+@org.springframework.core.annotation.Order(1)
+public class PostgresSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
