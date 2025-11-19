@@ -156,10 +156,9 @@ CREATE TABLE review (
 -- ======================
 
 CREATE TABLE wishlist (
-                          wishlist_id         UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-                          user_id         UUID NOT NULL REFERENCES "user"(user_id),
-                          wishlist_product_id UUID NOT NULL REFERENCES "product"(product_id),
-                          name                TEXT NOT NULL
+                          wishlist_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                          user_id     UUID NOT NULL REFERENCES "user"(user_id),
+                          name        TEXT NOT NULL
 );
 
 -- ======================
@@ -170,7 +169,6 @@ CREATE TABLE wishlist (
 CREATE TABLE order_coupon (
                               order_id    UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
                               coupon_id   UUID NOT NULL REFERENCES coupon(coupon_id) ON DELETE CASCADE,
-                              applied_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                               PRIMARY KEY (order_id, coupon_id)
 );
 
@@ -188,7 +186,6 @@ CREATE TABLE order_product (
 CREATE TABLE wishlist_product (
                                   wishlist_id UUID NOT NULL REFERENCES wishlist(wishlist_id) ON DELETE CASCADE,
                                   product_id  UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                  added_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                   PRIMARY KEY (wishlist_id, product_id)
 );
 
@@ -197,7 +194,6 @@ CREATE TABLE warehouse_product (
                                    warehouse_id   UUID NOT NULL REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
                                    product_id     UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
                                    stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
-                                   last_updated   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                    PRIMARY KEY (warehouse_id, product_id)
 );
 
@@ -214,45 +210,76 @@ CREATE TABLE product_category (
 -- =========================================
 
 -- 1. Process an order: confirm, update stock, and mark payment
+-- Updated to work with warehouse_product table
 CREATE OR REPLACE PROCEDURE sp_ProcessOrder(p_order_id UUID)
 LANGUAGE plpgsql
 AS $$
 DECLARE
-rec RECORD;
-    stock_qty INT;
+    rec RECORD;
+    total_stock INT;
 BEGIN
     -- Loop through each product in the order
-FOR rec IN
-SELECT product_id, quantity
-FROM order_product
-WHERE order_id = p_order_id
+    FOR rec IN
+        SELECT product_id, quantity
+        FROM order_product
+        WHERE order_id = p_order_id
     LOOP
--- Check stock
-SELECT stock_quantity INTO stock_qty
-FROM product
-WHERE product_id = rec.product_id;
+        -- Check total stock across all warehouses
+        SELECT COALESCE(SUM(stock_quantity), 0) INTO total_stock
+        FROM warehouse_product
+        WHERE product_id = rec.product_id;
 
-IF stock_qty < rec.quantity THEN
-            RAISE EXCEPTION 'Not enough stock for product %', rec.product_id;
-END IF;
+        IF total_stock < rec.quantity THEN
+            RAISE EXCEPTION 'Not enough stock for product %. Available: %, Needed: %', 
+                rec.product_id, total_stock, rec.quantity;
+        END IF;
 
-        -- Update stock
-UPDATE product
-SET stock_quantity = stock_quantity - rec.quantity
-WHERE product_id = rec.product_id;
-END LOOP;
+        -- Deduct stock from warehouse(s) with available inventory
+        -- This is a simple FIFO approach - deduct from warehouses in order
+        DECLARE
+            remaining_qty INT := rec.quantity;
+            warehouse_rec RECORD;
+        BEGIN
+            FOR warehouse_rec IN
+                SELECT warehouse_id, stock_quantity
+                FROM warehouse_product
+                WHERE product_id = rec.product_id AND stock_quantity > 0
+                ORDER BY warehouse_id
+            LOOP
+                IF remaining_qty <= 0 THEN
+                    EXIT;
+                END IF;
+
+                IF warehouse_rec.stock_quantity >= remaining_qty THEN
+                    -- This warehouse has enough stock
+                    UPDATE warehouse_product
+                    SET stock_quantity = stock_quantity - remaining_qty
+                    WHERE warehouse_id = warehouse_rec.warehouse_id
+                      AND product_id = rec.product_id;
+                    remaining_qty := 0;
+                ELSE
+                    -- Use all stock from this warehouse and continue
+                    UPDATE warehouse_product
+                    SET stock_quantity = 0
+                    WHERE warehouse_id = warehouse_rec.warehouse_id
+                      AND product_id = rec.product_id;
+                    remaining_qty := remaining_qty - warehouse_rec.stock_quantity;
+                END IF;
+            END LOOP;
+        END;
+    END LOOP;
 
     -- Update order status
-UPDATE "order"
-SET status = 'confirmed'
-WHERE order_id = p_order_id;
+    UPDATE "order"
+    SET status = 'confirmed'
+    WHERE order_id = p_order_id;
 
--- Process payment: mark as completed (simplified)
-UPDATE payment
-SET status = 'completed', payment_date = CURRENT_TIMESTAMP
-WHERE order_id = p_order_id;
+    -- Process payment: mark as completed (simplified)
+    UPDATE payment
+    SET status = 'completed', payment_date = CURRENT_TIMESTAMP
+    WHERE order_id = p_order_id;
 
-RAISE NOTICE 'Order % processed successfully', p_order_id;
+    RAISE NOTICE 'Order % processed successfully', p_order_id;
 END;
 $$;
 
@@ -486,43 +513,55 @@ CREATE TRIGGER trg_validate_coupon
     FOR EACH ROW
     EXECUTE FUNCTION validate_coupon();
 
--- 3. Update product stock when order is placed
-CREATE OR REPLACE FUNCTION update_product_stock()
+-- 3. Check stock availability when order is placed
+-- Updated to work with warehouse_product table
+CREATE OR REPLACE FUNCTION check_product_stock()
 RETURNS TRIGGER AS $$
+DECLARE
+    total_stock INT;
 BEGIN
-  -- Decrease product stock quantity
-UPDATE product
-SET stock_quantity = stock_quantity - NEW.quantity
-WHERE product_id = NEW.product_id;
+    -- Check total stock across all warehouses
+    SELECT COALESCE(SUM(stock_quantity), 0) INTO total_stock
+    FROM warehouse_product
+    WHERE product_id = NEW.product_id;
 
--- Check if stock went negative
-IF (SELECT stock_quantity FROM product WHERE product_id = NEW.product_id) < 0 THEN
-    RAISE EXCEPTION 'Insufficient stock for product';
-END IF;
+    IF total_stock < NEW.quantity THEN
+        RAISE EXCEPTION 'Insufficient stock for product %. Available: %, Requested: %', 
+            NEW.product_id, total_stock, NEW.quantity;
+    END IF;
 
-RETURN NEW;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_update_product_stock
-    AFTER INSERT ON order_product
+CREATE TRIGGER trg_check_product_stock
+    BEFORE INSERT ON order_product
     FOR EACH ROW
-    EXECUTE FUNCTION update_product_stock();
+    EXECUTE FUNCTION check_product_stock();
 
 -- 4. Restore product stock when order is cancelled
+-- Updated to work with warehouse_product table
 CREATE OR REPLACE FUNCTION restore_product_stock()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Only restore stock if order status changed to cancelled or returned
-  IF NEW.status IN ('cancelled', 'returned') AND OLD.status NOT IN ('cancelled', 'returned') THEN
-UPDATE product p
-SET stock_quantity = stock_quantity + op.quantity
-    FROM order_product op
-WHERE op.order_id = NEW.order_id
-  AND p.product_id = op.product_id;
-END IF;
+    -- Only restore stock if order status changed to cancelled or returned
+    IF NEW.status IN ('cancelled', 'returned') AND OLD.status NOT IN ('cancelled', 'returned') THEN
+        -- Restore stock to the first available warehouse for each product
+        -- In a real system, you'd track which warehouse the stock came from
+        UPDATE warehouse_product wp
+        SET stock_quantity = stock_quantity + op.quantity
+        FROM order_product op
+        WHERE op.order_id = NEW.order_id
+          AND wp.product_id = op.product_id
+          AND wp.warehouse_id = (
+              SELECT warehouse_id 
+              FROM warehouse_product 
+              WHERE product_id = op.product_id 
+              LIMIT 1
+          );
+    END IF;
 
-RETURN NEW;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
