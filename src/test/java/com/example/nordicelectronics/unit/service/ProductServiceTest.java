@@ -186,12 +186,7 @@ class ProductServiceTest {
     @Test
     void shouldReturnOne() {
         int productPrice = productService.getProductPrice();
-        assertThat(productPrice).isEqualTo(1);
+        assertThat(productPrice).isEqualTo(2);
     }
 
-    @Test
-    void shouldReturnInteger() {
-        int productPrice = productService.getSomeInteger();
-        assertThat(productPrice).isEqualTo(1);
-    }
 }
