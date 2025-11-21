@@ -87,11 +87,4 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    public String getSomething() {
-        return "Something";
-    }
-
-    public Integer getOne() {
-        return 1;
-    }
 }
