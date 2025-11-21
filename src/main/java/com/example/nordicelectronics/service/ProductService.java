@@ -90,4 +90,8 @@ public class ProductService {
     public Integer getProductPrice() {
         return 1;
     }
+
+    public Integer getSomeInteger() {
+        return 1;
+    }
 }
