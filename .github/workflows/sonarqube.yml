@@ -28,6 +28,12 @@ jobs:
       - name: Build, Test & Generate Coverage
         run: mvn -B clean verify
 
+      - name: Debug PR info
+        run: |
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "PR Branch: ${{ github.head_ref }}"
+          echo "PR Base: ${{ github.base_ref }}"
+
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
         with:
