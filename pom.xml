@@ -157,10 +157,8 @@
                         <configuration>
                             <outputDirectory>target/site/jacoco</outputDirectory>
                             <includes>
-                                <include>**/service/**</include>
-                                <include>**/controller/**</include>
-                                <include>**/repository/**</include>
-                                <include>**/model/**</include>
+                                <include>**/service/postgresql/**</include>
+                                <include>**/controller/postgresql/**</include>
                             </includes>
                         </configuration>
                     </execution>
