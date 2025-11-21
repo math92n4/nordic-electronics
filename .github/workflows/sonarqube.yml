@@ -26,10 +26,7 @@ jobs:
           java-version: 17
 
       - name: Build, Test & Generate Coverage
-        run: mvn -B clean verify
-
-      - name: Debug Jacoco XML
-        run: cat target/site/jacoco/jacoco.xml | grep '<class name='
+        run: mvn -B clean verify jacoco:report
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
