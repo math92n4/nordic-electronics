@@ -24,8 +24,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build + Test
-        run: mvn -B verify
+      - name: Build + Test + JaCoCo Report
+        run: mvn -B clean verify
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
@@ -35,5 +35,6 @@ jobs:
             -Dsonar.organization=math92n4
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.java.binaries=target/classes
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
