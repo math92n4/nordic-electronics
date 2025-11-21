@@ -51,13 +51,8 @@ jobs:
             -Dsonar.sources=src/main/java
             -Dsonar.tests=src/test/java
             
-            -Dsonar.exclusions=src/main/java/com/example/nordicelectronics/config/**,\
-            src/main/java/com/example/nordicelectronics/controller/mongo/**,\
-            src/main/java/com/example/nordicelectronics/document/**,\
-            src/main/java/com/example/nordicelectronics/entity/**,\
-            src/main/java/com/example/nordicelectronics/repositories/**,\
-            src/main/java/com/example/nordicelectronics/runner/**,\
-            src/main/java/com/example/nordicelectronics/service/mongo/**
+            -Dsonar.exclusions=src/main/java/com/example/nordicelectronics/config/**,src/main/java/com/example/nordicelectronics/controller/mongo/**,src/main/java/com/example/nordicelectronics/document/**,src/main/java/com/example/nordicelectronics/entity/**,src/main/java/com/example/nordicelectronics/repositories/**,src/main/java/com/example/nordicelectronics/runner/**,src/main/java/com/example/nordicelectronics/service/mongo/**
+        
 
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
