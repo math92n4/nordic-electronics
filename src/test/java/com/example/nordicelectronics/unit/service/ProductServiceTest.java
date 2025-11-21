@@ -182,4 +182,10 @@ class ProductServiceTest {
         // Assert
         verify(productRepository, times(1)).deleteById(testProductId);
     }
+
+    @Test
+    void shouldReturnOne() {
+        int productPrice = productService.getProductPrice();
+        assertThat(productPrice).isEqualTo(1);
+    }
 }
