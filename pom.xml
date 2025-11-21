@@ -153,6 +153,7 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.11</version>
                 <executions>
+                    <!-- Prepare Jacoco agent before tests -->
                     <execution>
                         <id>prepare-agent</id>
                         <goals>
@@ -161,6 +162,7 @@
                         <phase>initialize</phase>
                     </execution>
 
+                    <!-- Generate report after tests -->
                     <execution>
                         <id>report</id>
                         <phase>verify</phase>
@@ -172,10 +174,17 @@
                             <includes>
                                 <include>**/service/**</include>
                             </includes>
+                            <formats>
+                                <format>xml</format> <!-- Required for SonarCloud -->
+                                <format>html</format> <!-- Optional for local browsing -->
+                            </formats>
                         </configuration>
                     </execution>
+
+                    <!-- Optional: fail build if coverage thresholds are not met -->
                     <execution>
                         <id>jacoco-check</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -186,7 +195,6 @@
                                 <include>**/repository/**</include>
                                 <include>**/model/**</include>
                             </includes>
-
                             <rules>
                                 <rule>
                                     <element>PACKAGE</element>
