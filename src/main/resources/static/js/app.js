@@ -1,12 +1,12 @@
 // API Configuration
 const API_BASE_URL = '/api';
 const API_ENDPOINTS = {
-    AUTH: `${API_BASE_URL}/auth`,
-    PRODUCTS: `${API_BASE_URL}/products`,
-    CATEGORIES: `${API_BASE_URL}/categories`,
-    BRANDS: `${API_BASE_URL}/brands`,
-    WAREHOUSES: `${API_BASE_URL}/warehouses`,
-    REVIEWS: `${API_BASE_URL}/reviews`
+    AUTH: `${API_BASE_URL}/postgresql/auth`,
+    PRODUCTS: `${API_BASE_URL}/postgresql/products`,
+    CATEGORIES: `${API_BASE_URL}/postgresql/categories`,
+    BRANDS: `${API_BASE_URL}/postgresql/brands`,
+    WAREHOUSES: `${API_BASE_URL}/postgresql/warehouses`,
+    REVIEWS: `${API_BASE_URL}/postgresql/reviews`
 };
 
 // Global State
@@ -172,8 +172,19 @@ async function handleLogin(e) {
             body: JSON.stringify({ email, password })
         });
 
+        let responseData;
+        const contentType = response.headers.get('content-type');
+
+        // Check if response is JSON
+        if (contentType && contentType.includes('application/json')) {
+            responseData = await response.json();
+        } else {
+            // If not JSON, treat as text
+            const responseText = await response.text();
+            responseData = { message: responseText || 'Login failed' };
+        }
+
         if (response.ok) {
-            const responseData = await response.json();
             // Extract user data from response if it exists, otherwise use the full response
             currentUser = responseData.user || responseData;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -183,8 +194,7 @@ async function handleLogin(e) {
             // Clear the form
             document.getElementById('login-form').reset();
         } else {
-            const errorData = await response.json();
-            showAlert(errorData.message || 'Login failed', 'error');
+            showAlert(responseData.message || 'Login failed', 'error');
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -221,7 +231,18 @@ async function handleRegister(e) {
             body: JSON.stringify({ firstName, lastName, email, phoneNumber, password })
         });
 
-        const responseData = await response.json();
+        let responseData;
+        const contentType = response.headers.get('content-type');
+
+        // Check if response is JSON
+        if (contentType && contentType.includes('application/json')) {
+            responseData = await response.json();
+        } else {
+            // If not JSON, treat as text
+            const responseText = await response.text();
+            responseData = { message: responseText || 'Registration failed' };
+        }
+
         console.log('Registration response:', response.status, responseData); // Debug log
 
         if (response.ok) {
