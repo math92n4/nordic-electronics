@@ -152,17 +152,17 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.11</version>
+
                 <executions>
-                    <!-- Prepare agent before tests -->
+                    <!-- Attach Jacoco to test phase -->
                     <execution>
                         <id>prepare-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
-                        <phase>initialize</phase>
                     </execution>
 
-                    <!-- Generate XML report for SonarCloud -->
+                    <!-- Generate ONLY an XML report for SonarCloud -->
                     <execution>
                         <id>report</id>
                         <phase>verify</phase>
@@ -170,45 +170,10 @@
                             <goal>report</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>target/site/jacoco</outputDirectory>
-                            <dataFile>target/jacoco.exec</dataFile>
                             <formats>
                                 <format>XML</format>
                             </formats>
-                        </configuration>
-                    </execution>
-
-                    <!-- Optional: coverage check -->
-                    <execution>
-                        <id>check</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <configuration>
-                            <includes>
-                                <include>**/service/**</include>
-                                <include>**/controller/**</include>
-                                <include>**/repository/**</include>
-                                <include>**/model/**</include>
-                            </includes>
-                            <rules>
-                                <rule>
-                                    <element>PACKAGE</element>
-                                    <limits>
-                                        <limit>
-                                            <counter>LINE</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.00</minimum>
-                                        </limit>
-                                        <limit>
-                                            <counter>BRANCH</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.00</minimum>
-                                        </limit>
-                                    </limits>
-                                </rule>
-                            </rules>
+                            <outputDirectory>target/site/jacoco</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

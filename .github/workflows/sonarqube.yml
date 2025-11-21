@@ -2,11 +2,9 @@ name: SonarCloud Scan
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   sonar:
@@ -25,12 +23,14 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Build, Test & Generate Coverage
+      - name: Build + Test + Coverage
         run: mvn -B clean verify
 
-      - name: Check Jacoco XML
-        run: cat target/site/jacoco/jacoco.xml | grep getSomething
-
+      - name: Verify XML exists
+        run: |
+          echo "Jacoco report path:"
+          ls -l target/site/jacoco/
+          cat target/site/jacoco/jacoco.xml | grep "<report"
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
@@ -39,11 +39,14 @@ jobs:
             -Dsonar.projectKey=math92n4_nordic-electronics
             -Dsonar.organization=math92n4
             -Dsonar.host.url=https://sonarcloud.io
+
             -Dsonar.java.binaries=target/classes
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
             -Dsonar.pullrequest.base=${{ github.base_ref }}
+
             -Dsonar.tests=src/test/java
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
