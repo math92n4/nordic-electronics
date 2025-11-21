@@ -34,6 +34,11 @@ jobs:
           echo "PR Branch: ${{ github.head_ref }}"
           echo "PR Base: ${{ github.base_ref }}"
 
+      - name: Verify Jacoco XML
+        run: |
+          ls -l target/site/jacoco/
+          cat target/site/jacoco/jacoco.xml
+
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
         with:
