@@ -22,8 +22,14 @@ public class AddressService {
     }
 
     public Address getByUserId(UUID userId) {
-        return addressRepository.findByUser_UserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Address not found for user"));
+
+        User user = userService.findById(userId);
+
+        if (user.getAddress() == null) {
+            throw new EntityNotFoundException("User does not have an address");
+        }
+
+        return getById(user.getAddress().getAddressId());
     }
 
     public Address getByUserEmail(String email) {
@@ -38,12 +44,16 @@ public class AddressService {
     public Address saveForUser(String email, Address address) {
         User user = userService.findByEmail(email);
 
-        if (addressRepository.existsByUser_UserId(user.getUserId())) {
+        if (user.getAddress() != null) {
             throw new IllegalStateException("User already has an address.");
         }
-        
-        address.setUser(user);
-        return addressRepository.save(address);
+
+        Address saved = addressRepository.save(address);
+
+        user.setAddress(saved);
+        userService.save(user);
+
+        return saved;
     }
 
     public Address update(UUID id, Address address) {
