@@ -48,9 +48,5 @@ public class AddressMongoService {
         addressMongoRepository.deleteByUserId(userId);
     }
 
-
-    public Integer nothingButATest() {
-        return 1;
-    }
 }
 
