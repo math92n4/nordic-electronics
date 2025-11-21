@@ -87,7 +87,7 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    public Integer getProductPrice() {
-        return 2;
+    public String getSomething() {
+        return "Something";
     }
 }
