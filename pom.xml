@@ -154,6 +154,15 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <outputDirectory>target/site/jacoco</outputDirectory>
+                            <includes>
+                                <include>**/service/**</include>
+                                <include>**/controller/**</include>
+                                <include>**/repository/**</include>
+                                <include>**/model/**</include>
+                            </includes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>jacoco-check</id>
@@ -164,10 +173,10 @@
                             <includes>
                                 <include>**/service/**</include>
                                 <include>**/controller/**</include>
+                                <include>**/repository/**</include>
+                                <include>**/model/**</include>
                             </includes>
-                            <excludes>
-                                <exclude>**/*Test*.class</exclude>
-                            </excludes>
+
                             <rules>
                                 <rule>
                                     <element>PACKAGE</element>
@@ -189,6 +198,7 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
 

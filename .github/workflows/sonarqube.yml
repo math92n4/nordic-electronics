@@ -37,10 +37,9 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.java.binaries=target/classes
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number || '' }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref || '' }}
-            -Dsonar.pullrequest.base=${{ github.base_ref || '' }}
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
             -Dsonar.tests=src/test/java
-            -Dsonar.coverage.exclusions=src/test/**,**/*Test*.java
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
