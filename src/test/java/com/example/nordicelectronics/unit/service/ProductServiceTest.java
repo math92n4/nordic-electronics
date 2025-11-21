@@ -183,4 +183,8 @@ class ProductServiceTest {
         verify(productRepository, times(1)).deleteById(testProductId);
     }
 
+    @Test
+    void myTest() {
+        assertThat(!productService.getSomething().isEmpty());
+    }
 }
