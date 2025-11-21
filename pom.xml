@@ -161,6 +161,10 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <includes>
+                                <include>**/service/**</include>
+                                <include>**/controller/**</include>
+                            </includes>
                             <excludes>
                                 <exclude>**/*Test*.class</exclude>
                             </excludes>
