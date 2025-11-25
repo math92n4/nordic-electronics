@@ -6,7 +6,8 @@ const API_ENDPOINTS = {
     CATEGORIES: `${API_BASE_URL}/postgresql/categories`,
     BRANDS: `${API_BASE_URL}/postgresql/brands`,
     WAREHOUSES: `${API_BASE_URL}/postgresql/warehouses`,
-    REVIEWS: `${API_BASE_URL}/postgresql/reviews`
+    REVIEWS: `${API_BASE_URL}/postgresql/reviews`,
+    STRIPE: `${API_BASE_URL}/postgresql/stripe`
 };
 
 // Global State
@@ -104,6 +105,7 @@ function setupEventListeners() {
     const searchInputEl = document.getElementById('search-input');
     const categoryFilterEl = document.getElementById('category-filter');
     const brandFilterEl = document.getElementById('brand-filter');
+    const ordersLink = document.getElementById('orders-link');
 
     // Mobile Navigation
     if (hamburgerEl && navMenuEl) {
@@ -131,8 +133,55 @@ function setupEventListeners() {
     if (continueBtnEl) continueBtnEl.addEventListener('click', () => { hideCartModal(); scrollToSection('products'); });
     if (checkoutBtnEl) checkoutBtnEl.addEventListener('click', () => {
         if (!currentUser) { showAlert('Please login to proceed to checkout', 'error'); showAuthModal(); return; }
-        showAlert('Checkout successful (demo)', 'success');
-        cart = []; renderCartItems(); _onCartChanged(); hideCartModal();
+
+        // Start Stripe checkout process
+        (async () => {
+            try {
+                if (cart.length === 0) {
+                    showAlert('Your cart is empty', 'error');
+                    return;
+                }
+
+                showAlert('Creating checkout session...', 'info');
+
+                const response = await fetch(`${API_ENDPOINTS.STRIPE}/checkout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin', // Include session cookies
+                    body: JSON.stringify({
+                        cart: cart,
+                        successUrl: window.location.origin + '/?checkout=success',
+                        cancelUrl: window.location.origin + '/?checkout=cancel'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    console.error('Stripe checkout error:', data);
+                    showAlert(data.error || 'Failed to create checkout session', 'error');
+                    return;
+                }
+
+                if (data.url) {
+                    // Clear cart on successful checkout initiation
+                    cart = [];
+                    _onCartChanged();
+                    hideCartModal();
+
+                    // Redirect to Stripe checkout
+                    window.location.href = data.url;
+                } else {
+                    showAlert('No checkout URL received', 'error');
+                }
+
+            } catch (error) {
+                console.error('Checkout error:', error);
+                showAlert('Failed to initiate checkout. Please try again.', 'error');
+            }
+        })();
     });
 
     // Auth link
@@ -164,24 +213,60 @@ function setupEventListeners() {
     if (categoryFilterEl) categoryFilterEl.addEventListener('change', filterProducts);
     if (brandFilterEl) brandFilterEl.addEventListener('change', filterProducts);
 
-    // Smooth scrolling links
+    // Smooth scrolling links and section navigation
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
             const target = document.querySelector(this.getAttribute('href'));
-            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (target) {
+                // Show all sections first
+                document.querySelectorAll('.section').forEach(section => {
+                    section.style.display = 'block';
+                });
+
+                // Then scroll to the target section
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         });
     });
+
+    // Handle orders navigation
+    if (ordersLink) {
+        ordersLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentUser) {
+                showOrdersSection();
+                loadUserOrders();
+            } else {
+                showAlert('Please login to view orders', 'error');
+                showAuthModal();
+            }
+        });
+    }
 }
 
 // Authentication Functions
 function checkAuthStatus() {
-    // Check if user is logged in (you might want to implement session checking)
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-        currentUser = JSON.parse(storedUser);
+    // Check server-side authentication status instead of localStorage
+    fetch(`${API_ENDPOINTS.AUTH}/current-user`, {
+        method: 'GET',
+        credentials: 'same-origin' // Include session cookies
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.user && data.isAuthenticated) {
+            currentUser = data.user;
+            updateAuthUI();
+        } else {
+            currentUser = null;
+            updateAuthUI();
+        }
+    })
+    .catch(error => {
+        console.error('Error checking auth status:', error);
+        currentUser = null;
         updateAuthUI();
-    }
+    });
 }
 
 function showAuthModal() {
@@ -231,6 +316,7 @@ async function handleLogin(e) {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'same-origin', // Include session cookies
             body: JSON.stringify({ email, password })
         });
 
@@ -246,10 +332,9 @@ async function handleLogin(e) {
             responseData = { message: responseText || 'Login failed' };
         }
 
-        if (response.ok) {
-            // Extract user data from response if it exists, otherwise use the full response
-            currentUser = responseData.user || responseData;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        if (response.ok && responseData.success) {
+            // Use server-side session instead of localStorage
+            currentUser = responseData.user;
             updateAuthUI();
             hideAuthModal();
             showAlert('Login successful!', 'success');
@@ -322,12 +407,32 @@ async function handleRegister(e) {
 }
 
 function logout() {
-    currentUser = null;
-    localStorage.removeItem('currentUser');
-    updateAuthUI();
-    cart = [];
-    updateCartCount();
-    showAlert('Logged out successfully', 'success');
+    // Call server-side logout
+    fetch(`${API_ENDPOINTS.AUTH}/logout`, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentUser = null;
+            updateAuthUI();
+            cart = [];
+            updateCartCount();
+            showAlert('Logged out successfully', 'success');
+        } else {
+            showAlert('Logout failed', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Logout error:', error);
+        // Even if server logout fails, clear client state
+        currentUser = null;
+        updateAuthUI();
+        cart = [];
+        updateCartCount();
+        showAlert('Logged out', 'info');
+    });
 }
 
 function updateAuthUI() {
@@ -338,9 +443,117 @@ function updateAuthUI() {
 
         authLink.textContent = 'Logout';
         authLink.title = `Logged in as ${firstName || email}`;
+
+        // Show My Orders link
+        const ordersLink = document.getElementById('orders-link');
+        if (ordersLink) ordersLink.style.display = 'inline';
     } else {
         authLink.textContent = 'Login';
         authLink.title = 'Click to login';
+
+        // Hide My Orders link and section
+        const ordersLink = document.getElementById('orders-link');
+        const ordersSection = document.getElementById('orders');
+        if (ordersLink) ordersLink.style.display = 'none';
+        if (ordersSection) ordersSection.style.display = 'none';
+    }
+}
+
+// Orders Functions
+async function loadUserOrders() {
+    if (!currentUser) {
+        showError('orders-grid', 'Please login to view your orders');
+        return;
+    }
+
+    try {
+        showLoading('orders-grid');
+        const response = await fetch(`${API_ENDPOINTS.STRIPE}/orders`, {
+            method: 'GET',
+            credentials: 'same-origin' // Include session cookies
+        });
+
+        if (response.ok) {
+            const orders = await response.json();
+            displayOrders(orders);
+        } else {
+            throw new Error('Failed to load orders');
+        }
+    } catch (error) {
+        console.error('Error loading orders:', error);
+        showError('orders-grid', 'Failed to load orders');
+    }
+}
+
+function displayOrders(orders) {
+    const grid = document.getElementById('orders-grid');
+
+    if (orders.length === 0) {
+        grid.innerHTML = '<div class="no-orders"><p>You haven\'t placed any orders yet.</p><button class="btn btn-primary" onclick="scrollToSection(\'products\')">Start Shopping</button></div>';
+        return;
+    }
+
+    grid.innerHTML = orders.map(order => {
+        const orderDate = new Date(order.createdAt).toLocaleDateString();
+        const totalItems = order.cart.reduce((sum, item) => sum + item.quantity, 0);
+        const totalAmount = order.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        return `
+            <div class="order-card">
+                <div class="order-header">
+                    <div class="order-info">
+                        <h3>Order #${order.orderId.substring(0, 8)}</h3>
+                        <p class="order-date">${orderDate}</p>
+                        <span class="order-status status-${order.status.toLowerCase()}">${order.status}</span>
+                    </div>
+                    <div class="order-summary">
+                        <p class="order-total">$${totalAmount.toFixed(2)}</p>
+                        <p class="order-items">${totalItems} items</p>
+                    </div>
+                </div>
+                <div class="order-items-list">
+                    ${order.cart.map(item => `
+                        <div class="order-item">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-quantity">Qty: ${item.quantity}</span>
+                            <span class="item-price">$${item.price.toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="order-actions">
+                    <button class="btn btn-secondary" onclick="viewOrderDetails('${order.orderId}')">
+                        <i class="fas fa-eye"></i> View Details
+                    </button>
+                    ${order.status === 'PENDING' ? 
+                        `<button class="btn btn-primary" onclick="reorderItems('${order.orderId}')">
+                            <i class="fas fa-redo"></i> Reorder
+                        </button>` : ''
+                    }
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function viewOrderDetails(orderId) {
+    showAlert(`Order details for ${orderId.substring(0, 8)} - Feature coming soon!`, 'info');
+}
+
+function reorderItems(orderId) {
+    // This would add the order items back to cart
+    showAlert('Items added to cart!', 'success');
+}
+
+function showOrdersSection() {
+    // Hide all other sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.style.display = 'none';
+    });
+
+    // Show orders section
+    const ordersSection = document.getElementById('orders');
+    if (ordersSection) {
+        ordersSection.style.display = 'block';
     }
 }
 
@@ -731,57 +944,56 @@ function changeQuantity(productId, delta) {
     item.quantity += delta;
     if (item.quantity <= 0) {
         // Remove item from cart if quantity is zero or less
-        cart = cart.filter(i => i.id !== item.id);
+        cart = cart.filter(i => String(i.id) !== pid);
     }
     _onCartChanged();
-    // Re-render cart items to reflect changes
-    renderCartItems();
+    // Re-render cart items
+    if (cartModal && cartModal.style.display === 'block') renderCartItems();
 }
 
-// Cart item removal
+// Remove item from cart
 function removeFromCart(productId) {
     const pid = String(productId);
-    cart = cart.filter(item => String(item.id) !== pid);
+    cart = cart.filter(i => String(i.id) !== pid);
     _onCartChanged();
-    renderCartItems();
+    // Re-render cart items
+    if (cartModal && cartModal.style.display === 'block') renderCartItems();
 }
 
-// Show a simple alert message
+// Utility Functions
+function showLoading(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = '<p class="loading">Loading...</p>';
+    }
+}
+
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = `<p class="error">${message}</p>`;
+    }
+}
+
 function showAlert(message, type = 'info') {
     const alertBox = document.createElement('div');
-    alertBox.className = `alert ${type}`;
+    alertBox.className = `alert alert-${type}`;
     alertBox.textContent = message;
+
     document.body.appendChild(alertBox);
 
     // Auto-remove alert after 3 seconds
     setTimeout(() => {
         alertBox.classList.add('fade');
         setTimeout(() => {
-            document.body.removeChild(alertBox);
-        }, 500);
+            if (alertBox.parentNode) alertBox.parentNode.removeChild(alertBox);
+        }, 300);
     }, 3000);
 }
 
-// Smooth scroll to a section
 function scrollToSection(sectionId) {
     const section = document.getElementById(sectionId);
     if (section) {
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
-
-// Show loading state for a grid or list
-function showLoading(elementId) {
-    const container = document.getElementById(elementId);
-    if (container) {
-        container.innerHTML = '<div class="loading">Loading...</div>';
-    }
-}
-
-// Show error message in a grid or list
-function showError(elementId, message) {
-    const container = document.getElementById(elementId);
-    if (container) {
-        container.innerHTML = `<div class="error">${message}</div>`;
+        section.scrollIntoView({ behavior: 'smooth' });
     }
 }
