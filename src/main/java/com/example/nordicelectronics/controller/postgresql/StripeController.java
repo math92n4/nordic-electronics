@@ -262,6 +262,10 @@ public class StripeController {
         } catch (StripeApiException e) {
             // Re-throw StripeApiException as is
             throw e;
+        } catch (InterruptedException e) {
+            // Re-interrupt the current thread to preserve interruption signal
+            Thread.currentThread().interrupt();
+            throw new StripeApiException("Stripe session creation was interrupted: " + e.getMessage(), e);
         } catch (Exception e) {
             // Wrap other exceptions in StripeApiException
             throw new StripeApiException("Failed to create Stripe session: " + e.getMessage(), e);
