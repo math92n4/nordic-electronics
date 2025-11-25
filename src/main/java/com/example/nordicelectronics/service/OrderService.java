@@ -1,12 +1,14 @@
 package com.example.nordicelectronics.service;
 
-import com.example.nordicelectronics.entity.Order;
-import com.example.nordicelectronics.entity.User;
-import com.example.nordicelectronics.repositories.sql.OrderRepository;
-import com.example.nordicelectronics.repositories.sql.UserRepository;
+import com.example.nordicelectronics.entity.*;
+import com.example.nordicelectronics.repositories.sql.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,10 +16,15 @@ import java.util.UUID;
 public class OrderService {
 
     @Autowired
-    public OrderRepository orderRepository;
-
+    private OrderRepository orderRepository;
+    @PersistenceContext
+    private EntityManager entityManager;
     @Autowired
-    public UserRepository userRepository;
+    private UserRepository userRepository;
+    @Autowired
+    private OrderProductRepository orderProductRepository;
+    @Autowired
+    private ProductRepository productRepository;
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
@@ -39,34 +46,81 @@ public class OrderService {
     }
 
 
+    @Transactional
     public Order createOrder(Order order) {
-        // 1. Get the User object from the incoming 'order' entity.
-        //    This User object is likely only populated with the 'userId' from JSON.
-        User incomingUser = order.getUser();
 
-        // Safely check if the incoming user object is null OR if its ID is null
-        if (incomingUser == null || incomingUser.getUserId() == null) {
-            // Throw an explicit exception if the required user data is missing in the payload
-            throw new IllegalArgumentException("Order request must contain a valid 'user' object with a 'userId'.");
+        if (order.getUser() == null || order.getUser().getUserId() == null) {
+            throw new IllegalArgumentException("Order must contain a valid userId.");
         }
 
-        // 2. Extract the ID and fetch the *managed* entity from the database
-        UUID userId = incomingUser.getUserId();
+        UUID userId = order.getUser().getUserId();
 
         User managedUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        // 3. Attach the fully managed and non-null User entity back to the Order
         order.setUser(managedUser);
 
-        // --- END: Fix for NullPointerException on User ---
 
-        // 4. Any other logic (calculate totals, set dates, etc.)
-        // ...
+        if (managedUser.getAddress() == null || managedUser.getAddress().getAddressId() == null) {
+            throw new IllegalArgumentException("Order must contain a valid shippingAddressId.");
+        }
 
-        // 5. Save the final order
-        return orderRepository.save(order); // Line 42 might be here or just before here
+
+        for (OrderProduct op : order.getOrderProducts()) {
+            UUID productId = op.getProduct().getProductId();
+
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found: " + productId));
+
+            op.setOrder(order);
+            op.setProduct(product);
+
+        }
+
+        Order savedOrder = orderRepository.save(order);
+
+        for (OrderProduct op : order.getOrderProducts()) {
+
+            // Build composite key
+            OrderProductKey key = new OrderProductKey(
+                    savedOrder.getOrderId(),
+                    op.getProduct().getProductId()
+            );
+
+            op.setId(key);
+            orderProductRepository.save(op);
+        }
+
+
+        // ===============================
+        // 6. CALL stored procedure: sp_ProcessOrder
+        //    → stock deduction
+        //    → payment completed
+        //    → order.status = confirmed
+        // ===============================
+        entityManager
+                .createNativeQuery("CALL sp_ProcessOrder(:orderId)")
+                .setParameter("orderId", savedOrder.getOrderId())
+                .executeUpdate();
+
+
+        // ===============================
+        // 7. CALL shipping cost calculation
+        // ===============================
+        /*
+        entityManager
+                .createNativeQuery("CALL sp_CalculateShipping(:orderId)")
+                .setParameter("orderId", savedOrder.getOrderId())
+                .executeUpdate();
+        */
+
+        // ===============================
+        // 8. Return the final order
+        // ===============================
+        return orderRepository.findById(savedOrder.getOrderId())
+                .orElseThrow(() -> new IllegalStateException("Order vanished after creation!"));
     }
+
 
     public void deleteOrder(UUID orderId) {
         orderRepository.deleteById(orderId);
