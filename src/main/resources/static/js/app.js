@@ -15,6 +15,8 @@ let products = [];
 let categories = [];
 let brands = [];
 let cart = [];
+// Map to hold synthetic id -> product when product has no stable id field
+const productIndexMap = {};
 
 // DOM Elements
 const authModal = document.getElementById('auth-modal');
@@ -22,6 +24,12 @@ const authLink = document.getElementById('auth-link');
 const hamburger = document.getElementById('hamburger');
 const navMenu = document.getElementById('nav-menu');
 const cartCount = document.getElementById('cart-count');
+const cartIcon = document.getElementById('cart-icon');
+const cartModal = document.getElementById('cart-modal');
+const cartItemsContainer = document.getElementById('cart-items');
+const cartTotalEl = document.getElementById('cart-total');
+const continueShoppingBtn = document.getElementById('continue-shopping-btn');
+const checkoutBtn = document.getElementById('checkout-btn');
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', function() {
@@ -32,82 +40,136 @@ document.addEventListener('DOMContentLoaded', function() {
 // App Initialization
 function initializeApp() {
     checkAuthStatus();
+    loadCart();
     loadProducts();
     loadCategories();
     loadBrands();
     updateCartCount();
 }
 
+// Cart persistence
+function saveCart() {
+    try {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    } catch (e) {
+        console.warn('Could not save cart to localStorage', e);
+    }
+}
+
+function loadCart() {
+    try {
+        const raw = localStorage.getItem('cart');
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                // Normalize stored cart: ensure id is string and numeric fields are numbers
+                cart = parsed.map(item => ({
+                    id: String(item.id),
+                    name: item.name || 'Unnamed Product',
+                    price: Number(item.price) || 0,
+                    quantity: Number(item.quantity) || 0
+                })).filter(i => i.quantity > 0);
+            }
+        }
+    } catch (e) {
+        console.warn('Could not load cart from localStorage', e);
+        cart = [];
+    }
+}
+
+// Update the cart count badge in the UI
+function updateCartCount() {
+    const totalItems = (cart || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    if (cartCount) {
+        cartCount.textContent = totalItems;
+        cartCount.style.display = totalItems > 0 ? 'flex' : 'none';
+    }
+}
+
+// Make the updater available globally (prevents "not defined" in some runtime contexts)
+if (typeof window !== 'undefined') window.updateCartCount = updateCartCount;
+
 // Event Listeners Setup
 function setupEventListeners() {
+    // Re-query DOM elements inside the function (they may be null when script parsed)
+    const hamburgerEl = document.getElementById('hamburger');
+    const navMenuEl = document.getElementById('nav-menu');
+    const cartIconEl = document.getElementById('cart-icon');
+    const cartModalEl = document.getElementById('cart-modal');
+    const continueBtnEl = document.getElementById('continue-shopping-btn');
+    const checkoutBtnEl = document.getElementById('checkout-btn');
+    const authLinkEl = document.getElementById('auth-link');
+    const loginFormEl = document.getElementById('login-form');
+    const registerFormEl = document.getElementById('register-form');
+    const searchInputEl = document.getElementById('search-input');
+    const categoryFilterEl = document.getElementById('category-filter');
+    const brandFilterEl = document.getElementById('brand-filter');
+
     // Mobile Navigation
-    if (hamburger) {
-        hamburger.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
-        });
+    if (hamburgerEl && navMenuEl) {
+        hamburgerEl.addEventListener('click', () => navMenuEl.classList.toggle('active'));
     }
 
-    // Auth Modal
-    if (authLink) {
-        authLink.addEventListener('click', (e) => {
+    // Cart Icon -> open/close
+    if (cartIconEl) {
+        cartIconEl.addEventListener('click', (e) => {
             e.preventDefault();
-            if (currentUser) {
-                logout();
-            } else {
-                showAuthModal();
-            }
+            toggleCartModal();
         });
     }
 
-    // Close modal
-    const closeButton = document.querySelector('.close');
-    if (closeButton) {
-        closeButton.addEventListener('click', hideAuthModal);
+    // Cart modal outside click & close button
+    if (cartModalEl) {
+        cartModalEl.addEventListener('click', (e) => {
+            if (e.target === cartModalEl) hideCartModal();
+        });
+        const cartClose = cartModalEl.querySelector('.close');
+        if (cartClose) cartClose.addEventListener('click', hideCartModal);
     }
 
-    window.addEventListener('click', (e) => {
-        if (e.target === authModal) {
-            hideAuthModal();
-        }
+    // Continue / Checkout
+    if (continueBtnEl) continueBtnEl.addEventListener('click', () => { hideCartModal(); scrollToSection('products'); });
+    if (checkoutBtnEl) checkoutBtnEl.addEventListener('click', () => {
+        if (!currentUser) { showAlert('Please login to proceed to checkout', 'error'); showAuthModal(); return; }
+        showAlert('Checkout successful (demo)', 'success');
+        cart = []; renderCartItems(); _onCartChanged(); hideCartModal();
     });
 
-    // Auth Forms
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
-    if (registerForm) {
-        registerForm.addEventListener('submit', handleRegister);
+    // Auth link
+    if (authLinkEl) {
+        authLinkEl.addEventListener('click', (e) => { e.preventDefault(); if (currentUser) logout(); else showAuthModal(); });
     }
 
-    // Search and Filters
-    const searchInput = document.getElementById('search-input');
-    const categoryFilter = document.getElementById('category-filter');
-    const brandFilter = document.getElementById('brand-filter');
+    // Global close for auth modal
+    const closeButton = document.querySelector('.close');
+    if (closeButton) closeButton.addEventListener('click', hideAuthModal);
 
-    if (searchInput) {
-        searchInput.addEventListener('input', filterProducts);
-    }
-    if (categoryFilter) {
-        categoryFilter.addEventListener('change', filterProducts);
-    }
-    if (brandFilter) {
-        brandFilter.addEventListener('change', filterProducts);
-    }
+    // Click outside auth modal
+    window.addEventListener('click', (e) => {
+        const authModalEl = document.getElementById('auth-modal');
+        if (e.target === authModalEl) hideAuthModal();
+    });
 
-    // Smooth scrolling for navigation links
+    // Escape key closes modals
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { hideAuthModal(); hideCartModal(); }
+    });
+
+    // Forms
+    if (loginFormEl) loginFormEl.addEventListener('submit', handleLogin);
+    if (registerFormEl) registerFormEl.addEventListener('submit', handleRegister);
+
+    // Search & filters
+    if (searchInputEl) searchInputEl.addEventListener('input', filterProducts);
+    if (categoryFilterEl) categoryFilterEl.addEventListener('change', filterProducts);
+    if (brandFilterEl) brandFilterEl.addEventListener('change', filterProducts);
+
+    // Smooth scrolling links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
             const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
 }
@@ -343,24 +405,39 @@ function displayProducts(productsToShow) {
         return;
     }
 
-    grid.innerHTML = productsToShow.map(product => `
-        <div class="product-card" data-product-id="${product.id}">
+    // Clear the previous index map
+    for (const k in productIndexMap) delete productIndexMap[k];
+
+    grid.innerHTML = productsToShow.map((product, idx) => {
+        let pid = resolveProductIdField(product);
+        if (!pid) {
+            // create a synthetic stable id for this render
+            pid = `__idx_${idx}`;
+            productIndexMap[pid] = product;
+        } else {
+            // also map to product for quick lookup
+            productIndexMap[pid] = product;
+        }
+        const safeName = (product.name || 'Unnamed Product').replace(/"/g, '&quot;');
+        const priceVal = (product.price !== undefined && product.price !== null) ? product.price : 0;
+        return `
+        <div class="product-card" data-product-id="${pid}" data-product-name="${safeName}" data-product-price="${priceVal}">
             <div class="product-image">
                 <i class="fas fa-mobile-alt"></i>
             </div>
             <h3 class="product-title">${product.name || 'Unnamed Product'}</h3>
             <p class="product-description">${product.description || 'No description available'}</p>
-            <div class="product-price">$${product.price || '0.00'}</div>
+            <div class="product-price">$${priceVal}</div>
             <div class="product-actions">
-                <button class="btn btn-primary" onclick="addToCart('${product.id}')">
+                <button class="btn btn-primary" onclick="addToCart('${pid}')">
                     <i class="fas fa-cart-plus"></i> Add to Cart
                 </button>
-                <button class="btn btn-secondary" onclick="viewProduct('${product.id}')">
+                <button class="btn btn-secondary" onclick="viewProduct('${pid}')">
                     <i class="fas fa-eye"></i> View
                 </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 function displayCategories(categoriesToShow) {
@@ -452,100 +529,259 @@ function filterByBrand(brandId) {
 
 // Cart Functions
 function addToCart(productId) {
-    if (!currentUser) {
-        showAlert('Please login to add items to cart', 'error');
-        showAuthModal();
+    // Normalize ids to string to avoid mismatch between numeric IDs and string IDs
+    const pid = String(productId);
+    // First try to find the original product object from loaded products using flexible matching
+    const product = findProductById(pid);
+    console.debug('addToCart called for', pid, 'found product via product list:', product);
+    if (product) {
+        const existingItem = cart.find(item => String(item.id) === pid);
+        if (existingItem) {
+            existingItem.quantity = Number(existingItem.quantity || 0) + 1;
+        } else {
+            // Store a minimal product snapshot in cart to keep localStorage small and stable
+            const name = product.name || product.productName || product.title || 'Unnamed Product';
+            const price = Number(product.price || product.listPrice || 0) || 0;
+            cart.push({ id: pid, name, price, quantity: 1 });
+        }
+        _onCartChanged();
+        // If cart modal is open, re-render so the user sees the change immediately
+        if (cartModal && cartModal.style.display === 'block') renderCartItems();
+        showAlert(`${product.name || product.productName || 'Item'} added to cart`, 'success');
         return;
     }
 
-    const product = products.find(p => p.id === productId);
-    if (product) {
-        const existingItem = cart.find(item => item.id === productId);
-        if (existingItem) {
-            existingItem.quantity += 1;
+    // Fallback: try to read the rendered product card from the DOM (in case products haven't loaded yet)
+    const card = document.querySelector(`.product-card[data-product-id="${pid}"]`);
+    if (card) {
+        const nameEl = card.querySelector('.product-title');
+        const priceEl = card.querySelector('.product-price');
+        const name = nameEl ? nameEl.textContent.trim() : (card.dataset.productName || 'Unnamed Product');
+        let price = 0;
+        if (priceEl) {
+            const txt = priceEl.textContent.replace(/[^0-9.]/g, '');
+            price = parseFloat(txt) || Number(card.dataset.productPrice) || 0;
         } else {
-            cart.push({ ...product, quantity: 1 });
+            price = Number(card.dataset.productPrice) || 0;
         }
-        updateCartCount();
-        showAlert(`${product.name} added to cart`, 'success');
+        const existingItem = cart.find(item => String(item.id) === pid);
+        if (existingItem) {
+            existingItem.quantity = Number(existingItem.quantity || 0) + 1;
+        } else {
+            cart.push({ id: pid, name, price, quantity: 1 });
+        }
+        _onCartChanged();
+        if (cartModal && cartModal.style.display === 'block') renderCartItems();
+        showAlert(`${name} added to cart`, 'success');
+        return;
+    }
+
+    showAlert('Product not found (maybe still loading)', 'error');
+}
+
+// Helper: resolve product id from product object
+function resolveProductIdField(product) {
+    if (!product) return undefined;
+    // Try common id fields
+    if (product.id !== undefined && product.id !== null) return String(product.id);
+    if (product.productId !== undefined && product.productId !== null) return String(product.productId);
+    if (product._id !== undefined && product._id !== null) return String(product._id);
+    if (product.sku !== undefined && product.sku !== null) return String(product.sku);
+    return undefined;
+}
+
+// Helper: find product by flexible id matching
+function findProductById(pid) {
+    if (!pid) return undefined;
+    const ps = products || [];
+    // check direct product list fields
+    const found = ps.find(p => {
+        const pids = [p.id, p.productId, p._id, p.sku];
+        return pids.some(x => x !== undefined && String(x) === String(pid));
+    });
+    if (found) return found;
+    // check synthetic/index map
+    if (productIndexMap[pid]) return productIndexMap[pid];
+    return undefined;
+}
+
+// Toggle cart modal visibility
+function toggleCartModal() {
+    const modalEl = document.getElementById('cart-modal');
+    console.debug('toggleCartModal called, modalEl=', modalEl);
+    if (!modalEl) return;
+
+    const isVisible = modalEl.style.display === 'block';
+    modalEl.style.display = isVisible ? 'none' : 'block';
+    document.body.style.overflow = isVisible ? 'auto' : 'hidden';
+
+    if (!isVisible) {
+        // Modal is being opened, render items
+        renderCartItems();
     }
 }
 
-function updateCartCount() {
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    if (cartCount) {
-        cartCount.textContent = totalItems;
+function showCartModal() {
+    const modalEl = document.getElementById('cart-modal');
+    console.debug('showCartModal called, modalEl=', modalEl);
+    if (!modalEl) return;
+    renderCartItems();
+    modalEl.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function hideCartModal() {
+    const modalEl = document.getElementById('cart-modal');
+    console.debug('hideCartModal called, modalEl=', modalEl);
+    if (!modalEl) return;
+    modalEl.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function renderCartItems() {
+    const modalEl = document.getElementById('cart-modal');
+    const itemsContainer = document.getElementById('cart-items');
+    const totalEl = document.getElementById('cart-total');
+    console.debug('renderCartItems called, modalEl=', modalEl, 'itemsContainer=', itemsContainer);
+
+    if (!itemsContainer || !totalEl) return;
+
+    // Clear existing items
+    itemsContainer.innerHTML = '';
+
+    if (!Array.isArray(cart) || cart.length === 0) {
+        itemsContainer.innerHTML = '<p class="no-results">Your cart is empty</p>';
+        totalEl.textContent = '$0.00';
+        return;
+    }
+
+    let total = 0;
+
+    // Render each cart item
+    cart.forEach(item => {
+        const product = findProductById(item.id) || {};
+        const price = Number(item.price || product.price || 0) || 0;
+        const name = item.name || product.name || 'Unnamed Product';
+        const quantity = Number(item.quantity) || 0;
+
+        total += price * quantity;
+
+        const itemEl = document.createElement('div');
+        itemEl.classList.add('cart-item');
+        itemEl.dataset.productId = item.id;
+
+        itemEl.innerHTML = `
+            <div class="cart-item-info">
+                <h4 class="cart-item-name">${name}</h4>
+                <div class="cart-item-details">
+                    <span class="cart-item-price">$${price.toFixed(2)}</span>
+                    <span class="cart-item-quantity">Qty: ${quantity}</span>
+                </div>
+            </div>
+            <div class="cart-item-actions">
+                <button class="btn btn-secondary" onclick="changeQuantity('${item.id}', -1)">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="btn btn-secondary" onclick="changeQuantity('${item.id}', 1)">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="btn btn-danger" onclick="removeFromCart('${item.id}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+
+        itemsContainer.appendChild(itemEl);
+    });
+
+    totalEl.textContent = `$${total.toFixed(2)}`;
+}
+
+// Ensure cart changes are persisted when quantities or removals occur
+function _onCartChanged() {
+    // Persist
+    saveCart();
+
+    // Compute total directly and update the badge so we never rely solely on external references
+    try {
+        const totalItems = (cart || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+        if (cartCount) {
+            cartCount.textContent = totalItems;
+            cartCount.style.display = totalItems > 0 ? 'flex' : 'none';
+        }
+    } catch (e) {
+        console.error('Error updating cart badge directly', e);
+    }
+
+    // Also call global updater if present (keeps compatibility)
+    try {
+        if (typeof window !== 'undefined' && typeof window.updateCartCount === 'function') {
+            // If a global updater exists, call it (it's safe)
+            window.updateCartCount();
+        }
+    } catch (e) {
+        console.debug('updateCartCount not callable or failed:', e);
     }
 }
 
-function viewProduct(productId) {
-    const product = products.find(p => p.id === productId);
-    if (product) {
-        alert(`Product: ${product.name}\nPrice: $${product.price}\nDescription: ${product.description || 'No description available'}`);
+function changeQuantity(productId, delta) {
+    const pid = String(productId);
+    const item = cart.find(i => String(i.id) === pid);
+    if (!item) return;
+    item.quantity += delta;
+    if (item.quantity <= 0) {
+        // Remove item from cart if quantity is zero or less
+        cart = cart.filter(i => i.id !== item.id);
     }
+    _onCartChanged();
+    // Re-render cart items to reflect changes
+    renderCartItems();
 }
 
-// Utility Functions
-function scrollToSection(sectionId) {
-    const section = document.getElementById(sectionId);
-    if (section) {
-        section.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
-    }
+// Cart item removal
+function removeFromCart(productId) {
+    const pid = String(productId);
+    cart = cart.filter(item => String(item.id) !== pid);
+    _onCartChanged();
+    renderCartItems();
 }
 
-function showLoading(elementId) {
-    const element = document.getElementById(elementId);
-    element.innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-        </div>
-    `;
-}
+// Show a simple alert message
+function showAlert(message, type = 'info') {
+    const alertBox = document.createElement('div');
+    alertBox.className = `alert ${type}`;
+    alertBox.textContent = message;
+    document.body.appendChild(alertBox);
 
-function showError(elementId, message) {
-    const element = document.getElementById(elementId);
-    element.innerHTML = `
-        <div class="error">
-            <p>${message}</p>
-            <button onclick="location.reload()">Retry</button>
-        </div>
-    `;
-}
-
-function showAlert(message, type = 'success') {
-    // Remove existing alerts
-    const existingAlert = document.querySelector('.alert');
-    if (existingAlert) {
-        existingAlert.remove();
-    }
-
-    // Create new alert
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type}`;
-    alert.textContent = message;
-    alert.style.position = 'fixed';
-    alert.style.top = '100px';
-    alert.style.right = '20px';
-    alert.style.zIndex = '9999';
-    alert.style.maxWidth = '300px';
-
-    document.body.appendChild(alert);
-
-    // Auto remove after 3 seconds
+    // Auto-remove alert after 3 seconds
     setTimeout(() => {
-        if (alert.parentNode) {
-            alert.remove();
-        }
+        alertBox.classList.add('fade');
+        setTimeout(() => {
+            document.body.removeChild(alertBox);
+        }, 500);
     }, 3000);
 }
 
-// Global functions for HTML onclick handlers
-window.showTab = showTab;
-window.addToCart = addToCart;
-window.viewProduct = viewProduct;
-window.filterByCategory = filterByCategory;
-window.filterByBrand = filterByBrand;
-window.scrollToSection = scrollToSection;
+// Smooth scroll to a section
+function scrollToSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Show loading state for a grid or list
+function showLoading(elementId) {
+    const container = document.getElementById(elementId);
+    if (container) {
+        container.innerHTML = '<div class="loading">Loading...</div>';
+    }
+}
+
+// Show error message in a grid or list
+function showError(elementId, message) {
+    const container = document.getElementById(elementId);
+    if (container) {
+        container.innerHTML = `<div class="error">${message}</div>`;
+    }
+}
