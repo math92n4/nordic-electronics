@@ -19,9 +19,10 @@
                 <a href="#products" class="nav-link">Products</a>
                 <a href="#categories" class="nav-link">Categories</a>
                 <a href="#brands" class="nav-link">Brands</a>
+                <a href="#orders" class="nav-link" id="orders-link" style="display: none;">My Orders</a>
                 <a href="#auth" class="nav-link" id="auth-link">Login</a>
             </div>
-            <div class="cart-icon">
+            <div class="cart-icon" id="cart-icon">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="cart-count" id="cart-count">0</span>
             </div>
@@ -132,6 +133,36 @@
             </div>
         </div>
     </section>
+
+    <!-- Orders Section -->
+    <section id="orders" class="section" style="display: none;">
+        <div class="container">
+            <h2 class="section-title">My Orders</h2>
+            <div id="orders-grid" class="orders-grid">
+                <!-- Orders will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content cart-modal-content">
+            <span class="close">&times;</span>
+            <div class="cart-container">
+                <h3 class="cart-title"><i class="fas fa-shopping-cart"></i> Your Cart</h3>
+                <div class="cart-items" id="cart-items">
+                    <!-- Cart items will be rendered here -->
+                </div>
+                <div class="cart-summary">
+                    <div class="cart-total" id="cart-total">Total: $0.00</div>
+                    <div class="cart-actions">
+                        <button class="btn btn-secondary" id="continue-shopping-btn">Continue</button>
+                        <button class="btn btn-primary" id="checkout-btn">Checkout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">
