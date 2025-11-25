@@ -1,6 +1,7 @@
 package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.User;
+import com.example.nordicelectronics.exception.StripeApiException;
 import com.example.nordicelectronics.service.UserService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -118,6 +119,10 @@ public class StripeController {
                 "sessionId", sessionId
             ));
 
+        } catch (StripeApiException ex) {
+            log.error("Stripe API error: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(ERROR_SESSION_KEY, "Payment processing error", "detail", ex.getMessage()));
         } catch (Exception ex) {
             log.error("Error creating checkout session", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -215,43 +220,51 @@ public class StripeController {
         }
     }
 
-    private Map<String, Object> createStripeSession(List<Map<String, Object>> cart, String successUrl, String cancelUrl, String stripeKey) throws Exception {
-        StringBuilder form = new StringBuilder();
-        append(form, "mode", "payment");
-        append(form, "payment_method_types[]", "card");
-        append(form, "success_url", successUrl);
-        append(form, "cancel_url", cancelUrl);
+    private Map<String, Object> createStripeSession(List<Map<String, Object>> cart, String successUrl, String cancelUrl, String stripeKey) throws StripeApiException {
+        try {
+            StringBuilder form = new StringBuilder();
+            append(form, "mode", "payment");
+            append(form, "payment_method_types[]", "card");
+            append(form, "success_url", successUrl);
+            append(form, "cancel_url", cancelUrl);
 
-        // Add line items
-        for (int i = 0; i < cart.size(); i++) {
-            Map<String, Object> item = cart.get(i);
-            String name = String.valueOf(item.getOrDefault("name", "Item"));
-            double price = Double.parseDouble(String.valueOf(item.getOrDefault("price", 0)));
-            int quantity = Integer.parseInt(String.valueOf(item.getOrDefault("quantity", 1)));
+            // Add line items
+            for (int i = 0; i < cart.size(); i++) {
+                Map<String, Object> item = cart.get(i);
+                String name = String.valueOf(item.getOrDefault("name", "Item"));
+                double price = Double.parseDouble(String.valueOf(item.getOrDefault("price", 0)));
+                int quantity = Integer.parseInt(String.valueOf(item.getOrDefault("quantity", 1)));
 
-            long unitAmount = Math.round(price * 100); // Convert to cents
+                long unitAmount = Math.round(price * 100); // Convert to cents
 
-            append(form, String.format("line_items[%d][price_data][currency]", i), "usd");
-            append(form, String.format("line_items[%d][price_data][product_data][name]", i), name);
-            append(form, String.format("line_items[%d][price_data][unit_amount]", i), String.valueOf(unitAmount));
-            append(form, String.format("line_items[%d][quantity]", i), String.valueOf(quantity));
-        }
+                append(form, String.format("line_items[%d][price_data][currency]", i), "usd");
+                append(form, String.format("line_items[%d][price_data][product_data][name]", i), name);
+                append(form, String.format("line_items[%d][price_data][unit_amount]", i), String.valueOf(unitAmount));
+                append(form, String.format("line_items[%d][quantity]", i), String.valueOf(quantity));
+            }
 
-        // Make HTTP request to Stripe
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.stripe.com/v1/checkout/sessions"))
-                .header("Authorization", "Bearer " + stripeKey)
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(form.toString()))
-                .build();
+            // Make HTTP request to Stripe
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.stripe.com/v1/checkout/sessions"))
+                    .header("Authorization", "Bearer " + stripeKey)
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(HttpRequest.BodyPublishers.ofString(form.toString()))
+                    .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() >= 200 && response.statusCode() < 300) {
-            return objectMapper.readValue(response.body(), new TypeReference<Map<String, Object>>() {});
-        } else {
-            throw new Exception("Stripe API error: " + response.body());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                return objectMapper.readValue(response.body(), new TypeReference<Map<String, Object>>() {});
+            } else {
+                throw new StripeApiException("Stripe API error: " + response.body(), response.statusCode(), response.body());
+            }
+        } catch (StripeApiException e) {
+            // Re-throw StripeApiException as is
+            throw e;
+        } catch (Exception e) {
+            // Wrap other exceptions in StripeApiException
+            throw new StripeApiException("Failed to create Stripe session: " + e.getMessage(), e);
         }
     }
 
