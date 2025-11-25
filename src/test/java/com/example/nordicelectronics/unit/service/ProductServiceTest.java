@@ -4,9 +4,7 @@ import com.example.nordicelectronics.entity.Brand;
 import com.example.nordicelectronics.entity.Category;
 import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.Warranty;
-import com.example.nordicelectronics.repositories.sql.BrandRepository;
 import com.example.nordicelectronics.repositories.sql.ProductRepository;
-import com.example.nordicelectronics.repositories.sql.WarrantyRepository;
 import com.example.nordicelectronics.service.BrandService;
 import com.example.nordicelectronics.service.CategoryService;
 import com.example.nordicelectronics.service.ProductService;
@@ -29,7 +27,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
