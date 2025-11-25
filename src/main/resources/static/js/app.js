@@ -213,12 +213,20 @@ function setupEventListeners() {
     if (categoryFilterEl) categoryFilterEl.addEventListener('change', filterProducts);
     if (brandFilterEl) brandFilterEl.addEventListener('change', filterProducts);
 
-    // Smooth scrolling links
+    // Smooth scrolling links and section navigation
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
             const target = document.querySelector(this.getAttribute('href'));
-            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (target) {
+                // Show all sections first
+                document.querySelectorAll('.section').forEach(section => {
+                    section.style.display = 'block';
+                });
+
+                // Then scroll to the target section
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         });
     });
 
@@ -989,4 +997,3 @@ function scrollToSection(sectionId) {
         section.scrollIntoView({ behavior: 'smooth' });
     }
 }
-
