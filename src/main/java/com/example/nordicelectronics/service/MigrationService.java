@@ -387,9 +387,9 @@ public class MigrationService {
 
             // Get order products
             List<OrderDocument.OrderProductInfo> orderProducts = orderProductRepository.findAll().stream()
-                    .filter(op -> op.getOrderId().equals(order.getOrderId()))
+                    .filter(op -> op.getOrder().getOrderId().equals(order.getOrderId()))
                     .map(op -> {
-                        String productMongoId = productIdMap.get(op.getProductId().toString());
+                        String productMongoId = productIdMap.get(op.getProduct().getProductId().toString());
                         String productName = op.getProduct() != null ? op.getProduct().getName() : "Unknown";
                         return OrderDocument.OrderProductInfo.builder()
                                 .productId(productMongoId)

@@ -38,7 +38,6 @@ public class OrderService {
         // TODO: Return orders by user when UserService is implemented
     }
 
-    // Inside com.example.nordicelectronics.service.OrderService.java
 
     public Order createOrder(Order order) {
         // 1. Get the User object from the incoming 'order' entity.
