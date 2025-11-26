@@ -210,3 +210,66 @@ CREATE TABLE product_category (
                                   FOREIGN KEY (product_id) REFERENCES product(product_id) ON DELETE CASCADE,
                                   FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE CASCADE
 );
+
+-- ==============================================
+-- AUDIT SOLUTION - Simple audit log for tracking changes
+-- ==============================================
+
+-- Simple audit log table
+CREATE TABLE audit_log (
+    audit_id SERIAL PRIMARY KEY,
+    table_name TEXT NOT NULL,
+    operation TEXT NOT NULL,
+    record_id TEXT NOT NULL,
+    before_values JSONB,
+    after_values JSONB,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    changed_by TEXT DEFAULT current_user
+);
+
+-- Simple audit function
+CREATE OR REPLACE FUNCTION log_audit()
+RETURNS TRIGGER AS $$
+DECLARE
+    rec_id TEXT;
+BEGIN
+    -- Get the record ID based on table
+    IF TG_OP = 'DELETE' THEN
+        rec_id := (to_jsonb(OLD)->>(TG_ARGV[0]))::TEXT;
+        INSERT INTO audit_log (table_name, operation, record_id, before_values)
+        VALUES (TG_TABLE_NAME, 'DELETE', rec_id, to_jsonb(OLD));
+        RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+        rec_id := (to_jsonb(NEW)->>(TG_ARGV[0]))::TEXT;
+        INSERT INTO audit_log (table_name, operation, record_id, before_values, after_values)
+        VALUES (TG_TABLE_NAME, 'UPDATE', rec_id, to_jsonb(OLD), to_jsonb(NEW));
+        RETURN NEW;
+    ELSIF TG_OP = 'INSERT' THEN
+        rec_id := (to_jsonb(NEW)->>(TG_ARGV[0]))::TEXT;
+        INSERT INTO audit_log (table_name, operation, record_id, after_values)
+        VALUES (TG_TABLE_NAME, 'INSERT', rec_id, to_jsonb(NEW));
+        RETURN NEW;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply audit trigger to Product table (most critical for e-commerce)
+CREATE TRIGGER product_audit_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON product
+    FOR EACH ROW EXECUTE FUNCTION log_audit('product_id');
+
+-- Apply audit trigger to Order table (track order changes)
+CREATE TRIGGER order_audit_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON "order"
+    FOR EACH ROW EXECUTE FUNCTION log_audit('order_id');
+
+-- Apply audit trigger to Payment table (financial tracking)
+CREATE TRIGGER payment_audit_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON payment
+    FOR EACH ROW EXECUTE FUNCTION log_audit('payment_id');
+
+-- Apply audit trigger to Review table (customer feedback)
+CREATE TRIGGER review_audit_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON review
+    FOR EACH ROW EXECUTE FUNCTION log_audit('review_id');
