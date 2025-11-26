@@ -17,7 +17,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-public class Product {
+public class Product extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -33,10 +33,10 @@ public class Product {
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "price", nullable = false)
+    @Column(name = "price", nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "weight", nullable = false)
+    @Column(name = "weight", precision = 8, scale = 2)
     private BigDecimal weight;
 
     @ManyToMany
@@ -60,16 +60,13 @@ public class Product {
     @JsonManagedReference
     private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 
-    @Transient
-    public int getStockQuantity() {
-        return warehouseProducts.stream()
-                .mapToInt(WarehouseProduct::getStockQuantity)
-                .sum();
-    }
-
-    @ManyToMany(mappedBy = "products")
-    @JsonIgnore
-    private Set<Wishlist> wishlists = new HashSet<>();
+    // TODO: Make use of view instead
+    //    @Transient
+    //    public int getStockQuantity() {
+    //        return warehouseProducts.stream()
+    //                .mapToInt(WarehouseProduct::getStockQuantity)
+    //                .sum();
+    //    }
 
     @OneToMany(mappedBy = "product")
     @JsonIgnore

@@ -1,6 +1,7 @@
 package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.User;
+import com.example.nordicelectronics.exception.StripeApiException;
 import com.example.nordicelectronics.service.UserService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +35,9 @@ import java.util.*;
 public class StripeController {
 
     private static final Logger log = LoggerFactory.getLogger(StripeController.class);
+    private static final String USER_ORDERS_SESSION_KEY = "userOrders";
+    private static final String CREATED_AT_SESSION_KEY = "createdAt";
+    private static final String ERROR_SESSION_KEY = "error";
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final UserService userService;
 
@@ -48,7 +52,7 @@ public class StripeController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "User not logged in"));
+                        .body(Map.of(ERROR_SESSION_KEY, "User not logged in"));
             }
 
             // Get user details
@@ -57,26 +61,26 @@ public class StripeController {
                 currentUser = userService.findByEmail(authentication.getName());
                 if (currentUser == null) {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(Map.of("error", "User not found"));
+                            .body(Map.of(ERROR_SESSION_KEY, "User not found"));
                 }
             } catch (Exception e) {
                 log.error("Error finding user: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "User lookup failed"));
+                        .body(Map.of(ERROR_SESSION_KEY, "User lookup failed"));
             }
 
             String stripeKey = stripeSecretKey;
             if (stripeKey == null || stripeKey.isBlank()) {
                 log.error("STRIPE_SECRET_KEY not configured");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(Map.of("error", "Stripe secret key not configured"));
+                        .body(Map.of(ERROR_SESSION_KEY, "Stripe secret key not configured"));
             }
 
             // Parse cart
             List<Map<String, Object>> cart = parseCart(payload);
             if (cart.isEmpty()) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Cart is empty"));
+                        .body(Map.of(ERROR_SESSION_KEY, "Cart is empty"));
             }
 
             // Create order record first
@@ -96,18 +100,18 @@ public class StripeController {
             orderData.put("cart", cart);
             orderData.put("sessionId", sessionId);
             orderData.put("status", "PENDING");
-            orderData.put("createdAt", LocalDateTime.now().toString());
+            orderData.put(CREATED_AT_SESSION_KEY, LocalDateTime.now().toString());
             orderData.put("userEmail", currentUser.getEmail());
             orderData.put("userId", currentUser.getUserId().toString());
 
             // Store in session (temporary solution)
             @SuppressWarnings("unchecked")
-            List<Map<String, Object>> userOrders = (List<Map<String, Object>>) session.getAttribute("userOrders");
+            List<Map<String, Object>> userOrders = (List<Map<String, Object>>) session.getAttribute(USER_ORDERS_SESSION_KEY);
             if (userOrders == null) {
                 userOrders = new ArrayList<>();
             }
             userOrders.add(orderData);
-            session.setAttribute("userOrders", userOrders);
+            session.setAttribute(USER_ORDERS_SESSION_KEY, userOrders);
 
             return ResponseEntity.ok(Map.of(
                 "url", checkoutUrl,
@@ -115,10 +119,14 @@ public class StripeController {
                 "sessionId", sessionId
             ));
 
+        } catch (StripeApiException ex) {
+            log.error("Stripe API error: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(ERROR_SESSION_KEY, "Payment processing error", "detail", ex.getMessage()));
         } catch (Exception ex) {
             log.error("Error creating checkout session", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Internal server error", "detail", ex.getMessage()));
+                    .body(Map.of(ERROR_SESSION_KEY, "Internal server error", "detail", ex.getMessage()));
         }
     }
 
@@ -157,7 +165,7 @@ public class StripeController {
             return ResponseEntity.ok("OK");
         } catch (Exception ex) {
             log.error("Error processing webhook", ex);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ERROR_SESSION_KEY);
         }
     }
 
@@ -183,7 +191,7 @@ public class StripeController {
         }
 
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> userOrders = (List<Map<String, Object>>) session.getAttribute("userOrders");
+        List<Map<String, Object>> userOrders = (List<Map<String, Object>>) session.getAttribute(USER_ORDERS_SESSION_KEY);
         if (userOrders == null) {
             userOrders = new ArrayList<>();
         }
@@ -192,7 +200,7 @@ public class StripeController {
         String userEmail = currentUser.getEmail();
         List<Map<String, Object>> filteredOrders = userOrders.stream()
                 .filter(order -> userEmail.equals(order.get("userEmail")))
-                .sorted((o1, o2) -> ((String) o2.get("createdAt")).compareTo((String) o1.get("createdAt")))
+                .sorted((o1, o2) -> ((String) o2.get(CREATED_AT_SESSION_KEY)).compareTo((String) o1.get(CREATED_AT_SESSION_KEY)))
                 .toList();
 
         return ResponseEntity.ok(filteredOrders);
@@ -212,43 +220,55 @@ public class StripeController {
         }
     }
 
-    private Map<String, Object> createStripeSession(List<Map<String, Object>> cart, String successUrl, String cancelUrl, String stripeKey) throws Exception {
-        StringBuilder form = new StringBuilder();
-        append(form, "mode", "payment");
-        append(form, "payment_method_types[]", "card");
-        append(form, "success_url", successUrl);
-        append(form, "cancel_url", cancelUrl);
+    private Map<String, Object> createStripeSession(List<Map<String, Object>> cart, String successUrl, String cancelUrl, String stripeKey) throws StripeApiException {
+        try {
+            StringBuilder form = new StringBuilder();
+            append(form, "mode", "payment");
+            append(form, "payment_method_types[]", "card");
+            append(form, "success_url", successUrl);
+            append(form, "cancel_url", cancelUrl);
 
-        // Add line items
-        for (int i = 0; i < cart.size(); i++) {
-            Map<String, Object> item = cart.get(i);
-            String name = String.valueOf(item.getOrDefault("name", "Item"));
-            double price = Double.parseDouble(String.valueOf(item.getOrDefault("price", 0)));
-            int quantity = Integer.parseInt(String.valueOf(item.getOrDefault("quantity", 1)));
+            // Add line items
+            for (int i = 0; i < cart.size(); i++) {
+                Map<String, Object> item = cart.get(i);
+                String name = String.valueOf(item.getOrDefault("name", "Item"));
+                double price = Double.parseDouble(String.valueOf(item.getOrDefault("price", 0)));
+                int quantity = Integer.parseInt(String.valueOf(item.getOrDefault("quantity", 1)));
 
-            long unitAmount = Math.round(price * 100); // Convert to cents
+                long unitAmount = Math.round(price * 100); // Convert to cents
 
-            append(form, String.format("line_items[%d][price_data][currency]", i), "usd");
-            append(form, String.format("line_items[%d][price_data][product_data][name]", i), name);
-            append(form, String.format("line_items[%d][price_data][unit_amount]", i), String.valueOf(unitAmount));
-            append(form, String.format("line_items[%d][quantity]", i), String.valueOf(quantity));
-        }
+                append(form, String.format("line_items[%d][price_data][currency]", i), "usd");
+                append(form, String.format("line_items[%d][price_data][product_data][name]", i), name);
+                append(form, String.format("line_items[%d][price_data][unit_amount]", i), String.valueOf(unitAmount));
+                append(form, String.format("line_items[%d][quantity]", i), String.valueOf(quantity));
+            }
 
-        // Make HTTP request to Stripe
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.stripe.com/v1/checkout/sessions"))
-                .header("Authorization", "Bearer " + stripeKey)
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(form.toString()))
-                .build();
+            // Make HTTP request to Stripe
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.stripe.com/v1/checkout/sessions"))
+                    .header("Authorization", "Bearer " + stripeKey)
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(HttpRequest.BodyPublishers.ofString(form.toString()))
+                    .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() >= 200 && response.statusCode() < 300) {
-            return objectMapper.readValue(response.body(), new TypeReference<Map<String, Object>>() {});
-        } else {
-            throw new RuntimeException("Stripe API error: " + response.body());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                return objectMapper.readValue(response.body(), new TypeReference<Map<String, Object>>() {});
+            } else {
+                throw new StripeApiException("Stripe API error: " + response.body(), response.statusCode(), response.body());
+            }
+        } catch (StripeApiException e) {
+            // Re-throw StripeApiException as is
+            throw e;
+        } catch (InterruptedException e) {
+            // Re-interrupt the current thread to preserve interruption signal
+            Thread.currentThread().interrupt();
+            throw new StripeApiException("Stripe session creation was interrupted: " + e.getMessage(), e);
+        } catch (Exception e) {
+            // Wrap other exceptions in StripeApiException
+            throw new StripeApiException("Failed to create Stripe session: " + e.getMessage(), e);
         }
     }
 

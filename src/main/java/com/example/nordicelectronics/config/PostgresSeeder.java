@@ -8,8 +8,7 @@ import com.example.nordicelectronics.entity.enums.PaymentStatus;
 import com.example.nordicelectronics.repositories.sql.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.instancio.Instancio;
-import org.instancio.Select;
+import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -17,11 +16,8 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.instancio.Select.field;
 
 @Component
 @RequiredArgsConstructor
@@ -42,19 +38,19 @@ public class PostgresSeeder implements CommandLineRunner {
     private final PaymentRepository paymentRepository;
     private final ReviewRepository reviewRepository;
     private final OrderProductRepository orderProductRepository;
-    private final OrderCouponRepository orderCouponRepository;
-    private final WishlistRepository wishlistRepository;
     private final PasswordEncoder passwordEncoder;
+    
+    private final Faker faker = new Faker(new Locale("da", "DK")); // Danish locale for Nordic context
 
     @Override
     public void run(String... args) throws Exception {
         log.info("Starting database seeding...");
         
         // Check if database already has complete data
-        if (userRepository.count() > 0 && productRepository.count() > 0) {
-            log.info("Database already contains data. Skipping seeding.");
-            return;
-        }
+        // if (userRepository.count() > 0 && productRepository.count() > 0) {
+        //     log.info("Database already contains data. Skipping seeding.");
+        //     return;
+        // }
 
         try {
             // 1. Create Users
@@ -67,7 +63,7 @@ public class PostgresSeeder implements CommandLineRunner {
                 log.info("Using existing {} users", users.size());
             }
 
-            // 3. Create Brands
+            // 2. Create Brands
             List<Brand> brands;
             if (brandRepository.count() == 0) {
                 brands = createBrands();
@@ -77,7 +73,7 @@ public class PostgresSeeder implements CommandLineRunner {
                 log.info("Using existing {} brands", brands.size());
             }
 
-            // 4. Create Categories
+            // 3. Create Categories
             List<Category> categories;
             if (categoryRepository.count() == 0) {
                 categories = createCategories();
@@ -87,7 +83,14 @@ public class PostgresSeeder implements CommandLineRunner {
                 log.info("Using existing {} categories", categories.size());
             }
 
-            // 5. Create Products (warranties will be created inline)
+            // 4. Create Warranties (if needed)
+            // Note: Warranties are created on-demand during product creation
+            // due to OneToOne relationship - each product needs its own warranty
+            log.info("Checking warranty count...");
+            long warrantyCount = warrantyRepository.count();
+            log.info("Found {} existing warranties", warrantyCount);
+
+            // 5. Create Products (warranties will be created inline for each product)
             log.info("Starting product creation...");
             List<Product> products = createProducts(brands, categories);
             log.info("Created {} products", products.size());
@@ -109,7 +112,7 @@ public class PostgresSeeder implements CommandLineRunner {
 
             // 9. Create Orders
             log.info("Starting order creation...");
-            List<Order> orders = createOrders(users);
+            List<Order> orders = createOrders(users, coupons);
             log.info("Created {} orders", orders.size());
 
             // 10. Create Payments
@@ -122,17 +125,7 @@ public class PostgresSeeder implements CommandLineRunner {
             List<OrderProduct> orderProducts = createOrderProducts(orders, products);
             log.info("Created {} order products", orderProducts.size());
 
-            // 12. Create Order Coupons
-            log.info("Starting order coupon creation...");
-            List<OrderCoupon> orderCoupons = createOrderCoupons(orders, coupons);
-            log.info("Created {} order coupons", orderCoupons.size());
-
-            // 13. Create Wishlists (with products)
-            log.info("Starting wishlist creation...");
-            List<Wishlist> wishlists = createWishlists(users, products);
-            log.info("Created {} wishlists", wishlists.size());
-
-            // 14. Create Reviews
+            // 12. Create Reviews
             log.info("Starting review creation...");
             List<Review> reviews = createReviews(users, products, orders);
             log.info("Created {} reviews", reviews.size());
@@ -148,73 +141,85 @@ public class PostgresSeeder implements CommandLineRunner {
         List<User> users = new ArrayList<>();
 
         // Create admin user
+        User admin = User.builder()
+                .firstName("Admin")
+                .lastName("User")
+                .email("admin@nordic.com")
+                .phoneNumber("12345678")
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .password(passwordEncoder.encode("admin123"))
+                .isAdmin(true)
+                .address(new ArrayList<>())
+                .orders(new ArrayList<>())
+                .build();
+        admin = userRepository.save(admin);
+
+        // Create admin address
         Address adminAddress = Address.builder()
+                .user(admin)
                 .street("Vestergade")
                 .streetNumber("1")
                 .zip("1000")
                 .city("Copenhagen")
                 .build();
         addressRepository.save(adminAddress);
-
-        User admin = User.builder()
-                .firstName("Admin")
-                .lastName("User")
-                .email("admin@nordic.com")
-                .phoneNumber("+45 12 34 56 78")
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .password(passwordEncoder.encode("admin123"))
-                .isAdmin(true)
-                .address(adminAddress) // assign before saving
-                .build();
-        users.add(userRepository.save(admin));
+        users.add(admin);
 
         // Create test user
+        User testUser = User.builder()
+                .firstName("Test")
+                .lastName("User")
+                .email("user@nordic.com")
+                .phoneNumber("87654321")
+                .dateOfBirth(LocalDate.of(1995, 6, 15))
+                .password(passwordEncoder.encode("user123"))
+                .isAdmin(false)
+                .address(new ArrayList<>())
+                .orders(new ArrayList<>())
+                .build();
+        testUser = userRepository.save(testUser);
+
+        // Create test user address
         Address testAddress = Address.builder()
+                .user(testUser)
                 .street("Østergade")
                 .streetNumber("10")
                 .zip("2100")
                 .city("Copenhagen")
                 .build();
         addressRepository.save(testAddress);
+        users.add(testUser);
 
-        User testUser = User.builder()
-                .firstName("Test")
-                .lastName("User")
-                .email("user@nordic.com")
-                .phoneNumber("+45 87 65 43 21")
-                .dateOfBirth(LocalDate.of(1995, 6, 15))
-                .password(passwordEncoder.encode("user123"))
-                .isAdmin(false)
-                .address(testAddress) // assign before saving
-                .build();
-        users.add(userRepository.save(testUser));
-
-        // Random users
+        // Random users with realistic data
         for (int i = 0; i < 20; i++) {
+            User randomUser = User.builder()
+                    .firstName(faker.name().firstName())
+                    .lastName(faker.name().lastName())
+                    .email(faker.internet().emailAddress())
+                    .phoneNumber(faker.numerify("########"))
+                    .dateOfBirth(faker.date().birthday(18, 80).toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+                    .password(passwordEncoder.encode("password123"))
+                    .isAdmin(false)
+                    .address(new ArrayList<>())
+                    .orders(new ArrayList<>())
+                    .build();
+
+            randomUser = userRepository.save(randomUser);
+
+            // Create realistic address for random user
             Address randomAddress = Address.builder()
-                    .street("Random Street " + i)
-                    .streetNumber(String.valueOf(i + 1))
-                    .zip(String.valueOf(1000 + i))
-                    .city("City " + i)
+                    .user(randomUser)
+                    .street(faker.address().streetName())
+                    .streetNumber(faker.address().buildingNumber())
+                    .zip(faker.address().zipCode())
+                    .city(faker.address().city())
                     .build();
             addressRepository.save(randomAddress);
-
-            int finalI = i;
-            User randomUser = Instancio.of(User.class)
-                    .ignore(field(User::getUserId)) // let JPA generate it
-                    .supply(field(User::getEmail), random -> "user" + finalI + "@example.com")
-                    .set(field(User::getAddress), randomAddress) // assign manually
-                    .set(field(User::isAdmin), false)
-                    .create();
-
-            users.add(userRepository.save(randomUser));
+            users.add(randomUser);
         }
 
         return users;
     }
-
-
-
 
     private List<Brand> createBrands() {
         String[] brandNames = {
@@ -225,12 +230,10 @@ public class PostgresSeeder implements CommandLineRunner {
 
         List<Brand> brands = new ArrayList<>();
         for (String brandName : brandNames) {
-            Brand brand = Instancio.of(Brand.class)
-                    .ignore(field(Brand::getBrandId))
-                    .ignore(field(Brand::getProducts))
-                    .set(field(Brand::getName), brandName)
-                    .supply(field(Brand::getDescription), random -> "Leading manufacturer of quality " + brandName + " electronics and technology products.")
-                    .create();
+            Brand brand = Brand.builder()
+                    .name(brandName)
+                    .description(faker.lorem().paragraph(2))
+                    .build();
             brands.add(brandRepository.save(brand));
         }
 
@@ -263,23 +266,29 @@ public class PostgresSeeder implements CommandLineRunner {
         return categories;
     }
 
-    private List<Warranty> createWarranties() {
-        List<Warranty> warranties = Instancio.ofList(Warranty.class)
-                .size(50)
-                .ignore(field(Warranty::getWarrantyId))
-                .ignore(field(Warranty::getProduct))
-                .supply(field(Warranty::getStartDate), random -> LocalDate.now().minusDays(random.intRange(0, 30)))
-                .supply(field(Warranty::getEndDate), random -> LocalDate.now().plusYears(random.intRange(1, 5)))
-                .supply(field(Warranty::getDescription), random -> random.oneOf(
-                    "Standard manufacturer warranty covering defects",
-                    "Extended warranty with full coverage",
-                    "Limited warranty for parts and labor",
-                    "Premium warranty with 24/7 support",
-                    "Basic warranty covering manufacturing defects"
-                ))
-                .create();
+    private Warranty createWarranty(Random random) {
+        String[] warrantyTypes = {
+            "Standard manufacturer warranty covering defects",
+            "Extended warranty with full coverage",
+            "Limited warranty for parts and labor",
+            "Premium warranty with 24/7 support",
+            "Basic warranty covering manufacturing defects",
+            "Comprehensive warranty with replacement guarantee",
+            "Standard 1-year warranty",
+            "Extended 2-year warranty",
+            "Premium 3-year warranty with accidental damage coverage"
+        };
 
-        return warrantyRepository.saveAll(warranties);
+        LocalDate startDate = faker.date().past(30, java.util.concurrent.TimeUnit.DAYS)
+                .toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate endDate = faker.date().future(faker.number().numberBetween(365, 1095), java.util.concurrent.TimeUnit.DAYS)
+                .toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        
+        return Warranty.builder()
+                .startDate(startDate)
+                .endDate(endDate)
+                .description(warrantyTypes[random.nextInt(warrantyTypes.length)])
+                .build();
     }
 
     private List<Product> createProducts(List<Brand> brands, List<Category> categories) {
@@ -311,36 +320,23 @@ public class PostgresSeeder implements CommandLineRunner {
                                     productPrefixes[random.nextInt(productPrefixes.length)] + " " + 
                                     productTypes[random.nextInt(productTypes.length)];
 
-                BigDecimal price = BigDecimal.valueOf(random.nextInt(5000) + 100);
-                BigDecimal weight = BigDecimal.valueOf(random.nextDouble() * 10 + 0.1).setScale(2, BigDecimal.ROUND_HALF_UP);
+                BigDecimal price = BigDecimal.valueOf(faker.number().numberBetween(100, 5000));
+                BigDecimal weight = BigDecimal.valueOf(faker.number().randomDouble(2, 1, 1000)).setScale(2, RoundingMode.HALF_UP);
 
-                // Create warranty inline for ALL products (database requires NOT NULL)
-                LocalDate startDate = LocalDate.now().minusDays(random.nextInt(30));
-                LocalDate endDate = LocalDate.now().plusYears(random.nextInt(3) + 1);
-                String[] warrantyDescriptions = {
-                    "Standard manufacturer warranty covering defects",
-                    "Extended warranty with full coverage",
-                    "Limited warranty for parts and labor",
-                    "Premium warranty with 24/7 support",
-                    "Basic warranty covering manufacturing defects"
-                };
-                
-                Warranty warranty = Warranty.builder()
-                        .startDate(startDate)
-                        .endDate(endDate)
-                        .description(warrantyDescriptions[random.nextInt(warrantyDescriptions.length)])
-                        .build();
+                // Create a new warranty for each product (OneToOne relationship requires unique warranty per product)
+                Warranty warranty = createWarranty(random);
 
                 Product product = Product.builder()
-                        .sku("SKU-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                        .sku("SKU-" + faker.code().asin().replace("-", "").substring(0, 8).toUpperCase())
                         .name(productName)
-                        .description("High-quality " + productName + " with latest features and technology. Perfect for both professional and personal use.")
+                        .description(faker.lorem().paragraph(3))
                         .price(price)
                         .weight(weight)
                         .brand(brand)
                         .warranty(warranty)
                         .categories(productCategories)
                         .warehouseProducts(new HashSet<>())
+                        .reviews(new HashSet<>())
                         .build();
 
                 products.add(productRepository.save(product));
@@ -359,27 +355,44 @@ public class PostgresSeeder implements CommandLineRunner {
     private List<Warehouse> createWarehouses() {
         List<Warehouse> warehouses = new ArrayList<>();
 
-        String[][] warehouseData = {
-                {"Copenhagen Central", "Østerbrogade", "15", "2100", "Copenhagen"},
-                {"Aarhus Distribution", "Randersvej", "89", "8000", "Aarhus"},
-                {"Odense Logistics", "Vestergade", "45", "5000", "Odense"}
+        String[] warehouseNames = {
+                "Copenhagen Central Distribution Center",
+                "Aarhus Regional Warehouse",
+                "Odense Logistics Hub"
         };
 
-        for (String[] data : warehouseData) {
-            // 1. Create and save address first
+        for (String warehouseName : warehouseNames) {
+            // 1. Get or create system user for warehouse addresses
+            User systemUser = userRepository.findByEmail("admin@nordic.com")
+                    .orElseGet(() -> {
+                        User admin = User.builder()
+                                .firstName("System")
+                                .lastName("Admin")
+                                .email("system@nordic.com")
+                                .phoneNumber(faker.numerify("########"))
+                                .dateOfBirth(LocalDate.of(2000, 1, 1))
+                                .password(passwordEncoder.encode("system"))
+                                .isAdmin(true)
+                                .address(new ArrayList<>())
+                                .orders(new ArrayList<>())
+                                .build();
+                        return userRepository.save(admin);
+                    });
+            
+            // 2. Create realistic address (don't save manually - let cascade handle it)
             Address address = Address.builder()
-                    .street(data[1])
-                    .streetNumber(data[2])
-                    .zip(data[3])
-                    .city(data[4])
+                    .street(faker.address().streetName())
+                    .streetNumber(faker.address().buildingNumber())
+                    .zip(faker.address().zipCode())
+                    .city(faker.address().city())
+                    .user(systemUser)
                     .build();
-            addressRepository.save(address);
 
-            // 2. Create warehouse and assign address
+            // 3. Create warehouse and assign address (cascade will save the address)
             Warehouse warehouse = Warehouse.builder()
-                    .name(data[0])
-                    .phone("+45 12 34 56 78")
-                    .address(address) // must assign before saving
+                    .name(warehouseName)
+                    .phoneNumber(faker.numerify("########"))
+                    .address(address)
                     .warehouseProducts(new HashSet<>())
                     .build();
 
@@ -453,29 +466,59 @@ public class PostgresSeeder implements CommandLineRunner {
         return coupons;
     }
 
-    private List<Order> createOrders(List<User> users) {
+    private List<Order> createOrders(List<User> users, List<Coupon> coupons) {
         List<Order> orders = new ArrayList<>();
         Random random = new Random();
+
+        // Get all addresses for users
+        List<Address> addresses = addressRepository.findAll();
 
         // Create 50 orders
         for (int i = 0; i < 50; i++) {
             User user = users.get(random.nextInt(users.size()));
             
-            BigDecimal subtotal = BigDecimal.valueOf(random.nextInt(5000) + 100);
+            // Get user's addresses or use any address
+            Address orderAddress = addresses.stream()
+                    .filter(addr -> addr.getUser().getUserId().equals(user.getUserId()))
+                    .findFirst()
+                    .orElse(addresses.get(random.nextInt(addresses.size())));
+            
+            BigDecimal subtotal = BigDecimal.valueOf(faker.number().numberBetween(100, 5000));
             BigDecimal taxAmount = subtotal.multiply(BigDecimal.valueOf(0.25)); // 25% tax
-            BigDecimal shippingCost = BigDecimal.valueOf(random.nextInt(100) + 20);
-            BigDecimal discountAmount = random.nextBoolean() ? BigDecimal.valueOf(random.nextInt(200)) : BigDecimal.ZERO;
+            BigDecimal shippingCost = BigDecimal.valueOf(faker.number().numberBetween(20, 120));
+            
+            // Apply coupon to about 30% of orders
+            Coupon coupon = null;
+            BigDecimal discountAmount = BigDecimal.ZERO;
+            if (!coupons.isEmpty() && random.nextInt(100) < 30) {
+                coupon = coupons.get(random.nextInt(coupons.size()));
+                // Calculate discount based on coupon type
+                if (coupon.getDiscountType() == DiscountType.percentage) {
+                    discountAmount = subtotal.multiply(coupon.getDiscountValue().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
+                } else {
+                    discountAmount = coupon.getDiscountValue();
+                }
+                // Ensure discount doesn't exceed subtotal
+                if (discountAmount.compareTo(subtotal) > 0) {
+                    discountAmount = subtotal;
+                }
+            }
+            
             BigDecimal totalAmount = subtotal.add(taxAmount).add(shippingCost).subtract(discountAmount);
 
             Order order = Order.builder()
                     .user(user)
-                    .orderDate(LocalDateTime.now().minusDays(random.nextInt(365)))
+                    .address(orderAddress)
+                    .orderDate(faker.date().past(365, java.util.concurrent.TimeUnit.DAYS)
+                            .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime())
                     .orderStatus(OrderStatus.values()[random.nextInt(OrderStatus.values().length)])
                     .subtotal(subtotal)
                     .taxAmount(taxAmount)
                     .shippingCost(shippingCost)
                     .discountAmount(discountAmount)
                     .totalAmount(totalAmount)
+                    .coupon(coupon)
+                    .orderProducts(new ArrayList<>())
                     .build();
 
             orders.add(orderRepository.save(order));
@@ -493,7 +536,7 @@ public class PostgresSeeder implements CommandLineRunner {
                     .order(order)
                     .paymentMethod(PaymentMethod.values()[random.nextInt(PaymentMethod.values().length)])
                     .paymentStatus(PaymentStatus.values()[random.nextInt(PaymentStatus.values().length)])
-                    .paymentDate(order.getOrderDate().plusMinutes(random.nextInt(60)))
+                    .paymentDate(order.getOrderDate().plusMinutes(faker.number().numberBetween(1, 60)))
                     .amount(order.getTotalAmount())
                     .build();
 
@@ -513,34 +556,14 @@ public class PostgresSeeder implements CommandLineRunner {
             Product product = products.get(random.nextInt(products.size()));
             Order order = orders.get(random.nextInt(orders.size()));
 
-            String[] titles = {
-                "Great product!", "Excellent quality", "Very satisfied", "Good value",
-                "Amazing!", "Highly recommend", "Perfect!", "Worth the money",
-                "Not bad", "Could be better", "Disappointed", "Outstanding"
-            };
-
-            String[] comments = {
-                "This product exceeded my expectations. Highly recommended!",
-                "Good quality product, fast delivery. Very happy with the purchase.",
-                "Exactly what I was looking for. Works perfectly.",
-                "The product is okay, but I expected more for the price.",
-                "Excellent product! Will definitely buy again.",
-                "Very satisfied with the quality and performance.",
-                "Not as good as described, but still acceptable.",
-                "Amazing product! Best purchase this year.",
-                "Good product overall, minor issues but nothing major.",
-                "Fantastic! Exceeded all my expectations."
-            };
-
             Review review = Review.builder()
                     .user(user)
                     .product(product)
                     .orderId(order.getOrderId())
-                    .reviewValue(random.nextInt(5) + 1) // 1-5 stars
-                    .title(titles[random.nextInt(titles.length)])
-                    .comment(comments[random.nextInt(comments.length)])
-                    .isVerifiedPurchase(random.nextBoolean())
-                    .createdAt(LocalDateTime.now().minusDays(random.nextInt(180)))
+                    .reviewValue(faker.number().numberBetween(1, 6)) // 1-5 stars
+                    .title(faker.lorem().sentence(3, 6))
+                    .comment(faker.lorem().paragraph(2))
+                    .isVerifiedPurchase(faker.bool().bool())
                     .build();
 
             reviews.add(reviewRepository.save(review));
@@ -566,9 +589,10 @@ public class PostgresSeeder implements CommandLineRunner {
                         BigDecimal unitPrice = product.getPrice();
                         BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
                         
+                        OrderProductKey key = new OrderProductKey(order.getOrderId(), product.getProductId());
+                        
                         OrderProduct orderProduct = OrderProduct.builder()
-                                .orderId(order.getOrderId())
-                                .productId(product.getProductId())
+                                .id(key)
                                 .order(order)
                                 .product(product)
                                 .quantity(quantity)
@@ -585,69 +609,5 @@ public class PostgresSeeder implements CommandLineRunner {
         }
 
         return orderProducts;
-    }
-
-    private List<OrderCoupon> createOrderCoupons(List<Order> orders, List<Coupon> coupons) {
-        List<OrderCoupon> orderCoupons = new ArrayList<>();
-        Random random = new Random();
-
-        // Apply coupons to about 30% of orders
-        for (Order order : orders) {
-            if (random.nextInt(100) < 30) { // 30% chance
-                try {
-                    Coupon coupon = coupons.get(random.nextInt(coupons.size()));
-                    
-                    OrderCoupon orderCoupon = OrderCoupon.builder()
-                            .orderId(order.getOrderId())
-                            .couponId(coupon.getCouponId())
-                            .order(order)
-                            .coupon(coupon)
-                            .build();
-                    
-                    orderCoupons.add(orderCouponRepository.save(orderCoupon));
-                } catch (Exception e) {
-                    log.error("Error creating order coupon for order {}: ", order.getOrderId(), e);
-                }
-            }
-        }
-
-        return orderCoupons;
-    }
-
-    private List<Wishlist> createWishlists(List<User> users, List<Product> products) {
-        List<Wishlist> wishlists = new ArrayList<>();
-        Random random = new Random();
-
-        String[] wishlistNames = {
-            "My Wishlist", "Favorites", "Gift Ideas", "Want to Buy", 
-            "Dream Products", "Shopping List", "Birthday Wishlist"
-        };
-
-        // Create wishlists for about 60% of users
-        for (User user : users) {
-            if (random.nextInt(100) < 60) { // 60% chance
-                try {
-                    // Random products for this wishlist
-                    Set<Product> wishlistProducts = new HashSet<>();
-                    int numProducts = random.nextInt(8) + 2; // 2-10 products
-                    
-                    for (int i = 0; i < numProducts && i < products.size(); i++) {
-                        wishlistProducts.add(products.get(random.nextInt(products.size())));
-                    }
-                    
-                    Wishlist wishlist = Wishlist.builder()
-                            .user(user)
-                            .name(wishlistNames[random.nextInt(wishlistNames.length)])
-                            .products(wishlistProducts)
-                            .build();
-                    
-                    wishlists.add(wishlistRepository.save(wishlist));
-                } catch (Exception e) {
-                    log.error("Error creating wishlist for user {}: ", user.getUserId(), e);
-                }
-            }
-        }
-
-        return wishlists;
     }
 }

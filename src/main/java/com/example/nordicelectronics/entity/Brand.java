@@ -16,7 +16,7 @@ import java.util.UUID;
 @Setter
 @Builder
 
-public class Brand {
+public class Brand extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

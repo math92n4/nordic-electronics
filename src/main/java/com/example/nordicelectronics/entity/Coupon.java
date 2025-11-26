@@ -17,33 +17,33 @@ import java.util.UUID;
 @Setter
 @Builder
 @Table(name = "coupon")
-public class Coupon {
+public class Coupon extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "coupon_id", updatable = false, nullable = false)
     private UUID couponId;
 
-    @Column(name = "code", nullable = false)
+    @Column(name = "code", nullable = false, unique = true)
     private String code;
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "discount_type", nullable = false, columnDefinition = "discount_type_enum_name") // Adjust columnDefinition if needed
+    @Column(name = "discount_type", nullable = false, columnDefinition = "discount_type_enum")
     private DiscountType discountType;
 
-    @Column(name = "discount_value", nullable = false, precision = 19, scale = 2)
+    @Column(name = "discount_value", nullable = false, precision = 12, scale = 2)
     private BigDecimal discountValue;
 
-    @Column(name = "minimum_order_value", nullable = false, precision = 19, scale = 2)
+    @Column(name = "minimum_order_value", nullable = false, precision = 12, scale = 2)
     private BigDecimal minimumOrderValue;
 
-    @Column(name = "expiry_date", nullable = false)
+    @Column(name = "expiry_date")
     private LocalDate expiryDate;
 
     @Column(name = "usage_limit", nullable = false)
     private int usageLimit;
 
-    @Column(name = "times_used", nullable = false)
+    @Column(name = "times_used")
     private int timesUsed;
 
     @Column(name = "is_active", nullable = false)
