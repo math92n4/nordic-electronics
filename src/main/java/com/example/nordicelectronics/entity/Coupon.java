@@ -28,7 +28,7 @@ public class Coupon extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "discount_type", nullable = false, columnDefinition = "discount_type_enum_name") // Adjust columnDefinition if needed
+    @Column(name = "discount_type", nullable = false, columnDefinition = "discount_type_enum")
     private DiscountType discountType;
 
     @Column(name = "discount_value", nullable = false, precision = 12, scale = 2)

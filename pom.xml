@@ -96,6 +96,11 @@
             <artifactId>instancio-core</artifactId>
             <version>5.2.0</version>
         </dependency>
+        <dependency>
+            <groupId>net.datafaker</groupId>
+            <artifactId>datafaker</artifactId>
+            <version>2.2.2</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>

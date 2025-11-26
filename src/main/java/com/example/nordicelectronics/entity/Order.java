@@ -38,7 +38,7 @@ public class Order extends BaseEntity {
     private Payment payment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "address_id", nullable = false)
+    @JoinColumn(name = "address_id")
     @JsonBackReference
     private Address address;
 
@@ -66,6 +66,7 @@ public class Order extends BaseEntity {
     private BigDecimal discountAmount;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<OrderProduct> orderProducts = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
