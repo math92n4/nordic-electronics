@@ -29,7 +29,7 @@ public class AddressService {
             throw new EntityNotFoundException("User does not have an address");
         }
 
-        return getById(user.getAddress().getAddressId());
+        return getById(user.getAddress().stream().findFirst().get().getAddressId());
     }
 
     public Address getByUserEmail(String email) {
@@ -50,7 +50,7 @@ public class AddressService {
 
         Address saved = addressRepository.save(address);
 
-        user.setAddress(saved);
+        user.setAddress(java.util.Collections.singletonList(saved));
         userService.save(user);
 
         return saved;
