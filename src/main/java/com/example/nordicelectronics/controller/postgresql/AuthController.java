@@ -96,9 +96,9 @@ public class AuthController {
                                                     {
                                                       "firstName": "user",
                                                       "lastName": "user",
-                                                      "email": "user@mail.com",
+                                                      "email": "user2@nordic.com",
                                                       "phoneNumber": "12345678",
-                                                      "password": "user"
+                                                      "password": "user123"
                                                     }
                                                     """,
                                             description = "Default demo user for testing"
@@ -109,9 +109,9 @@ public class AuthController {
                                                     {
                                                       "firstName": "admin",
                                                       "lastName": "admin",
-                                                      "email": "admin@mail.com",
+                                                      "email": "admin2@nordic.com",
                                                       "phoneNumber": "87654321",
-                                                      "password": "admin"
+                                                      "password": "admin123"
                                                     }
                                                     """,
                                             description = "Admin user example"
@@ -157,8 +157,8 @@ public class AuthController {
                                             name = "Demo User Login",
                                             value = """
                                                     {
-                                                      "email": "user@mail.com",
-                                                      "password": "user"
+                                                      "email": "user@nordic.com",
+                                                      "password": "user123"
                                                     }
                                                     """,
                                             description = "Login with demo user credentials"
@@ -167,8 +167,8 @@ public class AuthController {
                                             name = "Admin User Login",
                                             value = """
                                                     {
-                                                      "email": "admin@mail.com",
-                                                      "password": "admin"
+                                                      "email": "admin@nordic.com",
+                                                      "password": "admin123"
                                                     }
                                                     """,
                                             description = "Login with admin credentials"

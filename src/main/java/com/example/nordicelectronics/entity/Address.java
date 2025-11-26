@@ -14,11 +14,16 @@ import java.util.UUID;
 @Setter
 @Builder
 
-public class Address {
+public class Address extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "address_id", updatable = false, nullable = false)
     private UUID addressId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
+    private User user;
 
     @Column(nullable = false)
     private String street;

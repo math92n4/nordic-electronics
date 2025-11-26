@@ -1,7 +1,6 @@
 package com.example.nordicelectronics.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-public class Warehouse {
+public class Warehouse extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,14 +25,13 @@ public class Warehouse {
     private String name;
 
     @Column(nullable = false)
-    private String phone;
+    private String phoneNumber;
 
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "address_id", referencedColumnName = "address_id", nullable = false)
-    @JsonIgnore
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id", referencedColumnName = "address_id")
     private Address address;
 }

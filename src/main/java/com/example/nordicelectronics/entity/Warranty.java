@@ -14,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-public class Warranty {
+public class Warranty extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

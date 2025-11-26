@@ -7,6 +7,8 @@ import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
 @EqualsAndHashCode
 public class OrderProductKey implements Serializable {
     private UUID orderId;

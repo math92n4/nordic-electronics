@@ -1,12 +1,11 @@
 package com.example.nordicelectronics.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 @Entity
 @Table(name = "warehouse_product")
@@ -32,5 +31,6 @@ public class WarehouseProduct implements Serializable {
     private Product product;
 
     @Column(nullable = false)
+    @Min(0)
     private int stockQuantity;
 }
