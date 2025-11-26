@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.nordicelectronics.entity.dto.OrderResponseDTO;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,13 +32,13 @@ public class OrderController {
 
     @Operation(summary = "Get PostgreSQL orders by IDs", description = "Fetches orders based on a list of order IDs and returns them as DTOs.")
     @GetMapping("/by-ids") // Assuming this is your method signature
-    public ResponseEntity<List<com.example.nordicelectronics.dto.OrderResponseDTO>> getOrdersByIds(@RequestParam List<UUID> ids) {
+    public ResponseEntity<List<OrderResponseDTO>> getOrdersByIds(@RequestParam List<UUID> ids) {
 
         // 1. Fetch entities (they contain lazy proxies)
         List<Order> orders = orderService.getOrdersByIds(ids);
 
         // 2. Map EACH entity to the safe DTO
-        List<com.example.nordicelectronics.dto.OrderResponseDTO> responseDTOs = orders.stream()
+        List<OrderResponseDTO> responseDTOs = orders.stream()
                 .map(OrderMapper::toResponseDTO)
                 .collect(Collectors.toList());
 
@@ -47,13 +48,13 @@ public class OrderController {
 
     @Operation(summary = "Create a new PostgreSQL order", description = "Creates a new PostgreSQL order and returns the created order as a DTO.")
     @PostMapping("/create")
-    public ResponseEntity<com.example.nordicelectronics.dto.OrderResponseDTO> createOrder(@RequestBody Order order) {
+    public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody Order order) {
 
         // 1. Service successfully saves the order (which includes fetching and attaching User)
         Order savedOrder = orderService.createOrder(order);
 
         // 2. Map the saved entity to the DTO for a safe response
-        com.example.nordicelectronics.dto.OrderResponseDTO responseDTO = OrderMapper.toResponseDTO(savedOrder);
+        OrderResponseDTO responseDTO = OrderMapper.toResponseDTO(savedOrder);
 
         // 3. Return the DTO
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);

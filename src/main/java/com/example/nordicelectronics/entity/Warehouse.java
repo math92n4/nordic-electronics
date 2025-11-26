@@ -34,6 +34,5 @@ public class Warehouse {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id", referencedColumnName = "address_id", nullable = false)
-    @JsonIgnore
     private Address address;
 }

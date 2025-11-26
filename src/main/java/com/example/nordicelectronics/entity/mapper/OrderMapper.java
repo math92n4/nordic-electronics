@@ -1,15 +1,16 @@
 package com.example.nordicelectronics.entity.mapper;
 
 import com.example.nordicelectronics.entity.Order;
+import com.example.nordicelectronics.entity.dto.OrderResponseDTO;
 
 public class OrderMapper {
 
-    public static com.example.nordicelectronics.dto.OrderResponseDTO toResponseDTO(Order order) {
+    public static OrderResponseDTO toResponseDTO(Order order) {
         if (order == null) {
             return null;
         }
 
-        com.example.nordicelectronics.dto.OrderResponseDTO dto = new com.example.nordicelectronics.dto.OrderResponseDTO();
+        OrderResponseDTO dto = new OrderResponseDTO();
 
         // Map simple fields
         dto.setOrderId(order.getOrderId());
