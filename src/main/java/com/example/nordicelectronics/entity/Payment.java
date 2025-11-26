@@ -9,7 +9,6 @@ import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -33,17 +32,17 @@ public class Payment extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "payment_method", nullable = false, columnDefinition = "payment_method_enum_name")
+    @Column(name = "payment_method", nullable = false, columnDefinition = "payment_type_enum")
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "status", nullable = false, columnDefinition = "payment_status_enum_name")
+    @Column(name = "status", columnDefinition = "status_type_enum")
     private PaymentStatus paymentStatus;
 
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
 
-    @Column(name = "amount", nullable = false)
+    @Column(name = "amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 }

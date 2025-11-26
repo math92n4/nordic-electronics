@@ -20,6 +20,23 @@ CREATE TABLE category (
 );
 
 -- ======================
+-- Users
+-- ======================
+CREATE TABLE "user" (
+                        user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                        first_name TEXT NOT NULL,
+                        last_name TEXT NOT NULL,
+                        email TEXT NOT NULL UNIQUE,
+                        phone_number TEXT NOT NULL,
+                        date_of_birth DATE NOT NULL,
+                        password TEXT NOT NULL,
+                        is_admin BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        deleted_at TIMESTAMP NULL
+);
+
+-- ======================
 -- Address
 -- ======================
 CREATE TABLE address (
@@ -43,23 +60,6 @@ CREATE TABLE warehouse (
                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            deleted_at TIMESTAMP NULL,
                            address_id UUID NOT NULL REFERENCES address(address_id)
-);
-
--- ======================
--- Users
--- ======================
-CREATE TABLE "user" (
-                        user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                        first_name TEXT NOT NULL,
-                        last_name TEXT NOT NULL,
-                        email TEXT NOT NULL UNIQUE,
-                        phone_number TEXT NOT NULL,
-                        date_of_birth DATE NOT NULL,
-                        password TEXT NOT NULL,
-                        is_admin BOOLEAN DEFAULT FALSE,
-                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        deleted_at TIMESTAMP NULL,
 );
 
 -- ======================
@@ -108,7 +108,7 @@ CREATE TABLE product (
                          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          deleted_at TIMESTAMP NULL,
                          brand_id UUID NOT NULL REFERENCES brand(brand_id),
-                         warranty_id UUID NOT NULL REFERENCES warranty(warranty_id),
+                         warranty_id UUID NOT NULL REFERENCES warranty(warranty_id)
 );
 
 -- ======================
@@ -123,11 +123,12 @@ CREATE TYPE order_type_enum AS ENUM (
 CREATE TABLE "order" (
                          order_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                          user_id UUID NOT NULL REFERENCES "user"(user_id),
-                         payment UUID REFERENCES payment(payment_id),
                          address_id UUID REFERENCES address(address_id),
+                         coupon_id UUID REFERENCES coupon(coupon_id),
                          order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                          status order_type_enum DEFAULT 'pending',
-                         total_amount NUMERIC(12, 2) NOT NULL subtotal NUMERIC(12, 2) NOT NULL,
+                         total_amount NUMERIC(12, 2) NOT NULL,
+                         subtotal NUMERIC(12, 2) NOT NULL,
                          tax_amount NUMERIC(12, 2) NOT NULL,
                          shipping_cost NUMERIC(12, 2) NOT NULL,
                          discount_amount NUMERIC(12, 2),
@@ -184,13 +185,6 @@ CREATE TABLE review (
 -- ======================
 -- Join Tables
 -- ======================
--- Order-Coupon many-to-many relationship
-CREATE TABLE order_coupon (
-                              order_id UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
-                              coupon_id UUID NOT NULL REFERENCES coupon(coupon_id) ON DELETE CASCADE,
-                              PRIMARY KEY (order_id, coupon_id)
-);
-
 -- Order-Product many-to-many relationship (order line items)
 CREATE TABLE order_product (
                                order_id UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
