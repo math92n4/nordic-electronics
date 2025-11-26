@@ -106,9 +106,15 @@ public class PostgresSeeder implements CommandLineRunner {
             log.info("Created {} warehouse product entries", warehouseProducts.size());
 
             // 8. Create Coupons
-            log.info("Starting coupon creation...");
-            List<Coupon> coupons = createCoupons();
-            log.info("Created {} coupons", coupons.size());
+            List<Coupon> coupons;
+            if (couponRepository.count() == 0) {
+                log.info("Starting coupon creation...");
+                coupons = createCoupons();
+                log.info("Created {} coupons", coupons.size());
+            } else {
+                coupons = couponRepository.findAll();
+                log.info("Using existing {} coupons", coupons.size());
+            }
 
             // 9. Create Orders
             log.info("Starting order creation...");
