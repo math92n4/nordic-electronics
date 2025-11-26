@@ -61,7 +61,7 @@ public class OrderService {
         order.setUser(managedUser);
 
 
-        if (managedUser.getAddress() == null || managedUser.getAddress().getAddressId() == null) {
+        if (managedUser.getAddress() == null || managedUser.getAddress().stream().findFirst() == null) {
             throw new IllegalArgumentException("Order must contain a valid shippingAddressId.");
         }
 

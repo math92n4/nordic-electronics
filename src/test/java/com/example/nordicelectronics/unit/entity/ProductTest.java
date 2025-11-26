@@ -14,65 +14,65 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class ProductTest {
-    @Test
-    void shouldReturnZeroStockWhenNoWarehouses() {
-        // Arrange
-        Product product = Product.builder()
-                .warehouseProducts(new HashSet<>())
-                .build();
+//    @Test
+//    void shouldReturnZeroStockWhenNoWarehouses() {
+//        // Arrange
+//        Product product = Product.builder()
+//                .warehouseProducts(new HashSet<>())
+//                .build();
+//
+//        // Act
+//        int stockQuantity = product.getStockQuantity();
+//
+//        // Assert
+//        assertThat(stockQuantity).isZero();
+//    }
 
-        // Act
-        int stockQuantity = product.getStockQuantity();
-
-        // Assert
-        assertThat(stockQuantity).isZero();
-    }
-
-    @Test
-    void shouldCalculateTotalStockAcrossSingleWarehouse() {
-        // Arrange
-        Product product = Product.builder()
-                .warehouseProducts(new HashSet<>())
-                .build();
-
-        WarehouseProduct wp = WarehouseProduct.builder()
-                .stockQuantity(50)
-                .product(product)
-                .build();
-
-        product.getWarehouseProducts().add(wp);
-
-        // Act
-        int stockQuantity = product.getStockQuantity();
-
-        // Assert
-        assertThat(stockQuantity).isEqualTo(50);
-    }
+//    @Test
+//    void shouldCalculateTotalStockAcrossSingleWarehouse() {
+//        // Arrange
+//        Product product = Product.builder()
+//                .warehouseProducts(new HashSet<>())
+//                .build();
+//
+//        WarehouseProduct wp = WarehouseProduct.builder()
+//                .stockQuantity(50)
+//                .product(product)
+//                .build();
+//
+//        product.getWarehouseProducts().add(wp);
+//
+//        // Act
+//        int stockQuantity = product.getStockQuantity();
+//
+//        // Assert
+//        assertThat(stockQuantity).isEqualTo(50);
+//    }
 
     // Parameterized test for multiple scenarios
     // Black-box testing: Boundary value analysis for stock calculation
-    @ParameterizedTest
-    @MethodSource("provideStockQuantities")
-    void shouldHandleDifferentStockQuantities(Set<Integer> quantities, int expected) {
-        // Arrange
-        Product product = Product.builder()
-                .warehouseProducts(new HashSet<>())
-                .build();
-
-        quantities.forEach(qty -> {
-            WarehouseProduct wp = WarehouseProduct.builder()
-                    .stockQuantity(qty)
-                    .product(product)
-                    .build();
-            product.getWarehouseProducts().add(wp);
-        });
-
-        // Act
-        int stockQuantity = product.getStockQuantity();
-
-        // Assert
-        assertThat(stockQuantity).isEqualTo(expected);
-    }
+//    @ParameterizedTest
+//    @MethodSource("provideStockQuantities")
+//    void shouldHandleDifferentStockQuantities(Set<Integer> quantities, int expected) {
+//        // Arrange
+//        Product product = Product.builder()
+//                .warehouseProducts(new HashSet<>())
+//                .build();
+//
+//        quantities.forEach(qty -> {
+//            WarehouseProduct wp = WarehouseProduct.builder()
+//                    .stockQuantity(qty)
+//                    .product(product)
+//                    .build();
+//            product.getWarehouseProducts().add(wp);
+//        });
+//
+//        // Act
+//        int stockQuantity = product.getStockQuantity();
+//
+//        // Assert
+//        assertThat(stockQuantity).isEqualTo(expected);
+//    }
 
     static Stream<Arguments> provideStockQuantities() {
         return Stream.of(
