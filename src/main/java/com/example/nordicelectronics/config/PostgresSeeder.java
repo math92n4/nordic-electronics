@@ -567,8 +567,6 @@ public class PostgresSeeder implements CommandLineRunner {
                         BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
                         
                         OrderProduct orderProduct = OrderProduct.builder()
-                                .orderId(order.getOrderId())
-                                .productId(product.getProductId())
                                 .order(order)
                                 .product(product)
                                 .quantity(quantity)
