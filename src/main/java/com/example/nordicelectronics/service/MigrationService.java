@@ -361,7 +361,7 @@ public class MigrationService {
             WarehouseDocument document = WarehouseDocument.builder()
                     .name(warehouse.getName())
                     .address(addressInfo)
-                    .phone(warehouse.getPhone())
+                    .phone(warehouse.getPhoneNumber())
                     .products(productInfoList)
                     .build();
 

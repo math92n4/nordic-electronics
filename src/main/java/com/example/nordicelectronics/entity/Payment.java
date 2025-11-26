@@ -21,7 +21,7 @@ import java.util.UUID;
 @Builder
 @Table(name = "payment")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "order"}) // Add "order" to prevent circular dependency with Order
-public class Payment {
+public class Payment extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "payment_id", updatable = false, nullable = false)
@@ -31,21 +31,17 @@ public class Payment {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    // TODO: Missing in SQL
-    //@Column(name = "currency", nullable = false)
-    //private String currency;
-
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "payment_method", nullable = false, columnDefinition = "payment_method_enum_name") // Adjust columnDefinition if needed
+    @Column(name = "payment_method", nullable = false, columnDefinition = "payment_method_enum_name")
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "status", nullable = false, columnDefinition = "payment_status_enum_name") // Adjust columnDefinition if needed
+    @Column(name = "status", nullable = false, columnDefinition = "payment_status_enum_name")
     private PaymentStatus paymentStatus;
 
-    @Column(name = "payment_date", nullable = false)
+    @Column(name = "payment_date")
     private LocalDateTime paymentDate;
 
     @Column(name = "amount", nullable = false)

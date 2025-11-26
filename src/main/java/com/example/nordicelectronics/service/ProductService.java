@@ -87,4 +87,6 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    // TODO: CALL REPOSIOTRY FOR VIEW GET_STOCK_QUANTITY
+
 }

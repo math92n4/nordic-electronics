@@ -1,6 +1,5 @@
 package com.example.nordicelectronics.repositories.sql;
 
-import com.example.nordicelectronics.entity.Wishlist;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

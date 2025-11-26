@@ -1,8 +1,6 @@
 package com.example.nordicelectronics.service;
 
-import com.example.nordicelectronics.entity.Brand;
 import com.example.nordicelectronics.entity.Warehouse;
-import com.example.nordicelectronics.repositories.sql.BrandRepository;
 import com.example.nordicelectronics.repositories.sql.WarehouseRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +33,7 @@ public class WarehouseService {
 
         existing.setName(warehouse.getName());
         existing.setAddress(warehouse.getAddress());
-        existing.setPhone(warehouse.getPhone());
+        existing.setPhoneNumber(warehouse.getPhoneNumber());
 
         return warehouseRepository.save(existing);
     }

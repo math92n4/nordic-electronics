@@ -2,6 +2,8 @@ package com.example.nordicelectronics.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +20,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-public class Review {
+public class Review extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "review_id", updatable = false, nullable = false)
@@ -33,6 +35,8 @@ public class Review {
     private UUID orderId;
 
     @Column(name = "review_value", nullable = false)
+    @Min(1)
+    @Max(5)
     private int reviewValue;
 
     @Column(nullable = false)
@@ -41,12 +45,8 @@ public class Review {
     @Column(nullable = false)
     private String comment;
 
-    @Column(name = "is_verified_purchase")
+    @Column(name = "is_verified_purchase") // TODO: Create as procedure or function
     private boolean isVerifiedPurchase;
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)

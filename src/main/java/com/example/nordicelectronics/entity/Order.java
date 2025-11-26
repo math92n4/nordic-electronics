@@ -2,13 +2,10 @@ package com.example.nordicelectronics.entity;
 
 import com.example.nordicelectronics.entity.enums.OrderStatus;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcType;
-import org.hibernate.annotations.Type;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.math.BigDecimal;
@@ -25,7 +22,7 @@ import java.util.UUID;
 @Builder
 @Table(name = "\"order\"")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "orderItems", "payment"})
-public class Order {
+public class Order extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -37,35 +34,42 @@ public class Order {
     @JsonBackReference
     private User user;
 
-    // Bidirectional relationship with Payment
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Payment payment;
 
-    @Column(name = "order_date", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id", nullable = false)
+    @JsonBackReference
+    private Address address;
+
+    @Column(name = "order_date")
     private LocalDateTime orderDate;
 
     @Enumerated(EnumType.STRING) // Standard JPA for Java enum handling
     @JdbcType(PostgreSQLEnumJdbcType.class) // Hibernate 6 way to bind to a custom JDBC type
-    @Column(name = "status", nullable = false, columnDefinition = "order_type_enum")
+    @Column(name = "status", columnDefinition = "order_type_enum")
     private OrderStatus orderStatus;
 
-    @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
+    @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "subtotal", nullable = false, precision = 19, scale = 2)
+    @Column(name = "subtotal", nullable = false, precision = 12, scale = 2)
     private BigDecimal subtotal;
 
-    @Column(name = "tax_amount", nullable = false, precision = 19, scale = 2)
+    @Column(name = "tax_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal taxAmount;
 
-    @Column(name = "shipping_cost", nullable = false, precision = 19, scale = 2)
+    @Column(name = "shipping_cost", nullable = false, precision = 12, scale = 2)
     private BigDecimal shippingCost;
 
-    @Column(name = "discount_amount", precision = 19, scale = 2)
+    @Column(name = "discount_amount", precision = 12, scale = 2)
     private BigDecimal discountAmount;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderProduct> orderProducts = new ArrayList<>();
 
-    // TODO: Order_Coupon
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_id")
+    @JsonBackReference
+    private Coupon coupon;
 }
