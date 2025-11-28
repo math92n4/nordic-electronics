@@ -751,31 +751,29 @@ SELECT cron.schedule(
 
 -- Order Abandonment Follow-up Event: Runs every 1 hour
 SELECT cron.schedule(
-               'order-abandonment-followup',
-               '0 * * * *', -- Every hour
-               $$
-                   BEGIN
+    'order-abandonment-followup',
+    '0 * * * *', -- Every hour
+    $$
+    BEGIN
         DECLARE
             v_order_record RECORD;
-BEGIN
-            -- Identify orders in PENDING status older than 1 hour
-FOR v_order_record IN
-SELECT order_id
-FROM "order"
-WHERE status = 'pending'
-  AND created_at < NOW() - INTERVAL '1 hour'
-  AND deleted_at IS NULL
-    LOOP
--- Restore inventory for abandoned orders
-UPDATE warehouse_product wp
-SET stock_quantity = wp.stock_quantity + op.quantity
-    FROM order_product op
-WHERE op.order_id = v_order_record.order_id
-  AND wp.product_id = op.product_id;
-END LOOP;
-END;
-END;
-    $$
+        -- Identify orders in PENDING status older than 1 hour
+        FOR v_order_record IN
+            SELECT order_id
+            FROM "order"
+            WHERE status = 'pending'
+                AND created_at < NOW() - INTERVAL '1 hour'
+                AND deleted_at IS NULL
+        LOOP
+            -- Restore inventory for abandoned orders
+            UPDATE warehouse_product wp
+            SET stock_quantity = wp.stock_quantity + op.quantity
+            FROM order_product op
+            WHERE op.order_id = v_order_record.order_id
+                AND wp.product_id = op.product_id;
+        END LOOP;
+    END;
+$$
 );
 
 -- Refresh Materialized Views Event: Runs daily at 3 AM
