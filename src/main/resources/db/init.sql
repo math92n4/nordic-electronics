@@ -481,12 +481,12 @@ $$ LANGUAGE plpgsql;
 
 -- Place Order Procedure: Validates coupon, calculates discounts, creates order, updates inventory
 CREATE OR REPLACE PROCEDURE sp_place_order(
+    OUT p_order_id UUID,
+    OUT p_total_amount NUMERIC(12, 2),
     p_user_id UUID,
     p_address_id UUID,
     p_order_items JSONB, -- Format: [{"product_id": "uuid", "quantity": 2, "warehouse_id": "uuid"}]
-    p_coupon_code TEXT DEFAULT NULL,
-    OUT p_order_id UUID,
-    OUT p_total_amount NUMERIC(12, 2)
+    p_coupon_code TEXT DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$
@@ -627,12 +627,17 @@ BEGIN
             WHERE product_id = (v_item->>'product_id')::UUID
                 AND warehouse_id = (v_item->>'warehouse_id')::UUID;
         ELSE
-            -- Update first available warehouse with stock
-            UPDATE warehouse_product
+        -- Update first warehouse that has enough stock
+            UPDATE warehouse_product wp
             SET stock_quantity = stock_quantity - (v_item->>'quantity')::INTEGER
-            WHERE product_id = (v_item->>'product_id')::UUID
-                AND stock_quantity >= (v_item->>'quantity')::INTEGER
-            LIMIT 1;
+            WHERE wp.warehouse_product_id = (
+                SELECT warehouse_product_id
+                FROM warehouse_product
+                WHERE product_id = (v_item->>'product_id')::UUID
+                    AND stock_quantity >= (v_item->>'quantity')::INTEGER
+                ORDER BY warehouse_product_id -- choose a deterministic row
+                LIMIT 1
+            );
         END IF;
     END LOOP;
     
@@ -746,29 +751,30 @@ SELECT cron.schedule(
 
 -- Order Abandonment Follow-up Event: Runs every 1 hour
 SELECT cron.schedule(
-    'order-abandonment-followup',
-    '0 * * * *', -- Every hour
-    $$
-    DO $$
-    DECLARE
-        v_order_record RECORD;
-    BEGIN
-        -- Identify orders in PENDING status older than 1 hour
-        FOR v_order_record IN 
-            SELECT order_id 
-            FROM "order" 
-            WHERE status = 'pending' 
-                AND created_at < NOW() - INTERVAL '1 hour'
-                AND deleted_at IS NULL
-        LOOP
-            -- Restore inventory for abandoned orders
-            UPDATE warehouse_product wp
-            SET stock_quantity = wp.stock_quantity + op.quantity
-            FROM order_product op
-            WHERE op.order_id = v_order_record.order_id
-                AND wp.product_id = op.product_id;
-        END LOOP;
-    END $$;
+               'order-abandonment-followup',
+               '0 * * * *', -- Every hour
+               $$
+                   BEGIN
+        DECLARE
+            v_order_record RECORD;
+BEGIN
+            -- Identify orders in PENDING status older than 1 hour
+FOR v_order_record IN
+SELECT order_id
+FROM "order"
+WHERE status = 'pending'
+  AND created_at < NOW() - INTERVAL '1 hour'
+  AND deleted_at IS NULL
+    LOOP
+-- Restore inventory for abandoned orders
+UPDATE warehouse_product wp
+SET stock_quantity = wp.stock_quantity + op.quantity
+    FROM order_product op
+WHERE op.order_id = v_order_record.order_id
+  AND wp.product_id = op.product_id;
+END LOOP;
+END;
+END;
     $$
 );
 
