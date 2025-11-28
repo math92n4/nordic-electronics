@@ -9,4 +9,5 @@ import java.util.UUID;
 
 public interface CouponRepository extends JpaRepository<Coupon, UUID> {
     List<Coupon> findAllByIsActive(boolean isActive);
+    Optional<Coupon> findByCode(String code);
 }

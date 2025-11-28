@@ -1,6 +1,11 @@
 package com.example.nordicelectronics.service;
 
+import com.example.nordicelectronics.entity.Address;
 import com.example.nordicelectronics.entity.Warehouse;
+import com.example.nordicelectronics.entity.dto.warehouse.WarehouseRequestDTO;
+import com.example.nordicelectronics.entity.dto.warehouse.WarehouseResponseDTO;
+import com.example.nordicelectronics.entity.mapper.WarehouseMapper;
+import com.example.nordicelectronics.repositories.sql.AddressRepository;
 import com.example.nordicelectronics.repositories.sql.WarehouseRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -8,34 +13,53 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class WarehouseService {
 
     private final WarehouseRepository warehouseRepository;
+    private final AddressRepository addressRepository;
 
-    public List<Warehouse> getAll() {
-        return warehouseRepository.findAll();
+    public List<WarehouseResponseDTO> getAll() {
+        return warehouseRepository.findAll().stream()
+                .map(WarehouseMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Warehouse getById(UUID id) {
-        return warehouseRepository.findById(id)
+    public WarehouseResponseDTO getById(UUID id) {
+        Warehouse warehouse = warehouseRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Warehouse not found"));
+        return WarehouseMapper.toResponseDTO(warehouse);
     }
 
-    public Warehouse save(Warehouse brand) {
-        return warehouseRepository.save(brand);
+    public WarehouseResponseDTO save(WarehouseRequestDTO dto) {
+        Address address = addressRepository.findById(dto.getAddressId())
+                .orElseThrow(() -> new EntityNotFoundException("Address not found with id: " + dto.getAddressId()));
+
+        Warehouse warehouse = WarehouseMapper.toEntity(dto);
+        warehouse.setAddress(address);
+        
+        Warehouse saved = warehouseRepository.save(warehouse);
+        return WarehouseMapper.toResponseDTO(saved);
     }
 
-    public Warehouse update(UUID id, Warehouse warehouse) {
-        Warehouse existing = getById(id);
+    public WarehouseResponseDTO update(UUID id, WarehouseRequestDTO dto) {
+        Warehouse existing = warehouseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Warehouse not found"));
 
-        existing.setName(warehouse.getName());
-        existing.setAddress(warehouse.getAddress());
-        existing.setPhoneNumber(warehouse.getPhoneNumber());
+        existing.setName(dto.getName());
+        existing.setPhoneNumber(dto.getPhoneNumber());
 
-        return warehouseRepository.save(existing);
+        if (dto.getAddressId() != null) {
+            Address address = addressRepository.findById(dto.getAddressId())
+                    .orElseThrow(() -> new EntityNotFoundException("Address not found with id: " + dto.getAddressId()));
+            existing.setAddress(address);
+        }
+
+        Warehouse saved = warehouseRepository.save(existing);
+        return WarehouseMapper.toResponseDTO(saved);
     }
 
     public void deleteById(UUID id) {

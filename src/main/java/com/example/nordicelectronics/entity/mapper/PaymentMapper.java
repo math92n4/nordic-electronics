@@ -1,7 +1,7 @@
 package com.example.nordicelectronics.entity.mapper;
 
 import com.example.nordicelectronics.entity.Payment;
-import com.example.nordicelectronics.entity.dto.PaymentResponseDTO;
+import com.example.nordicelectronics.entity.dto.payment.PaymentResponseDTO;
 
 public class PaymentMapper {
 

@@ -37,7 +37,7 @@ public class ReviewService {
     }
 
     public List<Review> getByProductId(UUID productId) {
-        Product product = productService.getById(productId);
+        Product product = productService.getEntityById(productId);
         return reviewRepository.findByProduct_ProductId(product.getProductId());
     }
 
@@ -47,7 +47,7 @@ public class ReviewService {
 
     public Review saveForUser(String email, Review review, UUID productId) {
         User user = userService.findByEmail(email);
-        Product product = productService.getById(productId);
+        Product product = productService.getEntityById(productId);
 
         review.setUser(user);
         review.setProduct(product);
@@ -58,7 +58,7 @@ public class ReviewService {
 
     public Review update(UUID id, Review review, UUID productId) {
         Review existing = getById(id);
-        Product product = productService.getById(productId);
+        Product product = productService.getEntityById(productId);
 
         existing.setProduct(product);
         existing.setReviewValue(review.getReviewValue());

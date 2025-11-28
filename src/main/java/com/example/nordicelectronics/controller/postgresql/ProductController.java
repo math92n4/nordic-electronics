@@ -1,6 +1,7 @@
 package com.example.nordicelectronics.controller.postgresql;
 
-import com.example.nordicelectronics.entity.Product;
+import com.example.nordicelectronics.entity.dto.product.ProductRequestDTO;
+import com.example.nordicelectronics.entity.dto.product.ProductResponseDTO;
 import com.example.nordicelectronics.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,31 +23,31 @@ public class ProductController {
 
     @Operation(summary = "Get all PostgreSQL products", description = "Fetches a list of all products.")
     @GetMapping("")
-    public ResponseEntity<List<Product>> getAll() {
+    public ResponseEntity<List<ProductResponseDTO>> getAll() {
         return new ResponseEntity<>(productService.getAll(), HttpStatus.OK);
     }
 
     @Operation(summary = "Get PostgreSQL product by ID", description = "Fetches a product by its unique ID.")
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getById(@PathVariable UUID id) {
+    public ResponseEntity<ProductResponseDTO> getById(@PathVariable UUID id) {
         return new ResponseEntity<>(productService.getById(id), HttpStatus.OK);
     }
 
     @Operation(summary = "Create a new PostgreSQL product", description = "Creates a new product and returns the created product.")
     @PostMapping("")
-    public ResponseEntity<Product> save(@RequestBody Product product) {
-        return new ResponseEntity<>(productService.save(product), HttpStatus.CREATED);
+    public ResponseEntity<ProductResponseDTO> save(@RequestBody ProductRequestDTO dto) {
+        return new ResponseEntity<>(productService.save(dto), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Update an existing PostgreSQL product", description = "Updates an existing product by its ID and returns the updated product.")
     @PutMapping("/{id}")
-    public ResponseEntity<Product> update(@PathVariable UUID id, @RequestBody Product product) {
-        return new ResponseEntity<>(productService.update(id, product), HttpStatus.OK);
+    public ResponseEntity<ProductResponseDTO> update(@PathVariable UUID id, @RequestBody ProductRequestDTO dto) {
+        return new ResponseEntity<>(productService.update(id, dto), HttpStatus.OK);
     }
 
     @Operation(summary = "Delete a PostgreSQL product", description = "Deletes a product by its unique ID.")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Product> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
         productService.deleteById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
