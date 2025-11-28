@@ -7,6 +7,7 @@ const API_ENDPOINTS = {
     BRANDS: `${API_BASE_URL}/postgresql/brands`,
     WAREHOUSES: `${API_BASE_URL}/postgresql/warehouses`,
     REVIEWS: `${API_BASE_URL}/postgresql/reviews`,
+    ORDERS: `${API_BASE_URL}/postgresql/orders`,
     STRIPE: `${API_BASE_URL}/postgresql/stripe`
 };
 
@@ -40,12 +41,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // App Initialization
 function initializeApp() {
-    checkAuthStatus();
-    loadCart();
-    loadProducts();
-    loadCategories();
-    loadBrands();
-    updateCartCount();
+    try {
+        checkAuthStatus();
+        loadCart();
+        loadProducts();
+        loadCategories();
+        loadBrands();
+        updateCartCount();
+    } catch (error) {
+        console.error('Error initializing app:', error);
+    }
 }
 
 // Cart persistence
@@ -142,7 +147,43 @@ function setupEventListeners() {
                     return;
                 }
 
+                // Collect and validate address information
+                const addressSection = document.getElementById('cart-address-section');
+                let address = null;
+                
+                if (addressSection && addressSection.style.display !== 'none') {
+                    const street = document.getElementById('address-street').value.trim();
+                    const streetNumber = document.getElementById('address-street-number').value.trim();
+                    const zip = document.getElementById('address-zip').value.trim();
+                    const city = document.getElementById('address-city').value.trim();
+                    
+                    // Validate all fields are filled
+                    if (!street || !streetNumber || !zip || !city) {
+                        showAlert('Please fill in all address fields', 'error');
+                        return;
+                    }
+                    
+                    // Create address object
+                    address = {
+                        street: street,
+                        streetNumber: streetNumber,
+                        zip: zip,
+                        city: city
+                    };
+                }
+
                 showAlert('Creating checkout session...', 'info');
+
+                const requestBody = {
+                    cart: cart,
+                    successUrl: window.location.origin + '/?checkout=success',
+                    cancelUrl: window.location.origin + '/?checkout=cancel'
+                };
+                
+                // Add address if provided
+                if (address) {
+                    requestBody.address = address;
+                }
 
                 const response = await fetch(`${API_ENDPOINTS.STRIPE}/checkout`, {
                     method: 'POST',
@@ -150,11 +191,7 @@ function setupEventListeners() {
                         'Content-Type': 'application/json',
                     },
                     credentials: 'same-origin', // Include session cookies
-                    body: JSON.stringify({
-                        cart: cart,
-                        successUrl: window.location.origin + '/?checkout=success',
-                        cancelUrl: window.location.origin + '/?checkout=cancel'
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();
@@ -169,6 +206,7 @@ function setupEventListeners() {
                     // Clear cart on successful checkout initiation
                     cart = [];
                     _onCartChanged();
+                    clearAddressFields();
                     hideCartModal();
 
                     // Redirect to Stripe checkout
@@ -468,7 +506,15 @@ async function loadUserOrders() {
 
     try {
         showLoading('orders-grid');
-        const response = await fetch(`${API_ENDPOINTS.STRIPE}/orders`, {
+        
+        // Get userId from currentUser (handle different response structures)
+        const userId = currentUser.userId || (currentUser.user && currentUser.user.userId);
+        if (!userId) {
+            showError('orders-grid', 'User ID not found. Please login again.');
+            return;
+        }
+
+        const response = await fetch(`${API_ENDPOINTS.ORDERS}/by-user?userId=${userId}`, {
             method: 'GET',
             credentials: 'same-origin' // Include session cookies
         });
@@ -477,34 +523,69 @@ async function loadUserOrders() {
             const orders = await response.json();
             displayOrders(orders);
         } else {
-            throw new Error('Failed to load orders');
+            const errorData = await response.json().catch(() => ({ message: 'Failed to load orders' }));
+            throw new Error(errorData.message || 'Failed to load orders');
         }
     } catch (error) {
         console.error('Error loading orders:', error);
-        showError('orders-grid', 'Failed to load orders');
+        showError('orders-grid', error.message || 'Failed to load orders');
     }
 }
 
 function displayOrders(orders) {
     const grid = document.getElementById('orders-grid');
 
-    if (orders.length === 0) {
+    if (!orders || orders.length === 0) {
         grid.innerHTML = '<div class="no-orders"><p>You haven\'t placed any orders yet.</p><button class="btn btn-primary" onclick="scrollToSection(\'products\')">Start Shopping</button></div>';
         return;
     }
 
     grid.innerHTML = orders.map(order => {
-        const orderDate = new Date(order.createdAt).toLocaleDateString();
-        const totalItems = order.cart.reduce((sum, item) => sum + item.quantity, 0);
-        const totalAmount = order.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        // Handle both old session-based format and new PostgreSQL format
+        const orderId = order.orderId || order.id || '';
+        const orderDate = order.orderDate ? new Date(order.orderDate).toLocaleDateString() : 
+                         (order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 
+                         (order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'));
+        const status = order.status || order.orderStatus || 'UNKNOWN';
+        
+        // Handle order products - PostgreSQL format has orderProducts array
+        let orderItems = [];
+        let totalItems = 0;
+        let totalAmount = 0;
+        
+        // Use totalAmount from DTO if available (preferred)
+        if (order.totalAmount !== undefined && order.totalAmount !== null) {
+            totalAmount = parseFloat(order.totalAmount) || 0;
+        }
+        
+        if (order.orderProducts && Array.isArray(order.orderProducts)) {
+            // PostgreSQL format
+            orderItems = order.orderProducts;
+            totalItems = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            // Only calculate from items if totalAmount wasn't provided
+            if (totalAmount === 0) {
+                totalAmount = orderItems.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
+            }
+        } else if (order.cart && Array.isArray(order.cart)) {
+            // Old session-based format (fallback)
+            orderItems = order.cart;
+            totalItems = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            if (totalAmount === 0) {
+                totalAmount = orderItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 0), 0);
+            }
+        }
 
+        // Safely convert orderId to string
+        const orderIdStr = orderId ? String(orderId) : 'N/A';
+        const orderIdDisplay = orderIdStr.length > 8 ? orderIdStr.substring(0, 8) : orderIdStr;
+        
         return `
             <div class="order-card">
                 <div class="order-header">
                     <div class="order-info">
-                        <h3>Order #${order.orderId.substring(0, 8)}</h3>
+                        <h3>Order #${orderIdDisplay}</h3>
                         <p class="order-date">${orderDate}</p>
-                        <span class="order-status status-${order.status.toLowerCase()}">${order.status}</span>
+                        <span class="order-status status-${status.toLowerCase()}">${status}</span>
                     </div>
                     <div class="order-summary">
                         <p class="order-total">$${totalAmount.toFixed(2)}</p>
@@ -512,20 +593,29 @@ function displayOrders(orders) {
                     </div>
                 </div>
                 <div class="order-items-list">
-                    ${order.cart.map(item => `
-                        <div class="order-item">
-                            <span class="item-name">${item.name}</span>
-                            <span class="item-quantity">Qty: ${item.quantity}</span>
-                            <span class="item-price">$${item.price.toFixed(2)}</span>
-                        </div>
-                    `).join('')}
+                    ${orderItems.length > 0 ? orderItems.map(item => {
+                        // Handle PostgreSQL format (orderProducts with product object)
+                        const productName = item.product ? (item.product.name || 'Unknown Product') : (item.name || 'Unknown Product');
+                        const quantity = item.quantity || 0;
+                        const price = item.totalPrice ? parseFloat(item.totalPrice) : 
+                                     (item.unitPrice ? parseFloat(item.unitPrice) * quantity : 
+                                     (item.price ? parseFloat(item.price) * quantity : 0));
+                        
+                        return `
+                            <div class="order-item">
+                                <span class="item-name">${productName}</span>
+                                <span class="item-quantity">Qty: ${quantity}</span>
+                                <span class="item-price">$${price.toFixed(2)}</span>
+                            </div>
+                        `;
+                    }).join('') : '<p class="no-items">No items in this order</p>'}
                 </div>
                 <div class="order-actions">
-                    <button class="btn btn-secondary" onclick="viewOrderDetails('${order.orderId}')">
+                    <button class="btn btn-secondary" onclick="viewOrderDetails('${orderId}')">
                         <i class="fas fa-eye"></i> View Details
                     </button>
-                    ${order.status === 'PENDING' ? 
-                        `<button class="btn btn-primary" onclick="reorderItems('${order.orderId}')">
+                    ${status.toUpperCase() === 'PENDING' || status.toUpperCase() === 'pending' ? 
+                        `<button class="btn btn-primary" onclick="reorderItems('${orderId}')">
                             <i class="fas fa-redo"></i> Reorder
                         </button>` : ''
                     }
@@ -536,7 +626,9 @@ function displayOrders(orders) {
 }
 
 function viewOrderDetails(orderId) {
-    showAlert(`Order details for ${orderId.substring(0, 8)} - Feature coming soon!`, 'info');
+    const orderIdStr = orderId ? String(orderId) : 'N/A';
+    const orderIdDisplay = orderIdStr.length > 8 ? orderIdStr.substring(0, 8) : orderIdStr;
+    showAlert(`Order details for ${orderIdDisplay} - Feature coming soon!`, 'info');
 }
 
 function reorderItems(orderId) {
@@ -852,12 +944,14 @@ function hideCartModal() {
 }
 
 function renderCartItems() {
-    const modalEl = document.getElementById('cart-modal');
-    const itemsContainer = document.getElementById('cart-items');
-    const totalEl = document.getElementById('cart-total');
-    console.debug('renderCartItems called, modalEl=', modalEl, 'itemsContainer=', itemsContainer);
+    try {
+        const modalEl = document.getElementById('cart-modal');
+        const itemsContainer = document.getElementById('cart-items');
+        const totalEl = document.getElementById('cart-total');
+        const addressSection = document.getElementById('cart-address-section');
+        console.debug('renderCartItems called, modalEl=', modalEl, 'itemsContainer=', itemsContainer);
 
-    if (!itemsContainer || !totalEl) return;
+        if (!itemsContainer || !totalEl) return;
 
     // Clear existing items
     itemsContainer.innerHTML = '';
@@ -865,7 +959,18 @@ function renderCartItems() {
     if (!Array.isArray(cart) || cart.length === 0) {
         itemsContainer.innerHTML = '<p class="no-results">Your cart is empty</p>';
         totalEl.textContent = '$0.00';
+        // Hide address section when cart is empty
+        if (addressSection) addressSection.style.display = 'none';
+        // Clear address fields
+        clearAddressFields();
         return;
+    }
+
+    // Show address section when cart has items and user is logged in
+    if (addressSection && currentUser) {
+        addressSection.style.display = 'block';
+    } else if (addressSection) {
+        addressSection.style.display = 'none';
     }
 
     let total = 0;
@@ -908,6 +1013,9 @@ function renderCartItems() {
     });
 
     totalEl.textContent = `$${total.toFixed(2)}`;
+    } catch (error) {
+        console.error('Error rendering cart items:', error);
+    }
 }
 
 // Ensure cart changes are persisted when quantities or removals occur
@@ -958,6 +1066,23 @@ function removeFromCart(productId) {
     _onCartChanged();
     // Re-render cart items
     if (cartModal && cartModal.style.display === 'block') renderCartItems();
+}
+
+// Clear address input fields
+function clearAddressFields() {
+    try {
+        const streetInput = document.getElementById('address-street');
+        const streetNumberInput = document.getElementById('address-street-number');
+        const zipInput = document.getElementById('address-zip');
+        const cityInput = document.getElementById('address-city');
+        
+        if (streetInput) streetInput.value = '';
+        if (streetNumberInput) streetNumberInput.value = '';
+        if (zipInput) zipInput.value = '';
+        if (cityInput) cityInput.value = '';
+    } catch (error) {
+        console.debug('Error clearing address fields (may not exist yet):', error);
+    }
 }
 
 // Utility Functions

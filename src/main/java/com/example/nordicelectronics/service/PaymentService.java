@@ -2,7 +2,7 @@ package com.example.nordicelectronics.service;
 
 import com.example.nordicelectronics.entity.Order;
 import com.example.nordicelectronics.entity.Payment;
-import com.example.nordicelectronics.entity.dto.PaymentRequestDTO;
+import com.example.nordicelectronics.entity.dto.payment.PaymentRequestDTO;
 import com.example.nordicelectronics.entity.enums.PaymentMethod;
 import com.example.nordicelectronics.entity.enums.PaymentStatus;
 import com.example.nordicelectronics.repositories.sql.OrderRepository;

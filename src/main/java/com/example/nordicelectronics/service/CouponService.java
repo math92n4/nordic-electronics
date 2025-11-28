@@ -1,37 +1,52 @@
 package com.example.nordicelectronics.service;
 
 import com.example.nordicelectronics.entity.Coupon;
+import com.example.nordicelectronics.entity.dto.coupon.CouponRequestDTO;
+import com.example.nordicelectronics.entity.dto.coupon.CouponResponseDTO;
+import com.example.nordicelectronics.entity.mapper.CouponMapper;
 import com.example.nordicelectronics.repositories.sql.CouponRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CouponService {
 
-    @Autowired
-    public CouponRepository couponRepository;
+    private final CouponRepository couponRepository;
 
-    public Coupon getCouponById(UUID couponId) {
-        return couponRepository.findById(couponId).orElse(null);
+    public CouponResponseDTO getCouponById(UUID couponId) {
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new RuntimeException("Coupon not found with id: " + couponId));
+        return CouponMapper.toResponseDTO(coupon);
     }
 
-    public List<Coupon> getAllCouponsByOrderId(UUID orderId) {
-        return couponRepository.findAllByIsActive(true); // TODO: implement method to get coupons by order ID
+    public List<CouponResponseDTO> getAllCouponsByOrderId(UUID orderId) {
+        // TODO: implement method to get coupons by order ID
+        return couponRepository.findAllByIsActive(true).stream()
+                .map(CouponMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<Coupon> getAllActiveCoupons() {
-        return couponRepository.findAllByIsActive(true);
+    public List<CouponResponseDTO> getAllActiveCoupons() {
+        return couponRepository.findAllByIsActive(true).stream()
+                .map(CouponMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<Coupon> getAllInactiveCoupons() {
-        return couponRepository.findAllByIsActive(false);
+    public List<CouponResponseDTO> getAllInactiveCoupons() {
+        return couponRepository.findAllByIsActive(false).stream()
+                .map(CouponMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Coupon save(Coupon coupon) {
-        return couponRepository.save(coupon);
+    public CouponResponseDTO save(CouponRequestDTO dto) {
+        Coupon coupon = CouponMapper.toEntity(dto);
+        Coupon saved = couponRepository.save(coupon);
+        return CouponMapper.toResponseDTO(saved);
     }
 
 }

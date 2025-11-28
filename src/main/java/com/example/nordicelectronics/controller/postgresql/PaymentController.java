@@ -1,8 +1,8 @@
 package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.Payment;
-import com.example.nordicelectronics.entity.dto.PaymentRequestDTO;
-import com.example.nordicelectronics.entity.dto.PaymentResponseDTO;
+import com.example.nordicelectronics.entity.dto.payment.PaymentRequestDTO;
+import com.example.nordicelectronics.entity.dto.payment.PaymentResponseDTO;
 import com.example.nordicelectronics.entity.mapper.PaymentMapper;
 import com.example.nordicelectronics.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;

@@ -1,10 +1,19 @@
 package com.example.nordicelectronics.unit.service;
 
+import com.example.nordicelectronics.entity.Address;
 import com.example.nordicelectronics.entity.Order;
 import com.example.nordicelectronics.entity.User;
+import com.example.nordicelectronics.entity.dto.address.AddressRequestDTO;
+import com.example.nordicelectronics.entity.dto.order.OrderProductRequestDTO;
+import com.example.nordicelectronics.entity.dto.order.OrderRequestDTO;
+import com.example.nordicelectronics.repositories.sql.AddressRepository;
+import com.example.nordicelectronics.repositories.sql.CouponRepository;
+import com.example.nordicelectronics.repositories.sql.OrderProductRepository;
 import com.example.nordicelectronics.repositories.sql.OrderRepository;
+import com.example.nordicelectronics.repositories.sql.ProductRepository;
 import com.example.nordicelectronics.repositories.sql.UserRepository;
 import com.example.nordicelectronics.service.OrderService;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,11 +23,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +43,21 @@ public class OrderServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private AddressRepository addressRepository;
+
+    @Mock
+    private OrderProductRepository orderProductRepository;
+
+    @Mock
+    private ProductRepository productRepository;
+
+    @Mock
+    private CouponRepository couponRepository;
+
+    @Mock
+    private EntityManager entityManager;
 
     private UUID orderId;
     private UUID userId;
@@ -160,17 +186,23 @@ public class OrderServiceTest {
     void createOrder_userNotFound_throwsException() {
         // Arrange
         UUID unknownUserId = UUID.randomUUID();
-        Order newOrder = new Order();
-        User userReference = new User();
-        userReference.setUserId(unknownUserId);
-        newOrder.setUser(userReference);
+        OrderRequestDTO orderRequestDTO = OrderRequestDTO.builder()
+                .userId(unknownUserId)
+                .address(AddressRequestDTO.builder()
+                        .street("Test Street")
+                        .streetNumber("123")
+                        .zip("12345")
+                        .city("Test City")
+                        .build())
+                .orderProducts(Collections.emptyList())
+                .build();
 
         // Mock the user lookup failure
         when(userRepository.findById(unknownUserId)).thenReturn(Optional.empty());
 
         // Act & Assert
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            orderService.createOrder(newOrder);
+            orderService.createOrder(orderRequestDTO);
         });
 
         assertTrue(exception.getMessage().contains("User not found with ID: " + unknownUserId));

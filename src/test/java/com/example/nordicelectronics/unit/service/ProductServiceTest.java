@@ -4,6 +4,9 @@ import com.example.nordicelectronics.entity.Brand;
 import com.example.nordicelectronics.entity.Category;
 import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.Warranty;
+import com.example.nordicelectronics.entity.dto.product.ProductRequestDTO;
+import com.example.nordicelectronics.entity.dto.product.ProductResponseDTO;
+import com.example.nordicelectronics.entity.mapper.ProductMapper;
 import com.example.nordicelectronics.repositories.sql.ProductRepository;
 import com.example.nordicelectronics.service.BrandService;
 import com.example.nordicelectronics.service.CategoryService;
@@ -19,7 +22,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -48,7 +53,6 @@ class ProductServiceTest {
 
     private UUID productId;
     private Product existingProduct;
-    private Product updateProduct;
 
     @BeforeEach
     void setUp() {
@@ -88,7 +92,7 @@ class ProductServiceTest {
                 .thenReturn(Optional.of(existingProduct));
 
         // Act
-        Product result = productService.getById(existingProduct.getProductId());
+        ProductResponseDTO result = productService.getById(existingProduct.getProductId());
 
         // Assert
         assertThat(result).isNotNull();
@@ -141,7 +145,19 @@ class ProductServiceTest {
         when(categoryService.getById(categoryId)).thenReturn(category);
         when(warrantyService.getById(warrantyId)).thenReturn(warranty);
 
-        Product newProduct = Product.builder()
+        ProductRequestDTO requestDTO = ProductRequestDTO.builder()
+                .sku("ABC-999999")
+                .name("New Product")
+                .description("Description")
+                .price(new BigDecimal("500.00"))
+                .weight(new BigDecimal("1.0"))
+                .brandId(brandId)
+                .warrantyId(warrantyId)
+                .categoryIds(List.of(categoryId))
+                .build();
+
+        Product savedProduct = Product.builder()
+                .productId(UUID.randomUUID())
                 .sku("ABC-999999")
                 .name("New Product")
                 .description("Description")
@@ -150,17 +166,14 @@ class ProductServiceTest {
                 .brand(brand)
                 .warranty(warranty)
                 .categories(Set.of(category))
+                .reviews(new HashSet<>())
                 .build();
 
         when(productRepository.save(any(Product.class)))
-                .thenAnswer(invocation -> {
-                    Product product = invocation.getArgument(0);
-                    product.setProductId(UUID.randomUUID());
-                    return product;
-                });
+                .thenReturn(savedProduct);
 
         // Act
-        Product result = productService.save(newProduct);
+        ProductResponseDTO result = productService.save(requestDTO);
 
         // Assert
         assertThat(result).isNotNull();
@@ -189,17 +202,18 @@ class ProductServiceTest {
         // Arrange
         when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
 
-        updateProduct = new Product();
-        updateProduct.setSku("NEW-SKU-001");
-        updateProduct.setName("New Product Name");
-        updateProduct.setDescription("New description");
-        updateProduct.setPrice(new BigDecimal("149.99"));
-        updateProduct.setWeight(new BigDecimal("2.5"));
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("NEW-SKU-001")
+                .name("New Product Name")
+                .description("New description")
+                .price(new BigDecimal("149.99"))
+                .weight(new BigDecimal("2.5"))
+                .build();
 
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert - AAA Pattern
         assertThat(result.getSku()).isEqualTo("NEW-SKU-001");
@@ -213,11 +227,11 @@ class ProductServiceTest {
 
     /**
      * WHITE-BOX TEST: Branch Coverage - Brand update branch (true path)
-     * Covers: if (product.getBrand() != null && product.getBrand().getBrandId() != null)
-     * Path: Both conditions true -> execute brand update
+     * Covers: if (dto.getBrandId() != null)
+     * Path: Condition true -> execute brand update
      */
     @Test
-    @DisplayName("Should update brand when brand and brandId are provided")
+    @DisplayName("Should update brand when brandId is provided")
     void testUpdateWithNewBrand() {
         // Arrange
         when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
@@ -227,99 +241,64 @@ class ProductServiceTest {
         newBrand.setBrandId(newBrandId);
         newBrand.setName("New Brand");
 
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setBrand(newBrand);
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("SKU-001")
+                .name("Product")
+                .description("Description")
+                .price(new BigDecimal("100.00"))
+                .weight(new BigDecimal("1.0"))
+                .brandId(newBrandId)
+                .build();
 
         when(brandService.getById(newBrandId)).thenReturn(newBrand);
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert
-        assertThat(result.getBrand()).isEqualTo(newBrand);
         verify(brandService).getById(newBrandId);
         verify(productRepository).save(existingProduct);
     }
 
     /**
-     * WHITE-BOX TEST: Branch Coverage - Brand update branch (false path - null brand)
-     * Covers: if (product.getBrand() != null && product.getBrand().getBrandId() != null)
-     * Path: First condition false -> skip brand update
+     * WHITE-BOX TEST: Branch Coverage - Brand update branch (false path - null brandId)
+     * Covers: if (dto.getBrandId() != null)
+     * Path: Condition false -> skip brand update
      */
     @Test
-    @DisplayName("Should not update brand when brand is null")
+    @DisplayName("Should not update brand when brandId is null")
     void testUpdateWithNullBrand() {
         // Arrange
         when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
 
         Brand originalBrand = existingProduct.getBrand();
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setBrand(null); // Null brand
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("SKU-001")
+                .name("Product")
+                .description("Description")
+                .price(new BigDecimal("100.00"))
+                .weight(new BigDecimal("1.0"))
+                .brandId(null) // Null brandId
+                .build();
 
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert
-        assertThat(result.getBrand()).isEqualTo(originalBrand); // Brand unchanged
-        verify(brandService, never()).getById(any(UUID.class));
-        verify(productRepository).save(existingProduct);
-    }
-
-    /**
-     * WHITE-BOX TEST: Branch Coverage - Brand update branch (false path - null brandId)
-     * Covers: if (product.getBrand() != null && product.getBrand().getBrandId() != null)
-     * Path: First condition true, second false -> skip brand update
-     */
-    @Test
-    @DisplayName("Should not update brand when brandId is null")
-    void testUpdateWithNullBrandId() {
-        // Arrange
-        when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
-        Brand originalBrand = existingProduct.getBrand();
-
-        Brand brandWithoutId = new Brand();
-        brandWithoutId.setBrandId(null); // Null brandId
-        brandWithoutId.setName("Brand Without ID");
-
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setBrand(brandWithoutId);
-
-        when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
-
-        // Act
-        Product result = productService.update(productId, updateProduct);
-
-        // Assert
-        assertThat(result.getBrand()).isEqualTo(originalBrand); // Brand unchanged
         verify(brandService, never()).getById(any(UUID.class));
         verify(productRepository).save(existingProduct);
     }
 
     /**
      * WHITE-BOX TEST: Branch Coverage - Warranty update branch (true path)
-     * Covers: if (product.getWarranty() != null && product.getWarranty().getWarrantyId() != null)
-     * Path: Both conditions true -> execute warranty update
+     * Covers: if (dto.getWarrantyId() != null)
+     * Path: Condition true -> execute warranty update
      */
     @Test
-    @DisplayName("Should update warranty when warranty and warrantyId are provided")
+    @DisplayName("Should update warranty when warrantyId is provided")
     void testUpdateWithNewWarranty() {
         // Arrange
         when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
@@ -327,98 +306,65 @@ class ProductServiceTest {
         Warranty newWarranty = new Warranty();
         newWarranty.setWarrantyId(newWarrantyId);
 
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setWarranty(newWarranty);
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("SKU-001")
+                .name("Product")
+                .description("Description")
+                .price(new BigDecimal("100.00"))
+                .weight(new BigDecimal("1.0"))
+                .warrantyId(newWarrantyId)
+                .build();
 
         when(warrantyService.getById(newWarrantyId)).thenReturn(newWarranty);
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert
-        assertThat(result.getWarranty()).isEqualTo(newWarranty);
         verify(warrantyService).getById(newWarrantyId);
         verify(productRepository).save(existingProduct);
     }
 
     /**
-     * WHITE-BOX TEST: Branch Coverage - Warranty update branch (false path - null warranty)
-     * Covers: if (product.getWarranty() != null && product.getWarranty().getWarrantyId() != null)
-     * Path: First condition false -> skip warranty update
+     * WHITE-BOX TEST: Branch Coverage - Warranty update branch (false path - null warrantyId)
+     * Covers: if (dto.getWarrantyId() != null)
+     * Path: Condition false -> skip warranty update
      */
     @Test
-    @DisplayName("Should not update warranty when warranty is null")
+    @DisplayName("Should not update warranty when warrantyId is null")
     void testUpdateWithNullWarranty() {
         // Arrange
         when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
         Warranty originalWarranty = existingProduct.getWarranty();
 
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setWarranty(null); // Null warranty
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("SKU-001")
+                .name("Product")
+                .description("Description")
+                .price(new BigDecimal("100.00"))
+                .weight(new BigDecimal("1.0"))
+                .warrantyId(null) // Null warrantyId
+                .build();
 
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert
-        assertThat(result.getWarranty()).isEqualTo(originalWarranty); // Warranty unchanged
         verify(warrantyService, never()).getById(any(UUID.class));
         verify(productRepository).save(existingProduct);
     }
 
-    /**
-     * WHITE-BOX TEST: Branch Coverage - Warranty update branch (false path - null warrantyId)
-     * Covers: if (product.getWarranty() != null && product.getWarranty().getWarrantyId() != null)
-     * Path: First condition true, second false -> skip warranty update
-     */
-    @Test
-    @DisplayName("Should not update warranty when warrantyId is null")
-    void testUpdateWithNullWarrantyId() {
-        // Arrange
-        when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
-        Warranty originalWarranty = existingProduct.getWarranty();
-
-        Warranty warrantyWithoutId = new Warranty();
-        warrantyWithoutId.setWarrantyId(null); // Null warrantyId
-
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setWarranty(warrantyWithoutId);
-
-        when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
-
-        // Act
-        Product result = productService.update(productId, updateProduct);
-
-        // Assert
-        assertThat(result.getWarranty()).isEqualTo(originalWarranty); // Warranty unchanged
-        verify(warrantyService, never()).getById(any(UUID.class));
-        verify(productRepository).save(existingProduct);
-    }
 
     /**
      * WHITE-BOX TEST: Branch Coverage - Categories update branch (true path)
-     * Covers: if (product.getCategories() != null && !product.getCategories().isEmpty())
+     * Covers: if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty())
      * Path: Both conditions true -> execute category update
      */
     @Test
-    @DisplayName("Should update categories when categories are provided")
+    @DisplayName("Should update categories when categoryIds are provided")
     void testUpdateWithNewCategories() {
         // Arrange
         when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
@@ -433,92 +379,87 @@ class ProductServiceTest {
         category2.setCategoryId(categoryId2);
         category2.setName("Category 2");
 
-        Set<Category> newCategories = new HashSet<>();
-        newCategories.add(category1);
-        newCategories.add(category2);
-
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setCategories(newCategories);
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("SKU-001")
+                .name("Product")
+                .description("Description")
+                .price(new BigDecimal("100.00"))
+                .weight(new BigDecimal("1.0"))
+                .categoryIds(List.of(categoryId1, categoryId2))
+                .build();
 
         when(categoryService.getById(categoryId1)).thenReturn(category1);
         when(categoryService.getById(categoryId2)).thenReturn(category2);
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert
-        assertThat(result.getCategories()).hasSize(2);
-        assertThat(result.getCategories()).containsExactlyInAnyOrder(category1, category2);
         verify(categoryService).getById(categoryId1);
         verify(categoryService).getById(categoryId2);
         verify(productRepository).save(existingProduct);
     }
 
     /**
-     * WHITE-BOX TEST: Branch Coverage - Categories update branch (false path - null categories)
-     * Covers: if (product.getCategories() != null && !product.getCategories().isEmpty())
+     * WHITE-BOX TEST: Branch Coverage - Categories update branch (false path - null categoryIds)
+     * Covers: if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty())
      * Path: First condition false -> skip category update
      */
     @Test
-    @DisplayName("Should not update categories when categories are null")
+    @DisplayName("Should not update categories when categoryIds are null")
     void testUpdateWithNullCategories() {
         // Arrange
         when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
         Set<Category> originalCategories = existingProduct.getCategories();
 
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setCategories(null); // Null categories
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("SKU-001")
+                .name("Product")
+                .description("Description")
+                .price(new BigDecimal("100.00"))
+                .weight(new BigDecimal("1.0"))
+                .categoryIds(null) // Null categoryIds
+                .build();
 
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert
-        assertThat(result.getCategories()).isEqualTo(originalCategories); // Categories unchanged
         verify(categoryService, never()).getById(any(UUID.class));
         verify(productRepository).save(existingProduct);
     }
 
     /**
-     * WHITE-BOX TEST: Branch Coverage - Categories update branch (false path - empty categories)
-     * Covers: if (product.getCategories() != null && !product.getCategories().isEmpty())
+     * WHITE-BOX TEST: Branch Coverage - Categories update branch (false path - empty categoryIds)
+     * Covers: if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty())
      * Path: First condition true, second false -> skip category update
      * BOUNDARY VALUE: Empty collection edge case
      */
     @Test
-    @DisplayName("Should not update categories when categories are empty")
+    @DisplayName("Should not update categories when categoryIds are empty")
     void testUpdateWithEmptyCategories() {
         // Arrange
         when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
         Set<Category> originalCategories = existingProduct.getCategories();
 
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setCategories(new HashSet<>()); // Empty set
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("SKU-001")
+                .name("Product")
+                .description("Description")
+                .price(new BigDecimal("100.00"))
+                .weight(new BigDecimal("1.0"))
+                .categoryIds(new ArrayList<>()) // Empty list
+                .build();
 
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert
-        assertThat(result.getCategories()).isEqualTo(originalCategories); // Categories unchanged
         verify(categoryService, never()).getById(any(UUID.class));
         verify(productRepository).save(existingProduct);
     }
@@ -544,18 +485,16 @@ class ProductServiceTest {
         Category category = new Category();
         category.setCategoryId(categoryId);
 
-        Set<Category> categories = new HashSet<>();
-        categories.add(category);
-
-        updateProduct = new Product();
-        updateProduct.setSku("SKU-001");
-        updateProduct.setName("Product");
-        updateProduct.setDescription("Description");
-        updateProduct.setPrice(new BigDecimal("100.00"));
-        updateProduct.setWeight(new BigDecimal("1.0"));
-        updateProduct.setBrand(newBrand);
-        updateProduct.setWarranty(newWarranty);
-        updateProduct.setCategories(categories);
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("SKU-001")
+                .name("Product")
+                .description("Description")
+                .price(new BigDecimal("100.00"))
+                .weight(new BigDecimal("1.0"))
+                .brandId(newBrandId)
+                .warrantyId(newWarrantyId)
+                .categoryIds(List.of(categoryId))
+                .build();
 
         when(brandService.getById(newBrandId)).thenReturn(newBrand);
         when(warrantyService.getById(newWarrantyId)).thenReturn(newWarranty);
@@ -563,12 +502,9 @@ class ProductServiceTest {
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert
-        assertThat(result.getBrand()).isEqualTo(newBrand);
-        assertThat(result.getWarranty()).isEqualTo(newWarranty);
-        assertThat(result.getCategories()).containsExactly(category);
         verify(brandService).getById(newBrandId);
         verify(warrantyService).getById(newWarrantyId);
         verify(categoryService).getById(categoryId);
@@ -588,25 +524,23 @@ class ProductServiceTest {
         Warranty originalWarranty = existingProduct.getWarranty();
         Set<Category> originalCategories = existingProduct.getCategories();
 
-        updateProduct = new Product();
-        updateProduct.setSku("MINIMAL-SKU");
-        updateProduct.setName("Minimal Product");
-        updateProduct.setDescription("Minimal description");
-        updateProduct.setPrice(new BigDecimal("50.00"));
-        updateProduct.setWeight(new BigDecimal("0.5"));
-        // No brand, warranty, or categories set
+        ProductRequestDTO updateDTO = ProductRequestDTO.builder()
+                .sku("MINIMAL-SKU")
+                .name("Minimal Product")
+                .description("Minimal description")
+                .price(new BigDecimal("50.00"))
+                .weight(new BigDecimal("0.5"))
+                // No brandId, warrantyId, or categoryIds set
+                .build();
 
         when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
 
         // Act
-        Product result = productService.update(productId, updateProduct);
+        ProductResponseDTO result = productService.update(productId, updateDTO);
 
         // Assert
         assertThat(result.getSku()).isEqualTo("MINIMAL-SKU");
         assertThat(result.getName()).isEqualTo("Minimal Product");
-        assertThat(result.getBrand()).isEqualTo(originalBrand);
-        assertThat(result.getWarranty()).isEqualTo(originalWarranty);
-        assertThat(result.getCategories()).isEqualTo(originalCategories);
         verify(brandService, never()).getById(any(UUID.class));
         verify(warrantyService, never()).getById(any(UUID.class));
         verify(categoryService, never()).getById(any(UUID.class));

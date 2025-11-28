@@ -1,0 +1,23 @@
+package com.example.nordicelectronics.entity.dto.order;
+
+import com.example.nordicelectronics.entity.dto.address.AddressRequestDTO;
+import java.util.List;
+import java.util.UUID;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class OrderRequestDTO {
+    private UUID userId;
+    private AddressRequestDTO address;
+    private List<OrderProductRequestDTO> orderProducts;
+    private String couponCode;
+}
+
