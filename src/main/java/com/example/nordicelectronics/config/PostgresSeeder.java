@@ -333,7 +333,7 @@ public class PostgresSeeder implements CommandLineRunner {
                 Warranty warranty = createWarranty(random);
 
                 Product product = Product.builder()
-                        .sku("SKU-" + faker.code().asin().replace("-", "").substring(0, 8).toUpperCase())
+                        .sku("SKU-" + faker.random().hex(10).toUpperCase())
                         .name(productName)
                         .description(faker.lorem().paragraph(3))
                         .price(price)
@@ -344,7 +344,6 @@ public class PostgresSeeder implements CommandLineRunner {
                         .warehouseProducts(new HashSet<>())
                         .reviews(new HashSet<>())
                         .build();
-
                 products.add(productRepository.save(product));
                 
                 if ((i + 1) % 20 == 0) {
