@@ -25,9 +25,17 @@ public class OrderController {
 
     @Operation(summary = "Get PostgreSQL orders by user ID", description = "Fetches all orders associated with a specific user ID.")
     @GetMapping("/by-user")
-    public List<Order> getOrdersByUser(
+    public ResponseEntity<List<OrderResponseDTO>> getOrdersByUser(
             @RequestParam("userId") UUID userId) {
-        return orderService.getOrdersByUserId(userId);
+        // Fetch entities
+        List<Order> orders = orderService.getOrdersByUserId(userId);
+        
+        // Convert to DTOs to avoid lazy loading issues
+        List<OrderResponseDTO> responseDTOs = orders.stream()
+                .map(OrderMapper::toResponseDTO)
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(responseDTOs);
     }
 
     @Operation(summary = "Get PostgreSQL orders by IDs", description = "Fetches orders based on a list of order IDs and returns them as DTOs.")

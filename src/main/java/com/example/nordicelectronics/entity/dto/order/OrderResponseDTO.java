@@ -10,6 +10,9 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,6 +23,12 @@ public class OrderResponseDTO {
     private UserDTO user;
     private AddressDTO address;
     private String status;
+    private LocalDateTime orderDate;
+    private BigDecimal totalAmount;
+    private BigDecimal subtotal;
+    private BigDecimal taxAmount;
+    private BigDecimal shippingCost;
+    private BigDecimal discountAmount;
     private List<OrderProductResponseDTO> orderProducts;
 }
 

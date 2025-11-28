@@ -49,6 +49,14 @@ public class OrderMapper {
             builder.status(order.getOrderStatus().name());
         }
 
+        // Map order date and amounts
+        builder.orderDate(order.getOrderDate());
+        builder.totalAmount(order.getTotalAmount());
+        builder.subtotal(order.getSubtotal());
+        builder.taxAmount(order.getTaxAmount());
+        builder.shippingCost(order.getShippingCost());
+        builder.discountAmount(order.getDiscountAmount());
+
         // Map OrderProducts to List<OrderProductResponseDTO>
         if (order.getOrderProducts() != null && !order.getOrderProducts().isEmpty()) {
             List<OrderProductResponseDTO> orderProductDTOs = order.getOrderProducts().stream()
