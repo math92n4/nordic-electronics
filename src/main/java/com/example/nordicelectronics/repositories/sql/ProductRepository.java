@@ -7,7 +7,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.UUID;
 
+import java.util.Optional;
+
 public interface ProductRepository extends JpaRepository<Product, UUID> {
+
+    Optional<Product> findBySku(String sku);
 
     // TODO: Implement method to get stock quantity from the database view
 //    @Query(value = "SELECT total_stock FROM vw_product_stock WHERE product_id = :productId",

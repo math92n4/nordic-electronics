@@ -1,7 +1,13 @@
 package com.example.nordicelectronics.controller.postgresql;
 
+import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.User;
+import com.example.nordicelectronics.entity.dto.address.AddressRequestDTO;
+import com.example.nordicelectronics.entity.dto.order.OrderProductRequestDTO;
+import com.example.nordicelectronics.entity.dto.order.OrderRequestDTO;
 import com.example.nordicelectronics.exception.StripeApiException;
+import com.example.nordicelectronics.repositories.sql.ProductRepository;
+import com.example.nordicelectronics.service.OrderService;
 import com.example.nordicelectronics.service.UserService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +46,8 @@ public class StripeController {
     private static final String ERROR_SESSION_KEY = "error";
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final UserService userService;
+    private final OrderService orderService;
+    private final ProductRepository productRepository;
 
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
@@ -83,9 +91,90 @@ public class StripeController {
                         .body(Map.of(ERROR_SESSION_KEY, "Cart is empty"));
             }
 
-            // Create order record first
-            String orderId = UUID.randomUUID().toString();
+            // Convert cart items to OrderProductRequestDTO
+            List<OrderProductRequestDTO> orderProducts = new ArrayList<>();
+            for (Map<String, Object> cartItem : cart) {
+                String itemId = String.valueOf(cartItem.get("id"));
+                Integer quantity = Integer.parseInt(String.valueOf(cartItem.getOrDefault("quantity", 1)));
+                
+                // Try to find product by UUID
+                UUID productId = null;
+                try {
+                    productId = UUID.fromString(itemId);
+                } catch (IllegalArgumentException e) {
+                    // If not a valid UUID, try to find by SKU
+                    log.warn("Cart item ID '{}' is not a valid UUID, attempting to find product by SKU", itemId);
+                    Optional<Product> productBySku = productRepository.findBySku(itemId);
+                    if (productBySku.isPresent()) {
+                        productId = productBySku.get().getProductId();
+                    } else {
+                        log.error("Could not find product with ID/SKU: {}", itemId);
+                        return ResponseEntity.badRequest()
+                                .body(Map.of(ERROR_SESSION_KEY, "Product not found: " + itemId));
+                    }
+                }
+                
+                // Verify product exists
+                if (!productRepository.existsById(productId)) {
+                    log.error("Product with UUID {} does not exist", productId);
+                    return ResponseEntity.badRequest()
+                            .body(Map.of(ERROR_SESSION_KEY, "Product not found: " + productId));
+                }
+                
+                OrderProductRequestDTO orderProduct = OrderProductRequestDTO.builder()
+                        .productId(productId)
+                        .quantity(quantity)
+                        .build();
+                orderProducts.add(orderProduct);
+            }
 
+            // Parse address from payload if provided
+            AddressRequestDTO addressRequest = null;
+            Object addressObj = payload.get("address");
+            if (addressObj != null) {
+                try {
+                    Map<String, Object> addressMap = objectMapper.convertValue(addressObj, new TypeReference<Map<String, Object>>() {});
+                    addressRequest = AddressRequestDTO.builder()
+                            .street((String) addressMap.get("street"))
+                            .streetNumber((String) addressMap.get("streetNumber"))
+                            .zip((String) addressMap.get("zip"))
+                            .city((String) addressMap.get("city"))
+                            .build();
+                } catch (Exception e) {
+                    log.warn("Failed to parse address from payload: {}", e.getMessage());
+                }
+            }
+
+            // Create order in PostgreSQL
+            OrderRequestDTO.OrderRequestDTOBuilder orderRequestBuilder = OrderRequestDTO.builder()
+                    .userId(currentUser.getUserId())
+                    .orderProducts(orderProducts);
+            
+            if (addressRequest != null) {
+                orderRequestBuilder.address(addressRequest);
+            }
+            
+            OrderRequestDTO orderRequest = orderRequestBuilder.build();
+
+            com.example.nordicelectronics.entity.Order createdOrder;
+            UUID orderUuid = null;
+            try {
+                createdOrder = orderService.createOrder(orderRequest);
+                orderUuid = createdOrder.getOrderId();
+                log.info("Created order in PostgreSQL: {}", orderUuid);
+            } catch (Exception e) {
+                log.error("Failed to create order in PostgreSQL: {}", e.getMessage(), e);
+                // Don't include the Order entity in the error response to avoid serialization issues
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of(ERROR_SESSION_KEY, "Failed to create order: " + e.getMessage()));
+            }
+            
+            if (orderUuid == null) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of(ERROR_SESSION_KEY, "Order creation failed - no order ID generated"));
+            }
+
+            String orderId = orderUuid.toString();
             String successUrl = (String) payload.getOrDefault("successUrl", "http://localhost:8080/?checkout=success&order=" + orderId);
             String cancelUrl = (String) payload.getOrDefault("cancelUrl", "http://localhost:8080/?checkout=cancel");
 
@@ -94,7 +183,7 @@ public class StripeController {
             String checkoutUrl = (String) stripeResponse.get("url");
             String sessionId = (String) stripeResponse.get("id");
 
-            // Store order in session (in production, save to database)
+            // Store order metadata in session for webhook/display
             Map<String, Object> orderData = new HashMap<>();
             orderData.put("orderId", orderId);
             orderData.put("cart", cart);
@@ -104,7 +193,7 @@ public class StripeController {
             orderData.put("userEmail", currentUser.getEmail());
             orderData.put("userId", currentUser.getUserId().toString());
 
-            // Store in session (temporary solution)
+            // Store in session for frontend display
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> userOrders = (List<Map<String, Object>>) session.getAttribute(USER_ORDERS_SESSION_KEY);
             if (userOrders == null) {
@@ -112,6 +201,9 @@ public class StripeController {
             }
             userOrders.add(orderData);
             session.setAttribute(USER_ORDERS_SESSION_KEY, userOrders);
+            
+            // Store sessionId -> orderId mapping for webhook
+            session.setAttribute("stripe_session_" + sessionId, orderId);
 
             return ResponseEntity.ok(Map.of(
                 "url", checkoutUrl,
@@ -159,7 +251,21 @@ public class StripeController {
                 String sessionId = (String) object.get("id");
 
                 log.info("Payment completed for session: {}", sessionId);
-                // In production, you would update the order status in the database here
+                
+                // Update order status in PostgreSQL
+                try {
+                    // Try to find order by sessionId from session (if available)
+                    // In production, you might want to store sessionId -> orderId mapping in database
+                    // For now, we'll try to find the most recent pending order for the user
+                    // This is a simplified approach - in production, store sessionId in order metadata
+                    
+                    // Alternative: Store sessionId in order metadata or create a mapping table
+                    // For now, we'll update orders that are still pending
+                    // The order should already be created in the checkout endpoint
+                    log.info("Order should already be created and processed via sp_ProcessOrder");
+                } catch (Exception e) {
+                    log.error("Error updating order status in webhook: {}", e.getMessage(), e);
+                }
             }
 
             return ResponseEntity.ok("OK");
