@@ -48,7 +48,7 @@ public class Order extends BaseEntity {
 
     @Enumerated(EnumType.STRING) // Standard JPA for Java enum handling
     @JdbcType(PostgreSQLEnumJdbcType.class) // Hibernate 6 way to bind to a custom JDBC type
-    @Column(name = "status", columnDefinition = "order_type_enum")
+    @Column(name = "status")
     private OrderStatus orderStatus;
 
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)

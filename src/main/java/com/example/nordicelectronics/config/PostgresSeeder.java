@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 @org.springframework.core.annotation.Order(1)
+@Profile("!test")
 public class PostgresSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
