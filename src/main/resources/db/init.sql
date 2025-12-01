@@ -318,9 +318,8 @@ ORDER BY total_units_sold DESC
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_best_selling_product_id
     ON mv_best_selling_products(product_id);
 
--- Additional index for queries
-CREATE INDEX IF NOT EXISTS idx_mv_best_selling_product_name_price
-    ON mv_best_selling_products(product_name, product_price);
+CREATE INDEX IF NOT EXISTS idx_mv_best_selling_units_sold
+    ON mv_best_selling_products(total_units_sold DESC);
 
 
 -- Best Reviewed Products View: Top 10 products by average customer rating
@@ -343,9 +342,9 @@ ORDER BY average_rating DESC, number_of_reviews DESC
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_best_reviewed_product_id
     ON mv_best_reviewed_products(product_id);
 
--- Additional index for queries
-CREATE INDEX IF NOT EXISTS idx_mv_best_reviewed_average_rating
-    ON mv_best_reviewed_products(average_rating DESC);
+-- Index for fast ordered retrieval of best-reviewed products
+CREATE INDEX IF NOT EXISTS idx_mv_best_reviewed_rating_reviews
+    ON mv_best_reviewed_products(average_rating DESC, number_of_reviews DESC);
 
 -- Function to refresh all materialized views
 CREATE OR REPLACE FUNCTION fn_refresh_materialized_views()

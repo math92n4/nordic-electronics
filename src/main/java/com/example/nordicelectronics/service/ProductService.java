@@ -31,12 +31,12 @@ public class ProductService {
     private final JdbcTemplate jdbcTemplate;
 
     public List<Map<String, Object>> getBestSellingProducts() {
-        String sql = "SELECT * FROM mv_best_selling_products";
+        String sql = "SELECT * FROM mv_best_selling_products ORDER BY total_units_sold DESC";
         return jdbcTemplate.queryForList(sql);
     }
 
     public List<Map<String, Object>> getBestReviewedProducts() {
-        String sql = "SELECT * FROM mv_best_reviewed_products";
+        String sql = "SELECT * FROM mv_best_reviewed_products ORDER BY average_rating DESC, number_of_reviews DESC";
         return jdbcTemplate.queryForList(sql);
     }
 
