@@ -547,6 +547,53 @@ class ProductServiceTest {
         verify(productRepository).save(existingProduct);
     }
 
+    @Test
+    @DisplayName("Get all products")
+    void shouldGetAllProducts() {
+        // Arrange
+        Product product1 = Product.builder()
+                .productId(UUID.randomUUID())
+                .sku("SKU-001")
+                .name("Product 1")
+                .build();
+
+        Product product2 = Product.builder()
+                .productId(UUID.randomUUID())
+                .sku("SKU-002")
+                .name("Product 2")
+                .build();
+
+        when(productRepository.findAll()).thenReturn(List.of(product1, product2));
+
+        // Act
+        List<ProductResponseDTO> results = productService.getAll();
+
+        // Assert
+        assertThat(results).isNotNull();
+        assertThat(results).hasSize(2);
+        assertThat(results).extracting("sku").containsExactlyInAnyOrder("SKU-001", "SKU-002");
+
+        verify(productRepository, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("getEntityById should return Product when found")
+    void testGetEntityByIdFound() {
+        // Arrange
+        when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
+
+        // Act
+        Product result = productService.getEntityById(productId);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getProductId()).isEqualTo(productId);
+
+        verify(productRepository, times(1)).findById(productId);
+    }
+
+
+
 }
 
 

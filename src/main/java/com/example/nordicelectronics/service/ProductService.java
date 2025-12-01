@@ -105,7 +105,4 @@ public class ProductService {
     public void deleteById(UUID id) {
         productRepository.deleteById(id);
     }
-
-    // TODO: CALL REPOSIOTRY FOR VIEW GET_STOCK_QUANTITY
-
 }
