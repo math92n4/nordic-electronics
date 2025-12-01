@@ -415,7 +415,7 @@ END IF;
 END;
 $$ LANGUAGE plpgsql;
 
--- Validate Coupon Function: Returns discount amount for a given coupon code and order
+/*-- Validate Coupon Function: Returns discount amount for a given coupon code and order
 CREATE OR REPLACE FUNCTION fn_validate_coupon(
     p_coupon_code TEXT,
     p_order_subtotal NUMERIC(12, 2)
@@ -456,7 +456,7 @@ END IF;
 
 RETURN v_discount_amount;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;*/
 
 -- Get Product Rating Function: Returns average customer rating for a specified product
 CREATE OR REPLACE FUNCTION fn_get_product_rating(
@@ -479,86 +479,39 @@ $$ LANGUAGE plpgsql;
 -- STORED PROCEDURES
 -- ==============================================
 
--- Place Order Procedure: Validates coupon, calculates discounts, creates order, updates inventory
 CREATE OR REPLACE PROCEDURE sp_place_order(
-    OUT p_order_id UUID,
-    OUT p_total_amount NUMERIC(12, 2),
     p_user_id UUID,
-    p_address JSONB, -- Format: {"street": "string", "streetNumber": "string", "zip": "string", "city": "string"}
-    p_order_items JSONB, -- Format: [{"product_id": "uuid", "quantity": 2, "warehouse_id": "uuid"}]
-    p_coupon_code TEXT DEFAULT NULL
+    p_address_id UUID,
+    p_order_items JSONB,
+    p_coupon_id UUID,
+    p_discount_amount NUMERIC(12, 2)
 )
 LANGUAGE plpgsql
 AS $$
 DECLARE
 v_order_id UUID;
-    v_address_id UUID;
     v_subtotal NUMERIC(12, 2) := 0;
-    v_tax_rate NUMERIC(5, 4) := 0.25; -- 25% tax rate (adjust based on address)
+    v_tax_rate NUMERIC(5, 4) := 0.25;
     v_tax_amount NUMERIC(12, 2);
-    v_shipping_cost NUMERIC(12, 2) := 50.00; -- Base shipping cost
-    v_discount_amount NUMERIC(12, 2) := 0;
+    v_shipping_cost NUMERIC(12, 2) := 50.00;
     v_total NUMERIC(12, 2);
-    v_coupon_id UUID;
     v_item JSONB;
     v_product_price NUMERIC(12, 2);
     v_item_total NUMERIC(12, 2);
 BEGIN
-    -- Start transaction (implicit in stored procedure)
-
-    -- Validate user exists
-    IF NOT EXISTS (SELECT 1 FROM "user" WHERE user_id = p_user_id AND deleted_at IS NULL) THEN
-        RAISE EXCEPTION 'User not found: %', p_user_id;
-END IF;
-
-    -- Validate address fields are provided
-    IF p_address->>'street' IS NULL OR p_address->>'streetNumber' IS NULL OR 
-       p_address->>'zip' IS NULL OR p_address->>'city' IS NULL THEN
-        RAISE EXCEPTION 'Address must include street, streetNumber, zip, and city';
-END IF;
-
-    -- Create address for the order
-    INSERT INTO address (
-        user_id,
-        street,
-        street_number,
-        zip,
-        city
-    ) VALUES (
-        p_user_id,
-        p_address->>'street',
-        p_address->>'streetNumber',
-        p_address->>'zip',
-        p_address->>'city'
-    ) RETURNING address_id INTO v_address_id;
-
-    -- Validate coupon if provided
-    IF p_coupon_code IS NOT NULL THEN
-SELECT coupon_id INTO v_coupon_id
-FROM coupon
-WHERE code = p_coupon_code
-  AND is_active = TRUE
-  AND deleted_at IS NULL;
-
-IF NOT FOUND THEN
-            RAISE EXCEPTION 'Invalid coupon code: %', p_coupon_code;
-END IF;
-END IF;
 
     -- Calculate subtotal and validate stock availability
 FOR v_item IN SELECT * FROM jsonb_array_elements(p_order_items)
                                 LOOP
--- Get product price
 SELECT price INTO v_product_price
 FROM product
 WHERE product_id = (v_item->>'product_id')::UUID
-            AND deleted_at IS NULL;
+          AND deleted_at IS NULL;
 
 IF NOT FOUND THEN
             RAISE EXCEPTION 'Product not found: %', v_item->>'product_id';
 END IF;
 
-        -- Check stock availability
         IF NOT fn_check_product_availability(
             (v_item->>'product_id')::UUID,
             (v_item->>'quantity')::INTEGER,
@@ -569,25 +522,13 @@ END IF;
             RAISE EXCEPTION 'Insufficient stock for product: %', v_item->>'product_id';
 END IF;
 
-        -- Calculate item total
         v_item_total := v_product_price * (v_item->>'quantity')::INTEGER;
         v_subtotal := v_subtotal + v_item_total;
 END LOOP;
 
-    -- Validate coupon and calculate discount
-    IF p_coupon_code IS NOT NULL THEN
-        v_discount_amount := fn_validate_coupon(p_coupon_code, v_subtotal);
-
-        -- Update coupon usage
-UPDATE coupon
-SET times_used = times_used + 1,
-    updated_at = CURRENT_TIMESTAMP
-WHERE code = p_coupon_code;
-END IF;
-
     -- Calculate tax and total
     v_tax_amount := v_subtotal * v_tax_rate;
-    v_total := v_subtotal + v_tax_amount + v_shipping_cost - v_discount_amount;
+    v_total := v_subtotal + v_tax_amount + v_shipping_cost - COALESCE(p_discount_amount, 0);
 
     -- Create order
 INSERT INTO "order" (
@@ -602,12 +543,12 @@ INSERT INTO "order" (
     status
 ) VALUES (
              p_user_id,
-             v_address_id,
-             v_coupon_id,
+             p_address_id,
+             p_coupon_id,
              v_subtotal,
              v_tax_amount,
              v_shipping_cost,
-             v_discount_amount,
+             COALESCE(p_discount_amount, 0),
              v_total,
              'pending'
          ) RETURNING order_id INTO v_order_id;
@@ -615,14 +556,12 @@ INSERT INTO "order" (
 -- Create order items and update inventory
 FOR v_item IN SELECT * FROM jsonb_array_elements(p_order_items)
                                 LOOP
--- Get product price
 SELECT price INTO v_product_price
 FROM product
 WHERE product_id = (v_item->>'product_id')::UUID;
 
 v_item_total := v_product_price * (v_item->>'quantity')::INTEGER;
 
-        -- Insert order_product
 INSERT INTO order_product (
     order_id,
     product_id,
@@ -644,29 +583,27 @@ SET stock_quantity = stock_quantity - (v_item->>'quantity')::INTEGER
 WHERE product_id = (v_item->>'product_id')::UUID
   AND warehouse_id = (v_item->>'warehouse_id')::UUID;
 ELSE
-        -- Update first warehouse that has enough stock
-UPDATE warehouse_product wp
+            -- Update first warehouse that has enough stock
+            -- Fixed: Use product_id and warehouse_id as the composite key
+UPDATE warehouse_product
 SET stock_quantity = stock_quantity - (v_item->>'quantity')::INTEGER
-WHERE wp.warehouse_product_id = (
-    SELECT warehouse_product_id
+WHERE (product_id, warehouse_id) = (
+    SELECT product_id, warehouse_id
     FROM warehouse_product
     WHERE product_id = (v_item->>'product_id')::UUID
   AND stock_quantity >= (v_item->>'quantity')::INTEGER
-    ORDER BY warehouse_product_id -- choose a deterministic row
+    ORDER BY warehouse_id
     LIMIT 1
     );
 END IF;
 END LOOP;
 
-    -- Return values
-    p_order_id := v_order_id;
-    p_total_amount := v_total;
-
-    -- Transaction commits automatically on success
-EXCEPTION
-    WHEN OTHERS THEN
-        -- Transaction rolls back automatically on error
-        RAISE;
+    IF p_coupon_id IS NOT NULL THEN
+UPDATE coupon
+SET times_used = times_used + 1,
+    updated_at = CURRENT_TIMESTAMP
+WHERE coupon_id = p_coupon_id;
+END IF;
 END;
 $$;
 
