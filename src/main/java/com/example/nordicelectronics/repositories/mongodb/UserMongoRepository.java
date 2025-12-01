@@ -1,13 +1,14 @@
 package com.example.nordicelectronics.repositories.mongodb;
 
-import com.example.nordicelectronics.document.UserDocument;
+import com.example.nordicelectronics.entity.mongodb.UserDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
-@Repository
 public interface UserMongoRepository extends MongoRepository<UserDocument, String> {
+    Optional<UserDocument> findByUserId(UUID userId);
     Optional<UserDocument> findByEmail(String email);
+    void deleteByUserId(UUID userId);
 }
 

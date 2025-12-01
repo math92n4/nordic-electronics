@@ -1,13 +1,14 @@
 package com.example.nordicelectronics.repositories.mongodb;
 
-import com.example.nordicelectronics.document.WarehouseDocument;
+import com.example.nordicelectronics.entity.mongodb.WarehouseDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
-@Repository
 public interface WarehouseMongoRepository extends MongoRepository<WarehouseDocument, String> {
+    Optional<WarehouseDocument> findByWarehouseId(UUID warehouseId);
     Optional<WarehouseDocument> findByName(String name);
+    void deleteByWarehouseId(UUID warehouseId);
 }
 
