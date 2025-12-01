@@ -19,7 +19,6 @@ services:
     volumes:
       - ./src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
-      # Remove the pg_hba.conf line if you added it
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
       interval: 10s

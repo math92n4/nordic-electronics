@@ -32,12 +32,12 @@ public class Payment extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "payment_method", nullable = false, columnDefinition = "payment_type_enum")
+    @Column(name = "payment_method", nullable = false)
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "status", columnDefinition = "status_type_enum")
+    @Column(name = "status")
     private PaymentStatus paymentStatus;
 
     @Column(name = "payment_date")
