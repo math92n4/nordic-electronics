@@ -1,28 +1,34 @@
-package com.example.nordicelectronics.entity.dto;
+package com.example.nordicelectronics.entity.dto.order;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import com.example.nordicelectronics.entity.dto.address.AddressDTO;
+import com.example.nordicelectronics.entity.dto.user.UserDTO;
+import java.util.List;
 import java.util.UUID;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class OrderResponseDTO {
-
     private UUID orderId;
+    private UserDTO user;
+    private AddressDTO address;
+    private String status;
     private LocalDateTime orderDate;
-    private String orderStatus;      // Use String for the enum value
     private BigDecimal totalAmount;
     private BigDecimal subtotal;
     private BigDecimal taxAmount;
     private BigDecimal shippingCost;
     private BigDecimal discountAmount;
-
-    // Include the user ID as a simple field, if needed
-    private UUID userId;
+    private List<OrderProductResponseDTO> orderProducts;
 }
+

@@ -1,6 +1,8 @@
 package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.Order;
+import com.example.nordicelectronics.entity.dto.order.OrderRequestDTO;
+import com.example.nordicelectronics.entity.dto.order.OrderResponseDTO;
 import com.example.nordicelectronics.entity.mapper.OrderMapper;
 import com.example.nordicelectronics.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,8 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import com.example.nordicelectronics.entity.dto.OrderResponseDTO;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,9 +25,17 @@ public class OrderController {
 
     @Operation(summary = "Get PostgreSQL orders by user ID", description = "Fetches all orders associated with a specific user ID.")
     @GetMapping("/by-user")
-    public List<Order> getOrdersByUser(
+    public ResponseEntity<List<OrderResponseDTO>> getOrdersByUser(
             @RequestParam("userId") UUID userId) {
-        return orderService.getOrdersByUserId(userId);
+        // Fetch entities
+        List<Order> orders = orderService.getOrdersByUserId(userId);
+        
+        // Convert to DTOs to avoid lazy loading issues
+        List<OrderResponseDTO> responseDTOs = orders.stream()
+                .map(OrderMapper::toResponseDTO)
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(responseDTOs);
     }
 
     @Operation(summary = "Get PostgreSQL orders by IDs", description = "Fetches orders based on a list of order IDs and returns them as DTOs.")
@@ -48,10 +56,10 @@ public class OrderController {
 
     @Operation(summary = "Create a new PostgreSQL order", description = "Creates a new PostgreSQL order and returns the created order as a DTO.")
     @PostMapping("/create")
-    public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody Order order) {
+    public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody OrderRequestDTO dto) {
 
         // 1. Service successfully saves the order (which includes fetching and attaching User)
-        Order savedOrder = orderService.createOrder(order);
+        Order savedOrder = orderService.createOrder(dto);
 
         // 2. Map the saved entity to the DTO for a safe response
         OrderResponseDTO responseDTO = OrderMapper.toResponseDTO(savedOrder);
