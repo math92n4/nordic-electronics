@@ -314,8 +314,14 @@ GROUP BY p.product_id, p.name, p.price
 ORDER BY total_units_sold DESC
     LIMIT 10;
 
--- Index BestSelling Products View on product_name, product_price
-CREATE INDEX IF NOT EXISTS idx_mv_best_selling_product_name_price ON mv_best_selling_products(product_name, product_price);
+-- UNIQUE index required for CONCURRENTLY refresh
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_best_selling_product_id
+    ON mv_best_selling_products(product_id);
+
+-- Additional index for queries
+CREATE INDEX IF NOT EXISTS idx_mv_best_selling_product_name_price
+    ON mv_best_selling_products(product_name, product_price);
+
 
 -- Best Reviewed Products View: Top 10 products by average customer rating
 CREATE MATERIALIZED VIEW IF NOT EXISTS mv_best_reviewed_products AS
@@ -333,8 +339,13 @@ HAVING COUNT(r.review_id) >= 1
 ORDER BY average_rating DESC, number_of_reviews DESC
     LIMIT 10;
 
--- Index BestReviewed Products View on average_rating DESC
-CREATE INDEX IF NOT EXISTS idx_mv_best_reviewed_average_rating ON mv_best_reviewed_products(average_rating DESC);
+-- UNIQUE index required for CONCURRENTLY refresh
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_best_reviewed_product_id
+    ON mv_best_reviewed_products(product_id);
+
+-- Additional index for queries
+CREATE INDEX IF NOT EXISTS idx_mv_best_reviewed_average_rating
+    ON mv_best_reviewed_products(average_rating DESC);
 
 -- Function to refresh all materialized views
 CREATE OR REPLACE FUNCTION fn_refresh_materialized_views()
@@ -344,7 +355,8 @@ BEGIN
     REFRESH MATERIALIZED VIEW CONCURRENTLY mv_best_reviewed_products;
 EXCEPTION
     WHEN OTHERS THEN
-        -- If CONCURRENTLY fails (no unique index), try without it
+        RAISE NOTICE 'Error refreshing materialized views: %', SQLERRM;
+        -- Fallback to non-concurrent refresh
         REFRESH MATERIALIZED VIEW mv_best_selling_products;
         REFRESH MATERIALIZED VIEW mv_best_reviewed_products;
 END;

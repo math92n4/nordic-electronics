@@ -11,9 +11,11 @@ import com.example.nordicelectronics.repositories.sql.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,6 +28,22 @@ public class ProductService {
     private final BrandService brandService;
     private final CategoryService categoryService;
     private final WarrantyService warrantyService;
+    private final JdbcTemplate jdbcTemplate;
+
+    public List<Map<String, Object>> getBestSellingProducts() {
+        String sql = "SELECT * FROM mv_best_selling_products";
+        return jdbcTemplate.queryForList(sql);
+    }
+
+    public List<Map<String, Object>> getBestReviewedProducts() {
+        String sql = "SELECT * FROM mv_best_reviewed_products";
+        return jdbcTemplate.queryForList(sql);
+    }
+
+    public void refreshAnalyticsViews() {
+        jdbcTemplate.execute("SELECT fn_refresh_materialized_views()");
+        System.out.println("Analytics views refreshed successfully");
+    }
 
     public List<ProductResponseDTO> getAll() {
         return productRepository.findAll().stream()
