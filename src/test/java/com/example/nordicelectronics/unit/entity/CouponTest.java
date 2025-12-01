@@ -64,11 +64,11 @@ class CouponTest {
     void hasValidIdLength_shouldReturnFalse_forInvalidLengths() {
         // REAL STRING DATA: Testing actual string lengths, no stubs needed
         // Too short
-        assertFalse(CouponValidator.hasValidIdLength("123"));
+        assertFalse(CouponValidator.hasValidIdLength("123")); // 3 chars
         assertFalse(CouponValidator.hasValidIdLength("12345678-1234-1234-1234-12345678901")); // 35 chars
 
         // Too long
-        assertFalse(CouponValidator.hasValidIdLength("12345678-1234-1234-1234-123456789012")); // 37 chars
+        assertFalse(CouponValidator.hasValidIdLength("12345678-1234-1234-1234-1234567890123")); // 37 chars
         assertFalse(CouponValidator.hasValidIdLength("12345678-1234-1234-1234-1234567890123456")); // 41 chars
     }
 
