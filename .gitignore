@@ -1,6 +1,6 @@
-HELP.md
+# Maven
 target/
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -32,4 +32,21 @@ build/
 ### VS Code ###
 .vscode/
 
-.env
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
+frontend/*.log
+frontend/.env
+frontend/.env.local
+
+# Static build artifacts (keep source, ignore built files)
+src/main/resources/static/js/*.js
+src/main/resources/static/js/*.jsx
+src/main/resources/static/js/components/
+src/main/resources/static/js/hooks/
+src/main/resources/static/js/utils/
+src/main/resources/static/package.json
+src/main/resources/static/vite.config.js
+src/main/resources/static/README.md
+src/main/resources/static/.gitignore

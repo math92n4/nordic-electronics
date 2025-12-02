@@ -1,8 +1,11 @@
 package com.example.nordicelectronics.controller.postgresql;
 
+import com.example.nordicelectronics.entity.Coupon;
 import com.example.nordicelectronics.entity.dto.coupon.CouponRequestDTO;
 import com.example.nordicelectronics.entity.dto.coupon.CouponResponseDTO;
+import com.example.nordicelectronics.entity.dto.coupon.CouponValidationRequestDTO;
 import com.example.nordicelectronics.service.CouponService;
+import com.example.nordicelectronics.service.validation.CouponValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +24,7 @@ import java.util.UUID;
 public class CouponController {
 
     private final CouponService couponService;
+    private final CouponValidationService couponValidationService;
 
     @Operation(summary = "Get PostgreSQL coupons by order ID", description = "Fetches all coupons associated with a specific order ID.")
     @GetMapping("/get-by-order-id")
@@ -49,5 +54,17 @@ public class CouponController {
     @PostMapping("/create")
     public ResponseEntity<CouponResponseDTO> createCoupon(@RequestBody CouponRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(couponService.save(dto));
+    }
+
+    @Operation(summary = "Validate a coupon", description = "Validates a coupon and returns the total amount.")
+    @PostMapping("/validate")
+    public ResponseEntity<?> validateCoupon(@RequestBody CouponValidationRequestDTO dto) {
+        Coupon coupon = couponValidationService.validateCoupon(dto.getCouponCode(), dto.getOrderSubtotal());
+        BigDecimal discount = BigDecimal.ZERO;
+        if (coupon != null) {
+            discount = couponValidationService.calculateDiscount(coupon, dto.getOrderSubtotal());
+            return ResponseEntity.ok(discount);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid coupon code or order subtotal");
     }
 }

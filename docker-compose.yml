@@ -76,6 +76,41 @@ services:
     ports:
       - "8080:8080"
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    restart: always
+    volumes:
+      # Mount frontend source for hot reload
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+      - ./frontend/public:/app/public
+      # Mount CSS from Spring Boot static resources to frontend public
+      - ./src/main/resources/static/css:/app/public/css
+      - /app/node_modules
+    develop:
+      watch:
+        # Sync frontend source files
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+        - action: sync
+          path: ./frontend/index.html
+          target: /app/index.html
+        - action: sync
+          path: ./frontend/vite.config.js
+          target: /app/vite.config.js
+    depends_on:
+      - spring-app
+    environment:
+      VITE_API_URL: http://spring-app:8080
+      DOCKER: 'true'
+    ports:
+      - "3000:3000"
+
 volumes:
   postgres_data:
   #mongodb_data:
