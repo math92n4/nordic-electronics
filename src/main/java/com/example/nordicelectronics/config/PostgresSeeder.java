@@ -42,7 +42,7 @@ public class PostgresSeeder implements CommandLineRunner {
     private final OrderProductRepository orderProductRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private final Faker faker = new Faker(new Locale("da", "DK")); // Danish locale for Nordic context
+    private final Faker faker = new Faker(new Locale("da", "DK"));
 
     @Override
     public void run(String... args) throws Exception {
