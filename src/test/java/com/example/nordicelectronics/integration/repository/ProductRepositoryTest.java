@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Transactional
-class ProductRepositoryIT extends BaseIntegrationTest {
+class ProductRepositoryTest extends BaseIntegrationTest {
 
     @Autowired
     private ProductRepository productRepository;

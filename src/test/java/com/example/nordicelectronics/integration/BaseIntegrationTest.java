@@ -29,11 +29,11 @@ import java.math.BigDecimal;
 public abstract class BaseIntegrationTest {
 
     @Container
-    protected static PostgreSQLContainer<?> postgresContainer =
-            new PostgreSQLContainer<>("postgres:16")
-                    .withDatabaseName("nordic_test")
+    public static PostgreSQLContainer<?> postgresContainer =
+            new PostgreSQLContainer<>("postgres")
                     .withUsername("test")
-                    .withPassword("test");
+                    .withPassword("test")
+                    .withDatabaseName("nordic_test");
                     // .withInitScript("db/test-schema.sql"); // Optional: load your schema
 
     @DynamicPropertySource

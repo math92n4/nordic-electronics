@@ -1,8 +1,6 @@
 package com.example.nordicelectronics.service;
 
-import com.example.nordicelectronics.entity.Brand;
 import com.example.nordicelectronics.entity.Category;
-import com.example.nordicelectronics.repositories.sql.BrandRepository;
 import com.example.nordicelectronics.repositories.sql.CategoryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
