@@ -4,8 +4,10 @@ import com.example.nordicelectronics.entity.User;
 import com.example.nordicelectronics.repositories.sql.UserRepository;
 import com.example.nordicelectronics.service.UserService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
@@ -18,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
     @Mock
@@ -89,6 +92,7 @@ class UserServiceTest {
 
         when(userRepository.existsByEmail(email)).thenReturn(false);
         when(passwordEncoder.encode(password)).thenReturn("encodedpassword");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         User user = userService.registerUser(
@@ -96,6 +100,10 @@ class UserServiceTest {
 
         // Then
         assertNotNull(user);
+        assertEquals("John", user.getFirstName());
+        assertEquals("Doe", user.getLastName());
+        assertEquals(email, user.getEmail());
+        assertEquals("encodedpassword", user.getPassword());
         verify(userRepository).save(any(User.class));
     }
 
