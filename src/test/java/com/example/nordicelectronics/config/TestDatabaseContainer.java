@@ -7,11 +7,11 @@ public class TestDatabaseContainer {
     private static final PostgreSQLContainer<?> POSTGRES_CONTAINER;
 
     static {
-        POSTGRES_CONTAINER = new PostgreSQLContainer<>("postgres:16")
+        POSTGRES_CONTAINER = new PostgreSQLContainer<>("postgres:17")
                 .withDatabaseName("nordic_test")
                 .withUsername("test_user")
                 .withPassword("test_pass")
-                .withReuse(true)       ;                 // Reuse container between test runs
+                .withReuse(true);                 // Reuse container between test runs
                 //.withInitScript("db/test-schema.sql");  // Load your schema
 
         POSTGRES_CONTAINER.start();
