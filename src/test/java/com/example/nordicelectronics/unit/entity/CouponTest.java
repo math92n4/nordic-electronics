@@ -14,33 +14,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * TESTING PATTERNS USED IN CouponTest:
- *
- * ✅ PURE UNIT TESTING (No Test Doubles)
- * - This test class uses NO mocks, stubs, or fakes
- * - Tests static methods in CouponValidator directly with real data
- * - Uses real Coupon entities with actual field values
- * - Tests pure business logic validation without external dependencies
- *
- * WHAT THIS CLASS TESTS:
- * - Input validation methods (ID length, code length, discount types, etc.)
- * - Business rule validation (expiry dates, discount percentages, usage limits)
- * - Boundary Value Analysis (BVA) and Equivalence Partitioning (EP)
- * - Edge cases and null handling
- * - Integration between Coupon entity fields and CouponValidator methods
- *
- * WHY NO MOCKS/STUBS/FAKES ARE NEEDED:
- * - CouponValidator contains only static utility methods
- * - No external dependencies (databases, services, APIs)
- * - No time-dependent behavior that needs stubbing (except LocalDate.now() in one method)
- * - Pure mathematical/logical validation that can be tested deterministically
- *
- * CONTRAST WITH CouponServiceTest:
- * - CouponServiceTest DOES use mocks (Mockito) to mock the CouponRepository
- * - CouponServiceTest tests service-layer behavior with external dependencies
- * - This class tests entity/validator logic in isolation
- */
 class CouponTest {
 
     @Test
