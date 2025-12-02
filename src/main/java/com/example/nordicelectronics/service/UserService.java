@@ -1,6 +1,10 @@
 package com.example.nordicelectronics.service;
 
 import com.example.nordicelectronics.entity.User;
+import com.example.nordicelectronics.entity.validator.UserValidator.DanishPhoneValidator;
+import com.example.nordicelectronics.entity.validator.UserValidator.DateOfBirthValidator;
+import com.example.nordicelectronics.entity.validator.UserValidator.EmailValidator;
+import com.example.nordicelectronics.entity.validator.UserValidator.PasswordValidator;
 import com.example.nordicelectronics.repositories.sql.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,7 +28,10 @@ public class UserService {
     }
 
     public User registerUser(String firstName, String lastName, String email,
-                           String phoneNumber, String password, boolean isAdmin) {
+                           String phoneNumber, String password, LocalDate dateOfBirth, boolean isAdmin) {
+
+        validateUserSignup(email, password, phoneNumber, dateOfBirth);
+
         if (userRepository.existsByEmail(email)) {
             throw new RuntimeException("User already exists with email: " + email);
         }
@@ -34,7 +41,7 @@ public class UserService {
                 .lastName(lastName)
                 .email(email)
                 .phoneNumber(phoneNumber)
-                .dateOfBirth(LocalDate.of(2000, 1, 1)) // Default date, you can make this configurable
+                .dateOfBirth(dateOfBirth)
                 .password(passwordEncoder.encode(password))
                 .isAdmin(isAdmin)
                 .build();
@@ -54,5 +61,15 @@ public class UserService {
 
     public User save(User user) {
         return userRepository.save(user);
+    }
+
+    private void validateUserSignup(String email, String password, String phone, LocalDate dateOfBirth) {
+        //TODO DOB
+        EmailValidator.validateEmail(email);
+        PasswordValidator.validatePassword(password);
+        if(!DanishPhoneValidator.isValidDanishMobile(phone)) {
+            throw new IllegalArgumentException("Invalid phone number");
+        }
+        DateOfBirthValidator.validateDateOfBirth(dateOfBirth);
     }
 }

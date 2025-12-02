@@ -17,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 import com.example.nordicelectronics.service.UserService;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -129,9 +131,12 @@ public class AuthController {
             String phoneNumber = (String) request.get("phoneNumber");
             String password = (String) request.get("password");
 
+            String dateOfBirthString = (String) request.get("dateOfBirth");
+            LocalDate dateOfBirth = LocalDate.parse(dateOfBirthString);
+
             boolean isAdmin = false;
 
-            User user = userService.registerUser(firstName, lastName, email, phoneNumber, password, isAdmin);
+            User user = userService.registerUser(firstName, lastName, email, phoneNumber, password, dateOfBirth, isAdmin);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

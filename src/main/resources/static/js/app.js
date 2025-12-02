@@ -413,16 +413,17 @@ async function handleRegister(e) {
     const lastName = document.getElementById('register-lastName').value.trim();
     const email = document.getElementById('register-email').value.trim();
     const phoneNumber = document.getElementById('register-phone').value.trim();
+    const dateOfBirth = document.getElementById('register-dob').value.trim();
     const password = document.getElementById('register-password').value;
 
     // Basic validation
-    if (!firstName || !lastName || !email || !phoneNumber || !password) {
+    if (!firstName || !lastName || !email || !phoneNumber || !password || !dateOfBirth) {
         showAlert('Please fill in all fields', 'error');
         return;
     }
 
-    if (password.length < 6) {
-        showAlert('Password must be at least 6 characters long', 'error');
+    if (password.length < 8) {
+        showAlert('Password must be at least 8 characters long', 'error');
         return;
     }
 
@@ -432,7 +433,7 @@ async function handleRegister(e) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ firstName, lastName, email, phoneNumber, password })
+            body: JSON.stringify({ firstName, lastName, email, phoneNumber, dateOfBirth, password })
         });
 
         let responseData;
