@@ -247,7 +247,26 @@ function setupEventListeners() {
     if (registerFormEl) registerFormEl.addEventListener('submit', handleRegister);
 
     // Search & filters
-    if (searchInputEl) searchInputEl.addEventListener('input', filterProducts);
+    // Use a button to trigger search instead of running on every input event
+    const searchButtonEl = document.getElementById('search-button');
+    if (searchButtonEl) {
+        searchButtonEl.addEventListener('click', () => {
+            filterProducts();
+            // Scroll to products so the user sees results
+            scrollToSection('products');
+        });
+    }
+
+    // Allow Enter key inside the input to trigger the search button (fallback to filterProducts)
+    if (searchInputEl) {
+        searchInputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (searchButtonEl) searchButtonEl.click(); else filterProducts();
+            }
+        });
+    }
+
     if (categoryFilterEl) categoryFilterEl.addEventListener('change', filterProducts);
     if (brandFilterEl) brandFilterEl.addEventListener('change', filterProducts);
 
@@ -800,11 +819,19 @@ function populateBrandFilter(brands) {
 }
 
 function filterProducts() {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    const selectedCategory = document.getElementById('category-filter').value;
-    const selectedBrand = document.getElementById('brand-filter').value;
+    // Safely read the search input, category and brand filters (they may not exist in all pages)
+    const searchInputEl = document.getElementById('search-input');
+    const searchTerm = (searchInputEl && typeof searchInputEl.value === 'string') ? searchInputEl.value.trim().toLowerCase() : '';
 
-    let filteredProducts = products.filter(product => {
+    const categoryFilterEl = document.getElementById('category-filter');
+    const selectedCategory = (categoryFilterEl && typeof categoryFilterEl.value === 'string') ? categoryFilterEl.value : '';
+
+    const brandFilterEl = document.getElementById('brand-filter');
+    const selectedBrand = (brandFilterEl && typeof brandFilterEl.value === 'string') ? brandFilterEl.value : '';
+
+    const sourceProducts = Array.isArray(products) ? products : [];
+
+    let filteredProducts = sourceProducts.filter(product => {
         const matchesSearch = !searchTerm ||
             (product.name && product.name.toLowerCase().includes(searchTerm)) ||
             (product.description && product.description.toLowerCase().includes(searchTerm));

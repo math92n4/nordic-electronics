@@ -2,9 +2,9 @@ name: SonarCloud Scan
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   sonar:
@@ -50,9 +50,8 @@ jobs:
             -Dsonar.qualitygate.wait=true
             -Dsonar.sources=src/main/java
             -Dsonar.tests=src/test/java
-            
-            -Dsonar.exclusions=src/main/java/com/example/nordicelectronics/config/**,src/main/java/com/example/nordicelectronics/controller/mongo/**,src/main/java/com/example/nordicelectronics/document/**,src/main/java/com/example/nordicelectronics/entity/**,src/main/java/com/example/nordicelectronics/repositories/**,src/main/java/com/example/nordicelectronics/runner/**,src/main/java/com/example/nordicelectronics/service/mongo/**,src/main/java/com/example/nordicelectronics/service/MigrationService.java,src/main/java/com/example/nordicelectronics/service/CustomUserDetailsService.java
-        
+
+            -Dsonar.exclusions=src/main/java/com/example/nordicelectronics/config/**,src/main/java/com/example/nordicelectronics/controller/mongo/**,src/main/java/com/example/nordicelectronics/document/**,src/main/java/com/example/nordicelectronics/entity/**,src/main/java/com/example/nordicelectronics/repositories/**,src/main/java/com/example/nordicelectronics/runner/**,src/main/java/com/example/nordicelectronics/service/mongo/**,src/main/java/com/example/nordicelectronics/service/MigrationService.java
 
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

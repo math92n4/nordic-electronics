@@ -1,0 +1,15 @@
+{
+  "name": "nordic-electronics-cypress",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start:static": "http-server -p 8080 src/main/resources/static",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run --headless"
+  },
+  "devDependencies": {
+    "cypress": "^12.17.0",
+    "http-server": "^14.1.1"
+  }
+}
+
