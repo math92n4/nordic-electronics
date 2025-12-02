@@ -28,10 +28,10 @@ class ProductRepositoryIT extends BaseIntegrationTest {
         Product product = createTestProduct("Test Product", brand);
 
         // Act
-        entityManager.persist(product);
-        entityManager.flush();
-        UUID productId = product.getProductId();
-        entityManager.clear();
+        entityManager.persist(product); // persist = save
+        entityManager.flush(); // flush = commit to DB
+        UUID productId = product.getProductId(); // get generated ID
+        entityManager.clear(); // clear persistence context to force DB retrieval
 
         Product retrieved = productRepository.findById(productId).orElseThrow();
 

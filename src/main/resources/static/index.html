@@ -8,7 +8,213 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
+<<<<<<< HEAD
     <div id="root"></div>
     <script type="module" src="/js/main.jsx"></script>
+=======
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2><i class="fas fa-bolt"></i> Nordic Electronics</h2>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="#home" class="nav-link">Home</a>
+                <a href="#products" class="nav-link">Products</a>
+                <a href="#categories" class="nav-link">Categories</a>
+                <a href="#brands" class="nav-link">Brands</a>
+                <a href="#orders" class="nav-link" id="orders-link" style="display: none;">My Orders</a>
+                <a href="#auth" class="nav-link" id="auth-link">Login</a>
+            </div>
+            <div class="cart-icon" id="cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count" id="cart-count">0</span>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <h1>Welcome to Nordic Electronics</h1>
+            <p>Discover the latest in electronic gadgets and technology</p>
+            <button class="cta-button" onclick="scrollToSection('products')">
+                Shop Now <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </section>
+
+    <!-- Authentication Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="auth-container">
+                <div class="auth-tabs">
+                    <button class="tab-button active" onclick="showTab('login')">Login</button>
+                    <button class="tab-button" onclick="showTab('register')">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <div id="login-tab" class="tab-content active">
+                    <h3>Login to Your Account</h3>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <input type="email" id="login-email" placeholder="Email" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="login-password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="auth-button">Login</button>
+                    </form>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-tab" class="tab-content">
+                    <h3>Create Account</h3>
+                    <form id="register-form">
+                        <div class="form-group">
+                            <input type="text" id="register-firstName" placeholder="First Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="register-lastName" placeholder="Last Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="register-email" placeholder="Email" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" id="register-phone" placeholder="Phone Number" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="date" id="register-dob" placeholder="Date of Birth" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="register-password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="auth-button">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Section -->
+    <section id="products" class="section">
+        <div class="container">
+            <h2 class="section-title">Our Products</h2>
+            <div class="filters">
+                <input type="text" id="search-input" class="search-input" placeholder="Search products...">
+                <button id="search-button" class="btn btn-primary" type="button">Search</button>
+            </div>
+            <div id="products-grid" class="products-grid">
+                <!-- Products will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section id="categories" class="section">
+        <div class="container">
+            <h2 class="section-title">Categories</h2>
+            <div id="categories-grid" class="categories-grid">
+                <!-- Categories will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Brands Section -->
+    <section id="brands" class="section">
+        <div class="container">
+            <h2 class="section-title">Our Brands</h2>
+            <div id="brands-grid" class="brands-grid">
+                <!-- Brands will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Orders Section -->
+    <section id="orders" class="section" style="display: none;">
+        <div class="container">
+            <h2 class="section-title">My Orders</h2>
+            <div id="orders-grid" class="orders-grid">
+                <!-- Orders will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content cart-modal-content">
+            <span class="close">&times;</span>
+            <div class="cart-container">
+                <h3 class="cart-title"><i class="fas fa-shopping-cart"></i> Your Cart</h3>
+                <div class="cart-items" id="cart-items">
+                    <!-- Cart items will be rendered here -->
+                </div>
+                <div class="cart-address-section" id="cart-address-section" style="display: none;">
+                    <h4 class="address-title"><i class="fas fa-map-marker-alt"></i> Shipping Address</h4>
+                    <div class="address-form">
+                        <div class="form-group">
+                            <input type="text" id="address-street" class="form-input" placeholder="Street" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="address-street-number" class="form-input" placeholder="Street Number" required>
+                        </div>
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <input type="text" id="address-zip" class="form-input" placeholder="ZIP Code" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="address-city" class="form-input" placeholder="City" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cart-summary">
+                    <div class="cart-total" id="cart-total">Total: $0.00</div>
+                    <div class="cart-actions">
+                        <button class="btn btn-secondary" id="continue-shopping-btn">Continue</button>
+                        <button class="btn btn-primary" id="checkout-btn">Checkout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-bolt"></i> Nordic Electronics</h3>
+                    <p>Your trusted partner for electronic gadgets and technology.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#products">Products</a></li>
+                        <li><a href="#categories">Categories</a></li>
+                        <li><a href="#brands">Brands</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> info@nordicelectronics.com</p>
+                    <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Nordic Electronics. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/app.js"></script>
+>>>>>>> main
 </body>
 </html>

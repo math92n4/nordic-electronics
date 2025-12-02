@@ -20,27 +20,27 @@ services:
       - ./src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-#  mongodb:
-#    image: mongo:7.0.0
-#    container_name: webshop_mongodb
-#    environment:
-#      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-#      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-#      MONGO_INITDB_DATABASE: ${MONGO_DB}
-#    ports:
-#      - "27017:27017"
-#    volumes:
-#      - mongodb_data:/data/db
-#    healthcheck:
-#      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
+  mongodb:
+    image: mongo:7.0.0
+    container_name: webshop_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   spring-app:
     build:
@@ -63,8 +63,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      #mongodb:
-        #condition: service_healthy
+      mongodb:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-nordic_electronics}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
@@ -113,4 +113,4 @@ services:
 
 volumes:
   postgres_data:
-  #mongodb_data:
+  mongodb_data:

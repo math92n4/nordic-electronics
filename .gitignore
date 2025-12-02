@@ -32,6 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
+<<<<<<< HEAD
 # Frontend
 frontend/node_modules/
 frontend/dist/
@@ -50,3 +51,8 @@ src/main/resources/static/package.json
 src/main/resources/static/vite.config.js
 src/main/resources/static/README.md
 src/main/resources/static/.gitignore
+=======
+.env
+
+/node_modules
+>>>>>>> main
