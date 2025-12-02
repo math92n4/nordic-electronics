@@ -45,6 +45,25 @@ public class ProductController {
         return new ResponseEntity<>(productService.update(id, dto), HttpStatus.OK);
     }
 
+    @Operation(summary = "Get best selling products", description = "Fetches a list of best selling products.")
+    @GetMapping("/best-selling")
+    public ResponseEntity<List<?>> getBestSellingProducts() {
+        return new ResponseEntity<>(productService.getBestSellingProducts(), HttpStatus.OK);
+    }
+
+    @Operation(summary = "Get best reviewed products", description = "Fetches a list of best reviewed products.")
+    @GetMapping("/best-reviewed")
+    public ResponseEntity<List<?>> getBestReviewedProducts() {
+        return new ResponseEntity<>(productService.getBestReviewedProducts(), HttpStatus.OK);
+    }
+
+    @Operation(summary = "Refresh analytics views", description = "Refreshes the materialized views for analytics.")
+    @PostMapping("/refresh-analytics")
+    public ResponseEntity<Void> refreshAnalyticsViews() {
+        productService.refreshAnalyticsViews();
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
     @Operation(summary = "Delete a PostgreSQL product", description = "Deletes a product by its unique ID.")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {

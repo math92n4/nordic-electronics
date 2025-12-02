@@ -41,13 +41,13 @@ public class PostgresSeeder implements CommandLineRunner {
     private final ReviewRepository reviewRepository;
     private final OrderProductRepository orderProductRepository;
     private final PasswordEncoder passwordEncoder;
-    
+
     private final Faker faker = new Faker(new Locale("da", "DK")); // Danish locale for Nordic context
 
     @Override
     public void run(String... args) throws Exception {
         log.info("Starting database seeding...");
-        
+
         // Check if database already has complete data
         // if (userRepository.count() > 0 && productRepository.count() > 0) {
         //     log.info("Database already contains data. Skipping seeding.");
@@ -55,7 +55,7 @@ public class PostgresSeeder implements CommandLineRunner {
         // }
 
         try {
-            // 1. Create Users
+            // 1. Create Users (increased to support more orders and reviews)
             List<User> users;
             if (userRepository.count() == 0) {
                 users = createUsers();
@@ -92,12 +92,12 @@ public class PostgresSeeder implements CommandLineRunner {
             long warrantyCount = warrantyRepository.count();
             log.info("Found {} existing warranties", warrantyCount);
 
-            // 5. Create Products (warranties will be created inline for each product)
+            // 5. Create Products (REDUCED from 100 to 50 for better review concentration)
             log.info("Starting product creation...");
             List<Product> products = createProducts(brands, categories);
             log.info("Created {} products", products.size());
 
-            // 6. Create Warehouses
+            // 6. Create Warehouses (REDUCED from 3 to 2)
             log.info("Starting warehouse creation...");
             List<Warehouse> warehouses = createWarehouses();
             log.info("Created {} warehouses", warehouses.size());
@@ -118,7 +118,7 @@ public class PostgresSeeder implements CommandLineRunner {
                 log.info("Using existing {} coupons", coupons.size());
             }
 
-            // 9. Create Orders
+            // 9. Create Orders (INCREASED from 50 to 150 for better sales data)
             log.info("Starting order creation...");
             List<Order> orders = createOrders(users, coupons);
             log.info("Created {} orders", orders.size());
@@ -133,12 +133,14 @@ public class PostgresSeeder implements CommandLineRunner {
             List<OrderProduct> orderProducts = createOrderProducts(orders, products);
             log.info("Created {} order products", orderProducts.size());
 
-            // 12. Create Reviews
+            // 12. Create Reviews (INCREASED from 75 to 250 for better review data)
             log.info("Starting review creation...");
             List<Review> reviews = createReviews(users, products, orders);
             log.info("Created {} reviews", reviews.size());
 
             log.info("Database seeding completed successfully!");
+            log.info("Summary: {} users, {} products, {} warehouses, {} orders, {} reviews",
+                    users.size(), products.size(), warehouses.size(), orders.size(), reviews.size());
         } catch (Exception e) {
             log.error("Error during database seeding: ", e);
             throw e;
@@ -198,8 +200,8 @@ public class PostgresSeeder implements CommandLineRunner {
         addressRepository.save(testAddress);
         users.add(testUser);
 
-        // Random users with realistic data
-        for (int i = 0; i < 20; i++) {
+        // Random users with realistic data (INCREASED from 20 to 40 for more reviewers)
+        for (int i = 0; i < 40; i++) {
             User randomUser = User.builder()
                     .firstName(faker.name().firstName())
                     .lastName(faker.name().lastName())
@@ -231,9 +233,9 @@ public class PostgresSeeder implements CommandLineRunner {
 
     private List<Brand> createBrands() {
         String[] brandNames = {
-            "Samsung", "Apple", "Sony", "LG", "Panasonic", 
-            "Philips", "Bose", "JBL", "Dell", "HP", 
-            "Lenovo", "Asus", "Acer", "Canon", "Nikon"
+                "Samsung", "Apple", "Sony", "LG", "Panasonic",
+                "Philips", "Bose", "JBL", "Dell", "HP",
+                "Lenovo", "Asus", "Acer", "Canon", "Nikon"
         };
 
         List<Brand> brands = new ArrayList<>();
@@ -276,22 +278,22 @@ public class PostgresSeeder implements CommandLineRunner {
 
     private Warranty createWarranty(Random random) {
         String[] warrantyTypes = {
-            "Standard manufacturer warranty covering defects",
-            "Extended warranty with full coverage",
-            "Limited warranty for parts and labor",
-            "Premium warranty with 24/7 support",
-            "Basic warranty covering manufacturing defects",
-            "Comprehensive warranty with replacement guarantee",
-            "Standard 1-year warranty",
-            "Extended 2-year warranty",
-            "Premium 3-year warranty with accidental damage coverage"
+                "Standard manufacturer warranty covering defects",
+                "Extended warranty with full coverage",
+                "Limited warranty for parts and labor",
+                "Premium warranty with 24/7 support",
+                "Basic warranty covering manufacturing defects",
+                "Comprehensive warranty with replacement guarantee",
+                "Standard 1-year warranty",
+                "Extended 2-year warranty",
+                "Premium 3-year warranty with accidental damage coverage"
         };
 
         LocalDate startDate = faker.date().past(30, java.util.concurrent.TimeUnit.DAYS)
                 .toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate endDate = faker.date().future(faker.number().numberBetween(365, 1095), java.util.concurrent.TimeUnit.DAYS)
                 .toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        
+
         return Warranty.builder()
                 .startDate(startDate)
                 .endDate(endDate)
@@ -301,22 +303,23 @@ public class PostgresSeeder implements CommandLineRunner {
 
     private List<Product> createProducts(List<Brand> brands, List<Category> categories) {
         String[] productPrefixes = {
-            "Ultra", "Pro", "Max", "Plus", "Elite", "Premium", 
-            "Smart", "Advanced", "Digital", "Wireless", "Portable"
+                "Ultra", "Pro", "Max", "Plus", "Elite", "Premium",
+                "Smart", "Advanced", "Digital", "Wireless", "Portable"
         };
 
         String[] productTypes = {
-            "Phone", "Laptop", "Tablet", "TV", "Monitor", "Speaker", 
-            "Headphones", "Camera", "Console", "Watch", "Router", "Keyboard"
+                "Phone", "Laptop", "Tablet", "TV", "Monitor", "Speaker",
+                "Headphones", "Camera", "Console", "Watch", "Router", "Keyboard"
         };
 
         List<Product> products = new ArrayList<>();
         Random random = new Random();
 
-        for (int i = 0; i < 100; i++) {
+        // REDUCED from 100 to 50 products to concentrate reviews and sales
+        for (int i = 0; i < 50; i++) {
             try {
                 Brand brand = brands.get(random.nextInt(brands.size()));
-                
+
                 // Select 1-3 random categories
                 Set<Category> productCategories = new HashSet<>();
                 int numCategories = random.nextInt(3) + 1;
@@ -324,9 +327,9 @@ public class PostgresSeeder implements CommandLineRunner {
                     productCategories.add(categories.get(random.nextInt(categories.size())));
                 }
 
-                String productName = brand.getName() + " " + 
-                                    productPrefixes[random.nextInt(productPrefixes.length)] + " " + 
-                                    productTypes[random.nextInt(productTypes.length)];
+                String productName = brand.getName() + " " +
+                        productPrefixes[random.nextInt(productPrefixes.length)] + " " +
+                        productTypes[random.nextInt(productTypes.length)];
 
                 BigDecimal price = BigDecimal.valueOf(faker.number().numberBetween(100, 5000));
                 BigDecimal weight = BigDecimal.valueOf(faker.number().randomDouble(2, 1, 1000)).setScale(2, RoundingMode.HALF_UP);
@@ -347,7 +350,7 @@ public class PostgresSeeder implements CommandLineRunner {
                         .reviews(new HashSet<>())
                         .build();
                 products.add(productRepository.save(product));
-                
+
                 if ((i + 1) % 20 == 0) {
                     log.info("Created {} products so far...", i + 1);
                 }
@@ -362,10 +365,10 @@ public class PostgresSeeder implements CommandLineRunner {
     private List<Warehouse> createWarehouses() {
         List<Warehouse> warehouses = new ArrayList<>();
 
+        // REDUCED from 3 to 2 warehouses
         String[] warehouseNames = {
                 "Copenhagen Central Distribution Center",
-                "Aarhus Regional Warehouse",
-                "Odense Logistics Hub"
+                "Aarhus Regional Warehouse"
         };
 
         for (String warehouseName : warehouseNames) {
@@ -385,7 +388,7 @@ public class PostgresSeeder implements CommandLineRunner {
                                 .build();
                         return userRepository.save(admin);
                     });
-            
+
             // 2. Create realistic address (don't save manually - let cascade handle it)
             Address address = Address.builder()
                     .street(faker.address().streetName())
@@ -414,14 +417,14 @@ public class PostgresSeeder implements CommandLineRunner {
         Random random = new Random();
 
         for (Product product : products) {
-            // Each product is stocked in 1-3 warehouses
-            int numWarehouses = random.nextInt(3) + 1;
+            // Each product is stocked in 1-2 warehouses (adjusted from 1-3)
+            int numWarehouses = random.nextInt(2) + 1;
             List<Warehouse> selectedWarehouses = new ArrayList<>(warehouses);
             Collections.shuffle(selectedWarehouses);
 
             for (int i = 0; i < numWarehouses && i < selectedWarehouses.size(); i++) {
                 Warehouse warehouse = selectedWarehouses.get(i);
-                
+
                 WarehouseProductKey key = WarehouseProductKey.builder()
                         .warehouseId(warehouse.getWarehouseId())
                         .productId(product.getProductId())
@@ -446,15 +449,15 @@ public class PostgresSeeder implements CommandLineRunner {
         Random random = new Random();
 
         String[] couponCodes = {
-            "WELCOME10", "SUMMER20", "WINTER25", "SPRING15", "FALL30",
-            "NEWYEAR50", "BLACKFRIDAY", "CYBERMONDAY", "LOYALTY15", "FIRST20"
+                "WELCOME10", "SUMMER20", "WINTER25", "SPRING15", "FALL30",
+                "NEWYEAR50", "BLACKFRIDAY", "CYBERMONDAY", "LOYALTY15", "FIRST20"
         };
 
         for (String code : couponCodes) {
             DiscountType discountType = random.nextBoolean() ? DiscountType.percentage : DiscountType.fixed_amount;
-            BigDecimal discountValue = discountType == DiscountType.percentage 
-                ? BigDecimal.valueOf(random.nextInt(30) + 5) 
-                : BigDecimal.valueOf(random.nextInt(500) + 50);
+            BigDecimal discountValue = discountType == DiscountType.percentage
+                    ? BigDecimal.valueOf(random.nextInt(30) + 5)
+                    : BigDecimal.valueOf(random.nextInt(500) + 50);
 
             Coupon coupon = Coupon.builder()
                     .code(code)
@@ -480,20 +483,20 @@ public class PostgresSeeder implements CommandLineRunner {
         // Get all addresses for users
         List<Address> addresses = addressRepository.findAll();
 
-        // Create 50 orders
-        for (int i = 0; i < 50; i++) {
+        // INCREASED from 50 to 150 orders for better sales analytics
+        for (int i = 0; i < 150; i++) {
             User user = users.get(random.nextInt(users.size()));
-            
+
             // Get user's addresses or use any address
             Address orderAddress = addresses.stream()
                     .filter(addr -> addr.getUser().getUserId().equals(user.getUserId()))
                     .findFirst()
                     .orElse(addresses.get(random.nextInt(addresses.size())));
-            
+
             BigDecimal subtotal = BigDecimal.valueOf(faker.number().numberBetween(100, 5000));
             BigDecimal taxAmount = subtotal.multiply(BigDecimal.valueOf(0.25)); // 25% tax
             BigDecimal shippingCost = BigDecimal.valueOf(faker.number().numberBetween(20, 120));
-            
+
             // Apply coupon to about 30% of orders
             Coupon coupon = null;
             BigDecimal discountAmount = BigDecimal.ZERO;
@@ -510,7 +513,7 @@ public class PostgresSeeder implements CommandLineRunner {
                     discountAmount = subtotal;
                 }
             }
-            
+
             BigDecimal totalAmount = subtotal.add(taxAmount).add(shippingCost).subtract(discountAmount);
 
             Order order = Order.builder()
@@ -557,8 +560,9 @@ public class PostgresSeeder implements CommandLineRunner {
         List<Review> reviews = new ArrayList<>();
         Random random = new Random();
 
-        // Create 75 reviews
-        for (int i = 0; i < 75; i++) {
+        // INCREASED from 75 to 250 reviews for better review analytics
+        // This ensures most products will have multiple reviews for the materialized view
+        for (int i = 0; i < 250; i++) {
             User user = users.get(random.nextInt(users.size()));
             Product product = products.get(random.nextInt(products.size()));
             Order order = orders.get(random.nextInt(orders.size()));
@@ -588,16 +592,16 @@ public class PostgresSeeder implements CommandLineRunner {
                 // Each order has 1-5 products
                 int numProducts = random.nextInt(5) + 1;
                 Set<Product> selectedProducts = new HashSet<>();
-                
+
                 for (int i = 0; i < numProducts; i++) {
                     Product product = products.get(random.nextInt(products.size()));
                     if (selectedProducts.add(product)) { // Avoid duplicates
                         int quantity = random.nextInt(3) + 1; // 1-3 items
                         BigDecimal unitPrice = product.getPrice();
                         BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
-                        
+
                         OrderProductKey key = new OrderProductKey(order.getOrderId(), product.getProductId());
-                        
+
                         OrderProduct orderProduct = OrderProduct.builder()
                                 .id(key)
                                 .order(order)
@@ -606,7 +610,7 @@ public class PostgresSeeder implements CommandLineRunner {
                                 .unitPrice(unitPrice)
                                 .totalPrice(totalPrice)
                                 .build();
-                        
+
                         orderProducts.add(orderProductRepository.save(orderProduct));
                     }
                 }

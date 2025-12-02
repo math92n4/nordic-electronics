@@ -57,6 +57,8 @@ public class Order extends BaseEntity {
     @Column(name = "subtotal", nullable = false, precision = 12, scale = 2)
     private BigDecimal subtotal;
 
+    // Tax rate for the order is hardcoded for 25%
+    // Therefore tax amount is calculated as subtotal * 0.25
     @Column(name = "tax_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal taxAmount;
 
