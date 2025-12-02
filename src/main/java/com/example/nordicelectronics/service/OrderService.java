@@ -18,6 +18,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -176,7 +177,11 @@ public class OrderService {
         return order;
     }
 
-    public void deleteOrder(UUID orderId) {
-        orderRepository.deleteById(orderId);
+    public void deleteOrderById(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+
+        order.setDeletedAt(LocalDateTime.now());
+        orderRepository.save(order);
     }
 }
