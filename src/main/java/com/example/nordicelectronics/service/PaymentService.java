@@ -59,7 +59,10 @@ public class PaymentService {
     }
 
     public void deletePaymentById(java.util.UUID paymentId) {
-        paymentRepository.deleteById(paymentId);
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found with id: " + paymentId));
+        payment.softDelete();
+        paymentRepository.save(payment);
     }
 
     public List<Payment> getAllPayments() {

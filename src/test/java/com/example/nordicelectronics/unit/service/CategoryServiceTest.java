@@ -201,15 +201,33 @@ class CategoryServiceTest {
     // ===== DELETE BY ID TESTS =====
 
     @Test
-    void deleteById_shouldCallRepositoryDeleteById() {
+    void deleteById_shouldSoftDeleteCategory() {
         // Arrange
-        doNothing().when(categoryRepository).deleteById(testCategoryId);
+        when(categoryRepository.findById(testCategoryId)).thenReturn(Optional.of(testCategory));
+        when(categoryRepository.save(any(Category.class))).thenReturn(testCategory);
 
         // Act
         categoryService.deleteById(testCategoryId);
 
-        // Assert
-        verify(categoryRepository).deleteById(testCategoryId);
+        // Assert - soft delete should find entity, set deletedAt, and save
+        verify(categoryRepository).findById(testCategoryId);
+        verify(categoryRepository).save(testCategory);
+        assertNotNull(testCategory.getDeletedAt());
+    }
+
+    @Test
+    void deleteById_shouldThrowEntityNotFoundException_whenCategoryNotFound() {
+        // Arrange
+        UUID nonExistentId = UUID.randomUUID();
+        when(categoryRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+            () -> categoryService.deleteById(nonExistentId));
+
+        assertEquals("Category not found", exception.getMessage());
+        verify(categoryRepository).findById(nonExistentId);
+        verify(categoryRepository, never()).save(any(Category.class));
     }
 }
 

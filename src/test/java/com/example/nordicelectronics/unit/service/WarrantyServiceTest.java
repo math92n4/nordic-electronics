@@ -212,15 +212,33 @@ class WarrantyServiceTest {
     // ===== DELETE BY ID TESTS =====
 
     @Test
-    void deleteById_shouldCallRepositoryDeleteById() {
+    void deleteById_shouldSoftDeleteWarranty() {
         // Arrange
-        doNothing().when(warrantyRepository).deleteById(testWarrantyId);
+        when(warrantyRepository.findById(testWarrantyId)).thenReturn(Optional.of(testWarranty));
+        when(warrantyRepository.save(any(Warranty.class))).thenReturn(testWarranty);
 
         // Act
         warrantyService.deleteById(testWarrantyId);
 
-        // Assert
-        verify(warrantyRepository).deleteById(testWarrantyId);
+        // Assert - soft delete should find entity, set deletedAt, and save
+        verify(warrantyRepository).findById(testWarrantyId);
+        verify(warrantyRepository).save(testWarranty);
+        assertNotNull(testWarranty.getDeletedAt());
+    }
+
+    @Test
+    void deleteById_shouldThrowEntityNotFoundException_whenWarrantyNotFound() {
+        // Arrange
+        UUID nonExistentId = UUID.randomUUID();
+        when(warrantyRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+            () -> warrantyService.deleteById(nonExistentId));
+
+        assertEquals("Warranty not found", exception.getMessage());
+        verify(warrantyRepository).findById(nonExistentId);
+        verify(warrantyRepository, never()).save(any(Warranty.class));
     }
 }
 

@@ -75,14 +75,16 @@ public class AddressService {
     }
 
     public void deleteById(UUID id) {
-        addressRepository.deleteById(id);
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Address not found"));
+        address.softDelete();
+        addressRepository.save(address);
     }
 
     public void deleteForUser(String email) {
         User user = userService.findByEmail(email);
         Address existing = getByUserId(user.getUserId());
-        deleteById(existing.getAddressId());
+        existing.softDelete();
+        addressRepository.save(existing);
     }
-
-
 }

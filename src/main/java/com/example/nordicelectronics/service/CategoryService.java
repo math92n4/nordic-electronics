@@ -38,6 +38,9 @@ public class CategoryService {
     }
 
     public void deleteById(UUID id) {
-        categoryRepository.deleteById(id);
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+        category.softDelete();
+        categoryRepository.save(category);
     }
 }

@@ -185,11 +185,17 @@ class ProductServiceTest {
     @Test
     void shouldDeleteProduct() {
         // Arrange
+        when(productRepository.findById(existingProduct.getProductId()))
+                .thenReturn(Optional.of(existingProduct));
+        when(productRepository.save(any(Product.class))).thenReturn(existingProduct);
+
         // Act
         productService.deleteById(existingProduct.getProductId());
 
-        // Assert
-        verify(productRepository, times(1)).deleteById(existingProduct.getProductId());
+        // Assert - soft delete should find entity, set deletedAt, and save
+        verify(productRepository, times(1)).findById(existingProduct.getProductId());
+        verify(productRepository, times(1)).save(existingProduct);
+        assertThat(existingProduct.getDeletedAt()).isNotNull();
     }
     /**
      * BLACK-BOX TEST: Equivalence Partitioning

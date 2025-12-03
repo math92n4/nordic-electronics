@@ -40,6 +40,9 @@ public class WarrantyService {
     }
 
     public void deleteById(UUID id) {
-        warrantyRepository.deleteById(id);
+        Warranty warranty = warrantyRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Warranty not found"));
+        warranty.softDelete();
+        warrantyRepository.save(warranty);
     }
 }
