@@ -76,6 +76,26 @@ services:
     ports:
       - "8080:8080"
 
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # TO START THIS RUN: "docker compose --profile loadtest up -d"
+  # Will take some time for it to run as it waits for the spring app to be healthy
+  # TO STOP IT "docker compose --profile loadtest down"
+  k6:
+    image: grafana/k6
+    container_name: k6
+    profiles: [ "loadtest" ]
+    volumes:
+      - ./k6-tests:/scripts
+    entrypoint: [ "k6", "run", "/scripts/product_load_test.js" ]
+    depends_on:
+      spring-app:
+        condition: service_healthy
+
   frontend:
     build:
       context: ./frontend
