@@ -6,6 +6,7 @@ import com.example.nordicelectronics.service.mongodb.OrderMongoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @Tag(name = "MongoDB Order Controller", description = "Handles operations related to orders in MongoDB")
 @RestController
+@ConditionalOnProperty(name = "spring.data.mongodb.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @RequestMapping("/api/mongodb/orders")
 public class OrderMongoController {

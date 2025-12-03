@@ -2,6 +2,7 @@ package com.example.nordicelectronics.integration.repository;
 
 import com.example.nordicelectronics.entity.Brand;
 import com.example.nordicelectronics.entity.Product;
+import com.example.nordicelectronics.entity.Warranty;
 import com.example.nordicelectronics.integration.BaseIntegrationTest;
 import com.example.nordicelectronics.repositories.sql.ProductRepository;
 import jakarta.transaction.Transactional;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +53,13 @@ class ProductRepositoryTest extends BaseIntegrationTest {
     }
 
     private Product createTestProduct(String name, Brand brand) {
+        Warranty warranty = new Warranty();
+        warranty.setDescription("Warranty Description");
+        warranty.setStartDate(LocalDate.now().minusDays(1));
+        warranty.setEndDate(LocalDate.now().plusDays(1));
+        entityManager.persist(warranty);
+        entityManager.flush();
+
         Product product = new Product();
         product.setName(name);
         product.setPrice(new BigDecimal("99.99"));
@@ -58,7 +67,7 @@ class ProductRepositoryTest extends BaseIntegrationTest {
         product.setDescription(name + " Description");
         product.setBrand(brand);
         product.setWeight(new BigDecimal("1.5"));
-        // Set other required fields
+        product.setWarranty(warranty);
         return product;
     }
 }

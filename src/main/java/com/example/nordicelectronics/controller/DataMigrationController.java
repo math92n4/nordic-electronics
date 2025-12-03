@@ -5,6 +5,7 @@ import com.example.nordicelectronics.service.Neo4jMigrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 @Tag(name = "Data Migration Controller", description = "Handles data migration from PostgreSQL to MongoDB and Neo4j")
 @RestController
+@ConditionalOnProperty(name = "spring.data.mongodb.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @RequestMapping("/api/migration")
 public class DataMigrationController {
