@@ -44,6 +44,10 @@
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-neo4j</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.hypersistence</groupId>
             <artifactId>hypersistence-utils-hibernate-63</artifactId>
             <version>3.7.0</version>
@@ -185,6 +189,10 @@
                         <exclude>**/controller/mongodb/**</exclude>
                         <exclude>**/repositories/mongodb/**</exclude>
                         <exclude>**/service/mongodb/**</exclude>
+                        <exclude>**/entity/neo4j/**</exclude>
+                        <exclude>**/controller/neo4j/**</exclude>
+                        <exclude>**/repositories/neo4j/**</exclude>
+                        <exclude>**/service/neo4j/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
