@@ -211,16 +211,32 @@ class AddressServiceTest {
     }
 
     @Test
-    void deleteById_callsRepository() {
+    void deleteById_softDeletesAddress() {
         UUID id = UUID.randomUUID();
-        doNothing().when(addressRepository).deleteById(id);
+        Address address = makeAddress(id);
+        when(addressRepository.findById(id)).thenReturn(Optional.of(address));
+        when(addressRepository.save(any(Address.class))).thenReturn(address);
 
         addressService.deleteById(id);
-        verify(addressRepository).deleteById(id);
+
+        // soft delete should find entity, set deletedAt, and save
+        verify(addressRepository).findById(id);
+        verify(addressRepository).save(address);
+        assertNotNull(address.getDeletedAt());
     }
 
     @Test
-    void deleteForUser_findsUserAndDeletes() {
+    void deleteById_throwsEntityNotFoundException_whenAddressNotFound() {
+        UUID id = UUID.randomUUID();
+        when(addressRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> addressService.deleteById(id));
+        verify(addressRepository).findById(id);
+        verify(addressRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteForUser_softDeletesAddress() {
         // setup
         UUID uniqueUserID = UUID.randomUUID();
         UUID uniqueAddressID = UUID.randomUUID();
@@ -235,15 +251,16 @@ class AddressServiceTest {
         when(userService.findByEmail("user@example.com")).thenReturn(user);
         when(userService.findById(uniqueUserID)).thenReturn(user);
         when(addressRepository.findById(uniqueAddressID)).thenReturn(Optional.of(newAddress));
-        doNothing().when(addressRepository).deleteById(uniqueAddressID);
+        when(addressRepository.save(any(Address.class))).thenReturn(newAddress);
 
         // act
         addressService.deleteForUser("user@example.com");
 
-        // verify
+        // verify - soft delete should save with deletedAt set
         verify(userService).findByEmail("user@example.com");
         verify(userService).findById(uniqueUserID);
         verify(addressRepository).findById(uniqueAddressID);
-        verify(addressRepository).deleteById(uniqueAddressID);
+        verify(addressRepository).save(newAddress);
+        assertNotNull(newAddress.getDeletedAt());
     }
 }

@@ -216,16 +216,31 @@ class ReviewServiceTest {
     }
 
     @Test
-    void deleteById_delegates() {
-        doNothing().when(reviewRepository).deleteById(reviewId);
+    void deleteById_softDeletes() {
+        Review review = new Review();
+        review.setReviewId(reviewId);
+        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+        when(reviewRepository.save(any(Review.class))).thenReturn(review);
 
         reviewService.deleteById(reviewId);
 
-        verify(reviewRepository).deleteById(reviewId);
+        // soft delete should find entity, set deletedAt, and save
+        verify(reviewRepository).findById(reviewId);
+        verify(reviewRepository).save(review);
+        assertThat(review.getDeletedAt()).isNotNull();
     }
 
     @Test
-    void deleteForUser_happyPath() {
+    void deleteById_throwsEntityNotFoundException_whenReviewNotFound() {
+        when(reviewRepository.findById(reviewId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewService.deleteById(reviewId))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Review not found");
+    }
+
+    @Test
+    void deleteForUser_softDeletes() {
         User user = new User();
         user.setUserId(userId);
         Review existing = new Review();
@@ -236,10 +251,13 @@ class ReviewServiceTest {
                 .thenReturn(user);
         when(reviewRepository.findByReviewIdAndUser_UserId(reviewId, userId))
                 .thenReturn(Optional.of(existing));
+        when(reviewRepository.save(any(Review.class))).thenReturn(existing);
 
         reviewService.deleteForUser("x@x", reviewId);
 
-        verify(reviewRepository).deleteById(reviewId);
+        // soft delete should save with deletedAt set
+        verify(reviewRepository).save(existing);
+        assertThat(existing.getDeletedAt()).isNotNull();
     }
 
     @Test

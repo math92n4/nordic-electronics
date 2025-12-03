@@ -201,15 +201,33 @@ class BrandServiceTest {
     // ===== DELETE BY ID TESTS =====
 
     @Test
-    void deleteById_shouldCallRepositoryDeleteById() {
+    void deleteById_shouldSoftDeleteBrand() {
         // Arrange
-        doNothing().when(brandRepository).deleteById(testBrandId);
+        when(brandRepository.findById(testBrandId)).thenReturn(Optional.of(testBrand));
+        when(brandRepository.save(any(Brand.class))).thenReturn(testBrand);
 
         // Act
         brandService.deleteById(testBrandId);
 
-        // Assert
-        verify(brandRepository).deleteById(testBrandId);
+        // Assert - soft delete should find entity, set deletedAt, and save
+        verify(brandRepository).findById(testBrandId);
+        verify(brandRepository).save(testBrand);
+        assertNotNull(testBrand.getDeletedAt());
+    }
+
+    @Test
+    void deleteById_shouldThrowEntityNotFoundException_whenBrandNotFound() {
+        // Arrange
+        UUID nonExistentId = UUID.randomUUID();
+        when(brandRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+            () -> brandService.deleteById(nonExistentId));
+
+        assertEquals("Brand not found", exception.getMessage());
+        verify(brandRepository).findById(nonExistentId);
+        verify(brandRepository, never()).save(any(Brand.class));
     }
 }
 

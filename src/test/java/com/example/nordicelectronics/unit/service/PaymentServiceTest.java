@@ -175,15 +175,33 @@ class PaymentServiceTest {
     // ===== DELETE PAYMENT BY ID TESTS =====
 
     @Test
-    void deletePaymentById_shouldCallRepositoryDeleteById() {
+    void deletePaymentById_shouldSoftDeletePayment() {
         // Arrange
-        doNothing().when(paymentRepository).deleteById(testPaymentId);
+        when(paymentRepository.findById(testPaymentId)).thenReturn(Optional.of(testPayment));
+        when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
 
         // Act
         paymentService.deletePaymentById(testPaymentId);
 
-        // Assert
-        verify(paymentRepository).deleteById(testPaymentId);
+        // Assert - soft delete should find entity, set deletedAt, and save
+        verify(paymentRepository).findById(testPaymentId);
+        verify(paymentRepository).save(testPayment);
+        assertNotNull(testPayment.getDeletedAt());
+    }
+
+    @Test
+    void deletePaymentById_shouldThrowIllegalArgumentException_whenPaymentNotFound() {
+        // Arrange
+        UUID nonExistentId = UUID.randomUUID();
+        when(paymentRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> paymentService.deletePaymentById(nonExistentId));
+
+        assertTrue(exception.getMessage().contains("Payment not found"));
+        verify(paymentRepository).findById(nonExistentId);
+        verify(paymentRepository, never()).save(any());
     }
 
     // ===== GET ALL PAYMENTS TESTS =====

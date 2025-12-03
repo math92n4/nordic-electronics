@@ -357,32 +357,34 @@ class WarehouseServiceTest {
     class DeleteByIdTests {
 
         @Test
-        @DisplayName("Should delete warehouse when valid id provided")
-        void shouldDeleteWarehouse_WhenValidIdProvided() {
+        @DisplayName("Should soft delete warehouse when valid id provided")
+        void shouldSoftDeleteWarehouse_WhenValidIdProvided() {
             // Arrange
-            doNothing().when(warehouseRepository).deleteById(warehouseId);
+            when(warehouseRepository.findById(warehouseId)).thenReturn(Optional.of(warehouse));
+            when(warehouseRepository.save(any(Warehouse.class))).thenReturn(warehouse);
 
             // Act
             warehouseService.deleteById(warehouseId);
 
-            // Assert
-            verify(warehouseRepository, times(1)).deleteById(warehouseId);
+            // Assert - soft delete should find entity, set deletedAt, and save
+            verify(warehouseRepository, times(1)).findById(warehouseId);
+            verify(warehouseRepository, times(1)).save(warehouse);
+            assertThat(warehouse.getDeletedAt()).isNotNull();
         }
 
         @Test
-        @DisplayName("Should call deleteById even when warehouse does not exist")
-        void shouldCallDeleteById_EvenWhenWarehouseDoesNotExist() {
+        @DisplayName("Should throw EntityNotFoundException when warehouse does not exist")
+        void shouldThrowEntityNotFoundException_WhenWarehouseDoesNotExist() {
             // Arrange
             UUID nonExistentId = UUID.randomUUID();
-            doNothing().when(warehouseRepository).deleteById(nonExistentId);
+            when(warehouseRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-            // Act
-            warehouseService.deleteById(nonExistentId);
-
-            // Assert
-            // Note: Spring Data JPA deleteById doesn't throw exception if entity doesn't exist
-            // This test documents this behavior
-            verify(warehouseRepository, times(1)).deleteById(nonExistentId);
+            // Act & Assert
+            assertThatThrownBy(() -> warehouseService.deleteById(nonExistentId))
+                    .isInstanceOf(EntityNotFoundException.class)
+                    .hasMessage("Warehouse not found");
+            verify(warehouseRepository, times(1)).findById(nonExistentId);
+            verify(warehouseRepository, never()).save(any(Warehouse.class));
         }
     }
 }
