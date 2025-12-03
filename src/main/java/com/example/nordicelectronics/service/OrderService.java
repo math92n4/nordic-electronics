@@ -51,6 +51,7 @@ public class OrderService {
     public List<Order> getOrdersByUserId(UUID userId) {
         return orderRepository.findAll().stream()
                 .filter(order -> order.getUser() != null && order.getUser().getUserId().equals(userId))
+                .filter(order -> order.getDeletedAt() == null)
                 .toList();
     }
 
@@ -173,7 +174,7 @@ public class OrderService {
 
     public void deleteOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
         order.softDelete();
         orderRepository.save(order);
     }
