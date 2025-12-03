@@ -3,8 +3,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE brand (
                        brand_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                       name TEXT NOT NULL,
-                       description TEXT NOT NULL,
+                       name VARCHAR(100) NOT NULL,
+                       description VARCHAR(500) NOT NULL,
                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                        deleted_at TIMESTAMP NULL
@@ -12,8 +12,8 @@ CREATE TABLE brand (
 
 CREATE TABLE category (
                           category_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                          name TEXT NOT NULL,
-                          description TEXT NOT NULL,
+                          name VARCHAR(100) NOT NULL,
+                          description VARCHAR(500) NOT NULL,
                           created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           deleted_at TIMESTAMP NULL
@@ -24,12 +24,12 @@ CREATE TABLE category (
 -- ======================
 CREATE TABLE "user" (
                         user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                        first_name TEXT NOT NULL,
-                        last_name TEXT NOT NULL,
-                        email TEXT NOT NULL UNIQUE,
-                        phone_number TEXT NOT NULL,
+                        first_name VARCHAR(50) NOT NULL,
+                        last_name VARCHAR(50) NOT NULL,
+                        email VARCHAR(255) NOT NULL UNIQUE,
+                        phone_number VARCHAR(8) NOT NULL,  -- Danish prefix + 8 digits
                         date_of_birth DATE NOT NULL,
-                        password TEXT NOT NULL,
+                        password VARCHAR(64) NOT NULL,  -- BVA: 8-64 characters
                         is_admin BOOLEAN DEFAULT FALSE,
                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -42,10 +42,10 @@ CREATE TABLE "user" (
 CREATE TABLE address (
                          address_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                          user_id UUID NOT NULL REFERENCES "user"(user_id),
-                         street TEXT NOT NULL,
-                         street_number TEXT NOT NULL,
-                         zip TEXT NOT NULL,
-                         city TEXT NOT NULL,
+                         street VARCHAR(100) NOT NULL,
+                         street_number VARCHAR(10) NOT NULL,
+                         zip VARCHAR(4) NOT NULL,  -- Danish zip codes are 4 digits
+                         city VARCHAR(100) NOT NULL,
                          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          deleted_at TIMESTAMP NULL,
@@ -54,8 +54,8 @@ CREATE TABLE address (
 
 CREATE TABLE warehouse (
                            warehouse_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                           name TEXT NOT NULL,
-                           phone_number TEXT NOT NULL,
+                           name VARCHAR(100) NOT NULL,
+                           phone_number VARCHAR(8) NOT NULL,
                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            deleted_at TIMESTAMP NULL,
@@ -68,13 +68,13 @@ CREATE TABLE warehouse (
 CREATE TYPE discount_type_enum AS ENUM ('percentage', 'fixed_amount');
 CREATE TABLE coupon (
                         coupon_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                        code TEXT NOT NULL UNIQUE,
+                        code VARCHAR(50) NOT NULL UNIQUE,
                         discount_type discount_type_enum NOT NULL,
-                        discount_value NUMERIC(12, 2) NOT NULL,
+                        discount_value NUMERIC(5, 2) NOT NULL CHECK (discount_value >= 0 AND discount_value <= 100),  -- BVA: 0-100%
                         minimum_order_value NUMERIC(12, 2) NOT NULL,
                         expiry_date DATE,
-                        usage_limit INTEGER NOT NULL,
-                        times_used INTEGER DEFAULT 0,
+                        usage_limit INTEGER NOT NULL CHECK (usage_limit >= 1 AND usage_limit <= 50),  -- BVA: 1-50 uses
+                        times_used INTEGER DEFAULT 0 CHECK (times_used >= 0),
                         is_active BOOLEAN DEFAULT TRUE,
                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -88,7 +88,7 @@ CREATE TABLE warranty (
                           warranty_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                           start_date DATE NOT NULL,
                           end_date DATE NOT NULL,
-                          description TEXT NOT NULL,
+                          description VARCHAR(500) NOT NULL,
                           created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           deleted_at TIMESTAMP NULL
@@ -99,10 +99,10 @@ CREATE TABLE warranty (
 -- ======================
 CREATE TABLE product (
                          product_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-                         sku TEXT UNIQUE NOT NULL,
-                         name TEXT NOT NULL,
-                         description TEXT NOT NULL,
-                         price NUMERIC(12, 2) NOT NULL,
+                         sku VARCHAR(50) UNIQUE NOT NULL,
+                         name VARCHAR(200) NOT NULL,
+                         description VARCHAR(2000) NOT NULL,
+                         price NUMERIC(12, 2) NOT NULL CHECK (price >= 0),  -- BVA: 0 to DECIMAL_MAX
                          weight NUMERIC(8, 2),
                          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -172,10 +172,10 @@ CREATE TABLE review (
                         order_id UUID NOT NULL REFERENCES "order"(order_id),
                         review_value INTEGER CHECK (
                             review_value >= 1
-                                AND review_value <= 5
+                                AND review_value <= 5  -- BVA: 1-5 star rating
                             ),
-                        title TEXT NOT NULL,
-                        comment TEXT NOT NULL,
+                        title VARCHAR(200) NOT NULL,
+                        comment VARCHAR(2000) NOT NULL,
                         is_verified_purchase BOOLEAN DEFAULT FALSE,
                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -189,7 +189,7 @@ CREATE TABLE review (
 CREATE TABLE order_product (
                                order_id UUID NOT NULL REFERENCES "order"(order_id) ON DELETE CASCADE,
                                product_id UUID NOT NULL REFERENCES product(product_id) ON DELETE RESTRICT,
-                               quantity INTEGER NOT NULL CHECK (quantity > 0),
+                               quantity INTEGER NOT NULL CHECK (quantity >= 1 AND quantity <= 50),  -- BVA: 1-50 items per order
                                unit_price NUMERIC(12, 2) NOT NULL,
                                total_price NUMERIC(12, 2) NOT NULL,
                                PRIMARY KEY (order_id, product_id)
@@ -199,7 +199,7 @@ CREATE TABLE order_product (
 CREATE TABLE warehouse_product (
                                    warehouse_id UUID NOT NULL REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
                                    product_id UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+                                   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),  -- BVA: 0 to max stock, no negative
                                    PRIMARY KEY (warehouse_id, product_id)
 );
 
@@ -218,13 +218,13 @@ CREATE TABLE product_category (
 -- Simple audit log table
 CREATE TABLE audit_log (
                            audit_id SERIAL PRIMARY KEY,
-                           table_name TEXT NOT NULL,
-                           operation TEXT NOT NULL,
-                           record_id TEXT NOT NULL,
+                           table_name VARCHAR(100) NOT NULL,
+                           operation VARCHAR(20) NOT NULL,
+                           record_id VARCHAR(100) NOT NULL,
                            before_values JSONB,
                            after_values JSONB,
                            changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                           changed_by TEXT DEFAULT current_user
+                           changed_by VARCHAR(100) DEFAULT current_user
 );
 
 -- Simple audit function
