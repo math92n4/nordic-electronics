@@ -193,6 +193,8 @@
                         <exclude>**/controller/neo4j/**</exclude>
                         <exclude>**/repositories/neo4j/**</exclude>
                         <exclude>**/service/neo4j/**</exclude>
+                        <exclude>**/service/DataMigrationService.class</exclude>
+                        <exclude>**/service/Neo4jMigrationService.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
