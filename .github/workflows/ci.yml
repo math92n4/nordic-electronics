@@ -67,7 +67,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Run Integration Tests
-        run: mvn -B clean verify -DskipUnitTests=true -Dtest=none -DfailIfNoTests=false
+        run: mvn -B clean verify -Dsurefire.skip=true
 
       - name: Upload integration test results
         if: always()
