@@ -60,7 +60,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/postgresql/**", "/api/mongodb/**").permitAll()
                         .requestMatchers(swaggerPaths).permitAll()
                         .requestMatchers(staticPaths).permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/v3/api-docs.yaml", "/v3/api-docs").permitAll()
                         .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                         .requestMatchers("/api/postgresql/auth/current-user", "/api/postgresql/auth/users", "/api/postgresql/auth/test").authenticated()
