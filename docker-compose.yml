@@ -96,6 +96,42 @@ services:
       spring-app:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    restart: always
+    volumes:
+      # Mount source code for instant hot reload
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+      # Exclude node_modules from volume mount to use container's installed dependencies
+      - /app/node_modules
+    develop:
+      watch:
+        # Sync source files directly into the container (instant updates)
+        - action: sync+restart
+          path: ./frontend/src
+          target: /app/src
+        - action: sync+restart
+          path: ./frontend/public
+          target: /app/public
+        # If package.json changes, rebuild the whole image
+        - action: rebuild
+          path: ./frontend/package.json
+        - action: rebuild
+          path: ./frontend/package-lock.json
+    depends_on:
+      spring-app:
+        condition: service_started
+    environment:
+      VITE_API_URL: http://spring-app:8080
+    ports:
+      - "3000:3000"
+
 volumes:
   postgres_data:
   mongodb_data:
