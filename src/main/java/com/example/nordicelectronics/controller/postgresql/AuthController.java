@@ -37,18 +37,6 @@ public class AuthController {
     @Autowired
     private SecurityContextRepository securityContextRepository;
 
-    @Operation(summary = "Test PostgreSQL endpoint", description = "Returns session and authentication details for testing purposes")
-    @GetMapping("/test")
-    public String test(HttpServletRequest request, HttpServletResponse response) {
-        var session = request.getSession(false);
-        String sessionId = (session != null) ? session.getId() : "no-session";
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = (auth != null) ? auth.getName() : "anonymous";
-
-        return "SessionID: " + sessionId + " | User: " + username + " | Request URI: " + request.getRequestURI()
-                + " | Status: " + response.getStatus();
-    }
-
     @Operation(summary = "Get all PostgreSQL users", description = "Fetches a list of all registered users")
     @GetMapping("/users")
     public List<User> getUsers() {
