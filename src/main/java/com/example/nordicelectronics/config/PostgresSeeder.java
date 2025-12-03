@@ -6,6 +6,7 @@ import com.example.nordicelectronics.entity.enums.OrderStatus;
 import com.example.nordicelectronics.entity.enums.PaymentMethod;
 import com.example.nordicelectronics.entity.enums.PaymentStatus;
 import com.example.nordicelectronics.repositories.sql.*;
+import com.example.nordicelectronics.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.datafaker.Faker;
@@ -41,6 +42,7 @@ public class PostgresSeeder implements CommandLineRunner {
     private final ReviewRepository reviewRepository;
     private final OrderProductRepository orderProductRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ProductService productService;
 
     private final Faker faker = new Faker(new Locale("da", "DK"));
 
@@ -141,6 +143,11 @@ public class PostgresSeeder implements CommandLineRunner {
             log.info("Database seeding completed successfully!");
             log.info("Summary: {} users, {} products, {} warehouses, {} orders, {} reviews",
                     users.size(), products.size(), warehouses.size(), orders.size(), reviews.size());
+
+            // 13. Refresh materialized views for analytics
+            log.info("Refreshing materialized views for analytics...");
+            productService.refreshAnalyticsViews();
+            log.info("Materialized views refreshed successfully.");
         } catch (Exception e) {
             log.error("Error during database seeding: ", e);
             throw e;
