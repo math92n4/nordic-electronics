@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.Types;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +33,7 @@ public class OrderService {
     private final JdbcTemplate jdbcTemplate;
 
     @PersistenceContext
-    private EntityManager entityManager;
+    EntityManager entityManager;
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
@@ -170,10 +167,8 @@ public class OrderService {
         // =====================================================
         // 7. QUERY FOR THE MOST RECENT ORDER BY THIS USER
         // =====================================================
-        Order order = orderRepository.findTopByUserOrderByCreatedAtDesc(user)
+        return orderRepository.findTopByUserOrderByCreatedAtDesc(user)
                 .orElseThrow(() -> new IllegalStateException("Order not found after creation"));
-
-        return order;
     }
 
     public void deleteOrder(UUID orderId) {

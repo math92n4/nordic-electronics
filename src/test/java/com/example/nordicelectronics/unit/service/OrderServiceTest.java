@@ -184,7 +184,7 @@ class OrderServiceTest {
     // HAPPY PATH: CREATE ORDER
     // ----------------------------------
     @Test
-    void createOrder_happyPath_withCoupon_shouldReturnOrder() throws Exception {
+    void createOrder_happyPath_withCoupon_shouldReturnOrder() {
         UUID addressId = UUID.randomUUID();
         UUID couponId = UUID.randomUUID();
         UUID warehouseId = UUID.randomUUID();
@@ -303,7 +303,7 @@ class OrderServiceTest {
     }
 
     @Test
-    void createOrder_orderNotFoundAfterProcedure_shouldThrow() throws Exception {
+    void createOrder_orderNotFoundAfterProcedure_shouldThrow() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(addressRepository.save(any())).thenReturn(Address.builder().addressId(UUID.randomUUID()).build());
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
@@ -342,7 +342,7 @@ class OrderServiceTest {
         when(orderRepository.save(order)).thenReturn(order); // simulate save
 
         // Call the service method
-        orderService.deleteOrderById(orderId);
+        orderService.deleteOrder(orderId);
 
         // Assert deletedAt is set
         assertNotNull(order.getDeletedAt(), "deletedAt should be set after deletion");
@@ -360,7 +360,7 @@ class OrderServiceTest {
 
         // Assert that EntityNotFoundException is thrown
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> orderService.deleteOrderById(orderId));
+                () -> orderService.deleteOrder(orderId));
 
         assertEquals("Order not found", exception.getMessage());
     }
