@@ -131,7 +131,7 @@ class OrderRepositoryTest extends BaseIntegrationTest {
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(email)
-                .phoneNumber("+4512345678")
+                .phoneNumber("12345678")
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
                 .password("testPassword123")
                 .isAdmin(false)
