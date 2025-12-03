@@ -38,8 +38,9 @@ public class BrandService {
     }
 
     public void deleteById(UUID id) {
-        brandRepository.deleteById(id);
+        Brand brand = brandRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Brand not found"));
+        brand.softDelete();
+        brandRepository.save(brand);
     }
-
-
 }

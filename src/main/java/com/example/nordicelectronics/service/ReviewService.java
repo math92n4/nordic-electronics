@@ -77,14 +77,18 @@ public class ReviewService {
     }
 
     public void deleteById(UUID id) {
-        reviewRepository.deleteById(id);
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Review not found"));
+        review.softDelete();
+        reviewRepository.save(review);
     }
 
     public void deleteForUser(String email, UUID reviewId) {
         User user = userService.findByEmail(email);
         Review existing = reviewRepository.findByReviewIdAndUser_UserId(reviewId, user.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Review not found or you don't have permission to delete it"));
-        deleteById(existing.getReviewId());
+        existing.softDelete();
+        reviewRepository.save(existing);
     }
 }
 

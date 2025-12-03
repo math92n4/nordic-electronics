@@ -63,7 +63,9 @@ public class WarehouseService {
     }
 
     public void deleteById(UUID id) {
-        warehouseRepository.deleteById(id);
+        Warehouse warehouse = warehouseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Warehouse not found"));
+        warehouse.softDelete();
+        warehouseRepository.save(warehouse);
     }
-
 }

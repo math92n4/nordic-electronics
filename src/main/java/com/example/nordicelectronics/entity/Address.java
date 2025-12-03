@@ -3,6 +3,7 @@ package com.example.nordicelectronics.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.UUID;
 
@@ -13,7 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-
+@SQLRestriction("deleted_at IS NULL")
 public class Address extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

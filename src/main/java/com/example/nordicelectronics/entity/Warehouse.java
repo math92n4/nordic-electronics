@@ -3,6 +3,7 @@ package com.example.nordicelectronics.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,6 +15,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
+@SQLRestriction("deleted_at IS NULL")
 public class Warehouse extends BaseEntity {
 
     @Id

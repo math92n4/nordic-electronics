@@ -4,6 +4,7 @@ import com.example.nordicelectronics.entity.enums.DiscountType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcType;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @Setter
 @Builder
 @Table(name = "coupon")
+@SQLRestriction("deleted_at IS NULL")
 public class Coupon extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
