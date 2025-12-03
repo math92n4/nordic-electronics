@@ -163,7 +163,7 @@ jobs:
             -Dsonar.sources=src/main/java
             -Dsonar.tests=src/test/java
 
-            -Dsonar.exclusions=src/main/java/com/example/nordicelectronics/config/**,src/main/java/com/example/nordicelectronics/controller/mongo/**,src/main/java/com/example/nordicelectronics/document/**,src/main/java/com/example/nordicelectronics/entity/**,src/main/java/com/example/nordicelectronics/repositories/**,src/main/java/com/example/nordicelectronics/runner/**,src/main/java/com/example/nordicelectronics/service/mongo/**,src/main/java/com/example/nordicelectronics/service/MigrationService.java
+            -Dsonar.exclusions=src/main/java/com/example/nordicelectronics/config/**,src/main/java/com/example/nordicelectronics/controller/mongodb/**,src/main/java/com/example/nordicelectronics/controller/neo4j/**,src/main/java/com/example/nordicelectronics/entity/mongodb/**,src/main/java/com/example/nordicelectronics/entity/neo4j/**,src/main/java/com/example/nordicelectronics/repositories/mongodb/**,src/main/java/com/example/nordicelectronics/repositories/neo4j/**,src/main/java/com/example/nordicelectronics/service/mongodb/**,src/main/java/com/example/nordicelectronics/service/neo4j/**,src/main/java/com/example/nordicelectronics/service/DataMigrationService.java,src/main/java/com/example/nordicelectronics/service/Neo4jMigrationService.java
 
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
