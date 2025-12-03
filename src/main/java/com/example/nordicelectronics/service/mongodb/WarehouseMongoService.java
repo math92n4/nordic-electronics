@@ -3,12 +3,14 @@ package com.example.nordicelectronics.service.mongodb;
 import com.example.nordicelectronics.entity.mongodb.WarehouseDocument;
 import com.example.nordicelectronics.repositories.mongodb.WarehouseMongoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(name = "spring.data.mongodb.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 public class WarehouseMongoService {
 
