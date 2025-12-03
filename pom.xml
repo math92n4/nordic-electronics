@@ -185,7 +185,6 @@
                 <configuration>
                     <excludes>
                         <exclude>**/config/**</exclude>
-                        <exclude>**/controller/**</exclude>
                         <exclude>**/entity/mongodb/**</exclude>
                         <exclude>**/controller/mongodb/**</exclude>
                         <exclude>**/repositories/mongodb/**</exclude>
