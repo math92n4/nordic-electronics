@@ -327,6 +327,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS mv_best_reviewed_products AS
 SELECT
     p.product_id,
     p.name AS product_name,
+    p.price AS product_price,
     ROUND(AVG(r.review_value)::NUMERIC, 2) AS average_rating,
     COUNT(r.review_id) AS number_of_reviews
 FROM product p
@@ -502,8 +503,6 @@ AS $$
 DECLARE
 v_order_id UUID;
     v_subtotal NUMERIC(12, 2) := 0;
-    v_tax_rate NUMERIC(5, 4) := 0.25;
-    v_tax_amount NUMERIC(12, 2);
     v_shipping_cost NUMERIC(12, 2) := 50.00;
     v_total NUMERIC(12, 2);
     v_item JSONB;
@@ -536,10 +535,8 @@ END IF;
         v_item_total := v_product_price * (v_item->>'quantity')::INTEGER;
         v_subtotal := v_subtotal + v_item_total;
 END LOOP;
-
-    -- Calculate tax and total
-    v_tax_amount := v_subtotal * v_tax_rate;
-    v_total := v_subtotal + v_tax_amount + v_shipping_cost - COALESCE(p_discount_amount, 0);
+    -- Calculate total
+        v_total := v_subtotal + v_shipping_cost - COALESCE(p_discount_amount, 0);
 
     -- Create order
 INSERT INTO "order" (
@@ -557,7 +554,7 @@ INSERT INTO "order" (
              p_address_id,
              p_coupon_id,
              v_subtotal,
-             v_tax_amount,
+             0,
              v_shipping_cost,
              COALESCE(p_discount_amount, 0),
              v_total,

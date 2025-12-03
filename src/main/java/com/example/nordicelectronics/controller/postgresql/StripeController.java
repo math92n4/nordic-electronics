@@ -24,6 +24,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
+
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -153,6 +155,15 @@ public class StripeController {
             if (addressRequest != null) {
                 orderRequestBuilder.address(addressRequest);
             }
+
+            // Add coupon code if provided
+            Object couponCodeObj = payload.get("couponCode");
+            if (couponCodeObj != null) {
+                String couponCode = String.valueOf(couponCodeObj).trim();
+                if (!couponCode.isEmpty() && !couponCode.equals("null")) {
+                    orderRequestBuilder.couponCode(couponCode);
+                }
+            }
             
             OrderRequestDTO orderRequest = orderRequestBuilder.build();
 
@@ -178,8 +189,13 @@ public class StripeController {
             String successUrl = (String) payload.getOrDefault("successUrl", "http://localhost:8080/?checkout=success&order=" + orderId);
             String cancelUrl = (String) payload.getOrDefault("cancelUrl", "http://localhost:8080/?checkout=cancel");
 
-            // Create Stripe session
-            Map<String, Object> stripeResponse = createStripeSession(cart, successUrl, cancelUrl, stripeKey);
+            // Get discount amount from created order
+            BigDecimal discountAmount = createdOrder.getDiscountAmount() != null
+                    ? createdOrder.getDiscountAmount()
+                    : BigDecimal.ZERO;
+
+            // Create Stripe session with discount
+            Map<String, Object> stripeResponse = createStripeSession(cart, successUrl, cancelUrl, stripeKey, discountAmount);
             String checkoutUrl = (String) stripeResponse.get("url");
             String sessionId = (String) stripeResponse.get("id");
 
@@ -326,7 +342,7 @@ public class StripeController {
         }
     }
 
-    private Map<String, Object> createStripeSession(List<Map<String, Object>> cart, String successUrl, String cancelUrl, String stripeKey) throws StripeApiException {
+    private Map<String, Object> createStripeSession(List<Map<String, Object>> cart, String successUrl, String cancelUrl, String stripeKey, BigDecimal discountAmount) throws StripeApiException {
         try {
             StringBuilder form = new StringBuilder();
             append(form, "mode", "payment");
@@ -334,19 +350,49 @@ public class StripeController {
             append(form, "success_url", successUrl);
             append(form, "cancel_url", cancelUrl);
 
-            // Add line items
+            // Calculate total cart amount for discount distribution
+            BigDecimal totalCartAmount = BigDecimal.ZERO;
+            List<BigDecimal> itemAmounts = new ArrayList<>();
+
+            for (Map<String, Object> item : cart) {
+                double price = Double.parseDouble(String.valueOf(item.getOrDefault("price", 0)));
+                int quantity = Integer.parseInt(String.valueOf(item.getOrDefault("quantity", 1)));
+                BigDecimal itemTotal = BigDecimal.valueOf(price).multiply(BigDecimal.valueOf(quantity));
+                totalCartAmount = totalCartAmount.add(itemTotal);
+                itemAmounts.add(itemTotal);
+            }
+
+            // Calculate discount ratio if discount exists
+            BigDecimal discountRatio = BigDecimal.ZERO;
+            if (discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0
+                    && totalCartAmount.compareTo(BigDecimal.ZERO) > 0) {
+                discountRatio = discountAmount.divide(totalCartAmount, 4, java.math.RoundingMode.HALF_UP);
+            }
+
+            // Add line items with discount applied proportionally
+            int itemIndex = 0;
             for (int i = 0; i < cart.size(); i++) {
                 Map<String, Object> item = cart.get(i);
                 String name = String.valueOf(item.getOrDefault("name", "Item"));
-                double price = Double.parseDouble(String.valueOf(item.getOrDefault("price", 0)));
                 int quantity = Integer.parseInt(String.valueOf(item.getOrDefault("quantity", 1)));
 
-                long unitAmount = Math.round(price * 100); // Convert to cents
+// Apply discount proportionally to each item
+                BigDecimal itemTotal = itemAmounts.get(i);
+                BigDecimal itemDiscount = itemTotal.multiply(discountRatio);
+                BigDecimal discountedItemTotal = itemTotal.subtract(itemDiscount);
+                BigDecimal discountedUnitPrice = discountedItemTotal.divide(BigDecimal.valueOf(quantity), 2, java.math.RoundingMode.HALF_UP);
 
-                append(form, String.format("line_items[%d][price_data][currency]", i), "usd");
-                append(form, String.format("line_items[%d][price_data][product_data][name]", i), name);
-                append(form, String.format("line_items[%d][price_data][unit_amount]", i), String.valueOf(unitAmount));
-                append(form, String.format("line_items[%d][quantity]", i), String.valueOf(quantity));
+                long unitAmount = Math.round(discountedUnitPrice.doubleValue() * 100); // Convert to cents
+
+                // Ensure minimum amount of 1 cent per unit
+                if (unitAmount < 1) {
+                    unitAmount = 1;
+                }
+                append(form, String.format("line_items[%d][price_data][currency]", itemIndex), "usd");
+                append(form, String.format("line_items[%d][price_data][product_data][name]", itemIndex), name);
+                append(form, String.format("line_items[%d][price_data][unit_amount]", itemIndex), String.valueOf(unitAmount));
+                append(form, String.format("line_items[%d][quantity]", itemIndex), String.valueOf(quantity));
+                itemIndex++;
             }
 
             // Make HTTP request to Stripe
