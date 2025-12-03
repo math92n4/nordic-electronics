@@ -466,14 +466,17 @@ public class PostgresSeeder implements CommandLineRunner {
                     ? BigDecimal.valueOf(random.nextInt(30) + 5)
                     : BigDecimal.valueOf(random.nextInt(500) + 50);
 
+            int usageLimit = random.nextInt(50) + 1;  // 1-50
+            int timesUsed = random.nextInt(usageLimit + 1);  // 0 to usageLimit
+
             Coupon coupon = Coupon.builder()
                     .code(code)
                     .discountType(discountType)
                     .discountValue(discountValue)
                     .minimumOrderValue(BigDecimal.valueOf(random.nextInt(1000) + 100))
                     .expiryDate(LocalDate.now().plusMonths(random.nextInt(12) + 1))
-                    .usageLimit(random.nextInt(1000) + 100)
-                    .timesUsed(random.nextInt(50))
+                    .usageLimit(usageLimit)
+                    .timesUsed(timesUsed)
                     .isActive(random.nextBoolean())
                     .build();
 
