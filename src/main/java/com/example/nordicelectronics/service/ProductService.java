@@ -4,13 +4,20 @@ import com.example.nordicelectronics.entity.Brand;
 import com.example.nordicelectronics.entity.Category;
 import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.Warranty;
+import com.example.nordicelectronics.entity.dto.product.ProductPageResponseDTO;
 import com.example.nordicelectronics.entity.dto.product.ProductRequestDTO;
 import com.example.nordicelectronics.entity.dto.product.ProductResponseDTO;
 import com.example.nordicelectronics.entity.mapper.ProductMapper;
 import com.example.nordicelectronics.repositories.sql.ProductRepository;
+import com.example.nordicelectronics.repositories.sql.ProductSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +56,64 @@ public class ProductService {
         return productRepository.findAll().stream()
                 .map(ProductMapper::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get products with pagination, filtering by category, brand, and search term
+     * 
+     * @param page Page number (0-based)
+     * @param size Number of items per page
+     * @param search Search term for name/description
+     * @param categoryId Filter by category UUID
+     * @param brandId Filter by brand UUID
+     * @param sortBy Field to sort by (default: name)
+     * @param sortDirection Sort direction (asc/desc)
+     * @return Paginated product response
+     */
+    public ProductPageResponseDTO getProductsWithPagination(
+            int page,
+            int size,
+            String search,
+            UUID categoryId,
+            UUID brandId,
+            String sortBy,
+            String sortDirection
+    ) {
+        // Validate and set defaults
+        if (page < 0) page = 0;
+        if (size <= 0 || size > 100) size = 12;
+        if (sortBy == null || sortBy.isEmpty()) sortBy = "name";
+        
+        // Create sort
+        Sort sort = Sort.by(
+                "desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortBy
+        );
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        // Build specification with filters
+        Specification<Product> spec = ProductSpecification.withFilters(search, categoryId, brandId);
+        
+        // Execute query
+        Page<Product> productPage = productRepository.findAll(spec, pageable);
+        
+        // Convert to DTOs
+        List<ProductResponseDTO> content = productPage.getContent().stream()
+                .map(ProductMapper::toResponseDTO)
+                .collect(Collectors.toList());
+        
+        return ProductPageResponseDTO.builder()
+                .content(content)
+                .pageNumber(productPage.getNumber())
+                .pageSize(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .first(productPage.isFirst())
+                .last(productPage.isLast())
+                .hasNext(productPage.hasNext())
+                .hasPrevious(productPage.hasPrevious())
+                .build();
     }
 
     public ProductResponseDTO getById(UUID id) {
