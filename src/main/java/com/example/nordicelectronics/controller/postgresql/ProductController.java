@@ -1,9 +1,11 @@
 package com.example.nordicelectronics.controller.postgresql;
 
+import com.example.nordicelectronics.entity.dto.product.ProductPageResponseDTO;
 import com.example.nordicelectronics.entity.dto.product.ProductRequestDTO;
 import com.example.nordicelectronics.entity.dto.product.ProductResponseDTO;
 import com.example.nordicelectronics.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,37 @@ public class ProductController {
     @GetMapping("")
     public ResponseEntity<List<ProductResponseDTO>> getAll() {
         return new ResponseEntity<>(productService.getAll(), HttpStatus.OK);
+    }
+
+    @Operation(summary = "Get paginated products with filtering and search", 
+               description = "Fetches products with pagination, filtering by category/brand, and search functionality.")
+    @GetMapping("/paginated")
+    public ResponseEntity<ProductPageResponseDTO> getProductsPaginated(
+            @Parameter(description = "Page number (0-based)") 
+            @RequestParam(defaultValue = "0") int page,
+            
+            @Parameter(description = "Number of items per page (max 100)") 
+            @RequestParam(defaultValue = "12") int size,
+            
+            @Parameter(description = "Search term for product name or description") 
+            @RequestParam(required = false) String search,
+            
+            @Parameter(description = "Filter by category ID") 
+            @RequestParam(required = false) UUID categoryId,
+            
+            @Parameter(description = "Filter by brand ID") 
+            @RequestParam(required = false) UUID brandId,
+            
+            @Parameter(description = "Field to sort by (name, price, sku)") 
+            @RequestParam(defaultValue = "name") String sortBy,
+            
+            @Parameter(description = "Sort direction (asc, desc)") 
+            @RequestParam(defaultValue = "asc") String sortDirection
+    ) {
+        ProductPageResponseDTO response = productService.getProductsWithPagination(
+                page, size, search, categoryId, brandId, sortBy, sortDirection
+        );
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "Get PostgreSQL product by ID", description = "Fetches a product by its unique ID.")
