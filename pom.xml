@@ -225,6 +225,7 @@
                         <exclude>**/service/neo4j/**</exclude>
                         <exclude>**/service/DataMigrationService.class</exclude>
                         <exclude>**/service/Neo4jMigrationService.class</exclude>
+                        <exclude>**/controller/DataMigrationController.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
