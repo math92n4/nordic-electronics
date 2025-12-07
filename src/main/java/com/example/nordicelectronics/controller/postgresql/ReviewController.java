@@ -1,6 +1,7 @@
 package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.Review;
+import com.example.nordicelectronics.entity.dto.review.ReviewDTO;
 import com.example.nordicelectronics.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,8 +47,8 @@ public class ReviewController {
     @Operation(summary = "Create a new PostgreSQL review", description = "Creates a new review and returns the created review.")
     @PostMapping("")
     public ResponseEntity<Review> save(@AuthenticationPrincipal UserDetails userDetails,
-                                       @RequestBody Review review) {
-        Review savedReview = reviewService.saveForUser(userDetails.getUsername(), review, review.getProduct().getProductId());
+                                       @RequestBody ReviewDTO review) {
+        Review savedReview = reviewService.saveForUser(userDetails.getUsername(), review);
         return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
     }
 
@@ -55,8 +56,8 @@ public class ReviewController {
     @PutMapping("/{id}")
     public ResponseEntity<Review> update(@AuthenticationPrincipal UserDetails userDetails,
                                           @PathVariable UUID id,
-                                          @RequestBody Review review) {
-        Review updatedReview = reviewService.updateForUser(userDetails.getUsername(), id, review, review.getProduct().getProductId());
+                                          @RequestBody ReviewDTO review) {
+        Review updatedReview = reviewService.updateForUser(userDetails.getUsername(), id, review);
         return ResponseEntity.ok(updatedReview);
     }
 
