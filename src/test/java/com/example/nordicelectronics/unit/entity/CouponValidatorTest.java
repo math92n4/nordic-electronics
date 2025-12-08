@@ -14,7 +14,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CouponTest {
+class CouponValidatorTest {
 
     @Test
     void hasValidIdLength_shouldReturnTrue_forValidUUID() {
