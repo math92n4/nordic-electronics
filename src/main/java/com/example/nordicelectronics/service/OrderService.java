@@ -178,4 +178,8 @@ public class OrderService {
         order.softDelete();
         orderRepository.save(order);
     }
+
+    public Order save(Order order) {
+        return orderRepository.save(order);
+    }
 }

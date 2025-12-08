@@ -1,9 +1,12 @@
 package com.example.nordicelectronics.unit.service;
 
+import com.example.nordicelectronics.entity.Order;
 import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.Review;
 import com.example.nordicelectronics.entity.User;
+import com.example.nordicelectronics.entity.dto.review.ReviewDTO;
 import com.example.nordicelectronics.repositories.sql.ReviewRepository;
+import com.example.nordicelectronics.service.OrderService;
 import com.example.nordicelectronics.service.ProductService;
 import com.example.nordicelectronics.service.ReviewService;
 import com.example.nordicelectronics.service.UserService;
@@ -36,6 +39,9 @@ class ReviewServiceTest {
 
     @Mock
     private ProductService productService;
+
+    @Mock
+    private OrderService orderService;
 
     @InjectMocks
     private ReviewService reviewService;
@@ -129,14 +135,23 @@ class ReviewServiceTest {
         Product product = new Product();
         product.setProductId(productId);
 
-        Review incomingReview = new Review();
+        Order dummyOrder = new Order();
+        dummyOrder.setOrderId(UUID.randomUUID());
+        when(orderService.getOrderById(any(UUID.class))).thenReturn(dummyOrder);
+
+        ReviewDTO incomingReview = new ReviewDTO();
         incomingReview.setTitle("T");
+        incomingReview.setComment("Great product");
+        incomingReview.setReviewValue(5);
+        incomingReview.setOrderId(dummyOrder.getOrderId());
+        incomingReview.setIsVerifiedPurchase(false);
+        incomingReview.setProductId(productId);
 
         when(userService.findByEmail("u@x.y")).thenReturn(user);
         when(productService.getEntityById(productId)).thenReturn(product);
         when(reviewRepository.save(any(Review.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Review savedReview = reviewService.saveForUser("u@x.y", incomingReview, productId);
+        Review savedReview = reviewService.saveForUser("u@x.y", incomingReview);
 
         assertThat(savedReview.getUser()).isSameAs(user);
         assertThat(savedReview.getProduct()).isSameAs(product);
@@ -153,11 +168,11 @@ class ReviewServiceTest {
         existing.setReviewValue(1);
         existing.setVerifiedPurchase(false);
 
-        Review updateReview = new Review();
+        ReviewDTO updateReview = new ReviewDTO();
         updateReview.setTitle("new");
         updateReview.setComment("newc");
         updateReview.setReviewValue(5);
-        updateReview.setVerifiedPurchase(true);
+        updateReview.setIsVerifiedPurchase(true);
 
         Product product = new Product();
         product.setProductId(productId);
@@ -185,8 +200,10 @@ class ReviewServiceTest {
         existing.setReviewId(reviewId);
         existing.setUser(user);
 
-        Review updateReview = new Review();
+        ReviewDTO updateReview = new ReviewDTO();
         updateReview.setTitle("changed");
+        updateReview.setProductId(productId);
+        updateReview.setIsVerifiedPurchase(true);
 
         Product product = new Product();
         product.setProductId(productId);
@@ -197,7 +214,7 @@ class ReviewServiceTest {
         when(productService.getEntityById(productId)).thenReturn(product);
         when(reviewRepository.save(any(Review.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Review updatedReview = reviewService.updateForUser("u@a.b", reviewId, updateReview, productId);
+        Review updatedReview = reviewService.updateForUser("u@a.b", reviewId, updateReview);
 
         assertThat(updatedReview.getTitle()).isEqualTo("changed");
     }
@@ -210,7 +227,7 @@ class ReviewServiceTest {
                 .thenReturn(user);
         when(reviewRepository.findByReviewIdAndUser_UserId(reviewId, userId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> reviewService.updateForUser("bad@u", reviewId, new Review(), productId))
+        assertThatThrownBy(() -> reviewService.updateForUser("bad@u", reviewId, new ReviewDTO()))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Review not found or you don't have permission to update it");
     }

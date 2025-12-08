@@ -41,7 +41,7 @@ CREATE TABLE "user" (
 -- ======================
 CREATE TABLE address (
                          address_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                         user_id UUID NOT NULL REFERENCES "user"(user_id),
+                         user_id UUID REFERENCES "user"(user_id),
                          street VARCHAR(100) NOT NULL,
                          street_number VARCHAR(10) NOT NULL,
                          zip VARCHAR(4) NOT NULL,  -- Danish zip codes are 4 digits

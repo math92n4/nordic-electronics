@@ -1,8 +1,10 @@
 package com.example.nordicelectronics.service;
 
+import com.example.nordicelectronics.entity.Order;
 import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.Review;
 import com.example.nordicelectronics.entity.User;
+import com.example.nordicelectronics.entity.dto.review.ReviewDTO;
 import com.example.nordicelectronics.repositories.sql.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class ReviewService {
     private final UserService userService;
     @Lazy
     private final ProductService productService;
+    private final OrderService orderService;
 
     public Review getById(UUID id) {
         return reviewRepository.findById(id)
@@ -45,18 +48,27 @@ public class ReviewService {
         return reviewRepository.save(review);
     }
 
-    public Review saveForUser(String email, Review review, UUID productId) {
+    public Review saveForUser(String email, ReviewDTO review) {
         User user = userService.findByEmail(email);
-        Product product = productService.getEntityById(productId);
+        Product product = productService.getEntityById(review.getProductId());
+        Order order = orderService.getOrderById(review.getOrderId());
 
-        review.setUser(user);
-        review.setProduct(product);
-        review.setCreatedAt(LocalDateTime.now());
+        Review userReview = Review.builder()
+                .user(user)
+                .product(product)
+                .orderId(order.getOrderId())
+                .comment(review.getComment())
+                .title(review.getTitle())
+                .isVerifiedPurchase(review.getIsVerifiedPurchase())
+                .reviewValue(review.getReviewValue())
+                .build();
 
-        return reviewRepository.save(review);
+        userReview.setCreatedAt(LocalDateTime.now());
+
+        return reviewRepository.save(userReview);
     }
 
-    public Review update(UUID id, Review review, UUID productId) {
+    public Review update(UUID id, ReviewDTO review, UUID productId) {
         Review existing = getById(id);
         Product product = productService.getEntityById(productId);
 
@@ -64,16 +76,16 @@ public class ReviewService {
         existing.setReviewValue(review.getReviewValue());
         existing.setTitle(review.getTitle());
         existing.setComment(review.getComment());
-        existing.setVerifiedPurchase(review.isVerifiedPurchase());
+        existing.setVerifiedPurchase(review.getIsVerifiedPurchase());
 
         return reviewRepository.save(existing);
     }
 
-    public Review updateForUser(String email, UUID reviewId, Review review, UUID productId) {
+    public Review updateForUser(String email, UUID reviewId, ReviewDTO review) {
         User user = userService.findByEmail(email);
         Review existing = reviewRepository.findByReviewIdAndUser_UserId(reviewId, user.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Review not found or you don't have permission to update it"));
-        return update(existing.getReviewId(), review, productId);
+        return update(existing.getReviewId(), review, review.getProductId());
     }
 
     public void deleteById(UUID id) {
