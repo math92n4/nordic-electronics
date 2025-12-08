@@ -1,6 +1,7 @@
 package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.WarehouseProduct;
+import com.example.nordicelectronics.entity.dto.warehouse_product.WarehouseProductDTO;
 import com.example.nordicelectronics.service.WarehouseProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,10 +37,10 @@ public class WarehouseProductController {
 
     @Operation(summary = "Create a new PostgreSQL warehouse product", description = "Creates a new warehouse product entry in the system.")
     @PostMapping("")
-    public ResponseEntity<WarehouseProduct> save(@RequestBody WarehouseProduct warehouseProduct) {
+    public ResponseEntity<WarehouseProduct> save(@RequestBody WarehouseProductDTO warehouseProduct) {
         return new ResponseEntity<>(warehouseProductService.save(
-                warehouseProduct.getWarehouse().getWarehouseId(),
-                warehouseProduct.getProduct().getProductId(),
+                warehouseProduct.getWarehouseId(),
+                warehouseProduct.getProductId(),
                 warehouseProduct.getStockQuantity()), HttpStatus.CREATED);
     }
 
