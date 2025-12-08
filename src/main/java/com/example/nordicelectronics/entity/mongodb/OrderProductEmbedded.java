@@ -13,14 +13,13 @@ import java.util.UUID;
 @Builder
 public class OrderProductEmbedded implements Serializable {
 
-    private UUID orderId;
-    
     private UUID productId;
-
+    
+    private String productName;
+    private String productSku;
+    private String productDescription;
+    
     private Integer quantity;
-
     private BigDecimal unitPrice;
-
     private BigDecimal totalPrice;
 }
-

@@ -26,14 +26,14 @@ public class OrderDocument extends BaseDocument {
     @Field("order_id")
     private UUID orderId;
 
-    @Field("user_id")
-    private UUID userId;
+    @Field("customer")
+    private CustomerEmbedded customer;
 
-    @Field("payment_id")
-    private UUID paymentId;
+    @Field("shipping_address")
+    private AddressEmbedded shippingAddress;
 
-    @Field("address_id")
-    private UUID addressId;
+    @Field("payment")
+    private PaymentEmbedded payment;
 
     @Field("order_date")
     private LocalDateTime orderDate;
@@ -60,7 +60,6 @@ public class OrderDocument extends BaseDocument {
     @Builder.Default
     private List<OrderProductEmbedded> orderProducts = new ArrayList<>();
 
-    @Field("coupon_id")
-    private UUID couponId;
+    @Field("coupon")
+    private CouponEmbedded coupon;
 }
-

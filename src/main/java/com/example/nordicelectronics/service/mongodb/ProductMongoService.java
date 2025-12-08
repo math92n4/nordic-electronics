@@ -35,7 +35,7 @@ public class ProductMongoService {
     }
 
     public List<ProductDocument> getByCategoryId(UUID categoryId) {
-        return productMongoRepository.findByCategoryIdsContaining(categoryId);
+        return productMongoRepository.findByCategoryId(categoryId);
     }
 
     public ProductDocument save(ProductDocument productDocument) {
@@ -53,11 +53,11 @@ public class ProductMongoService {
         existing.setDescription(productDocument.getDescription());
         existing.setPrice(productDocument.getPrice());
         existing.setWeight(productDocument.getWeight());
-        existing.setCategoryIds(productDocument.getCategoryIds());
-        existing.setWarrantyId(productDocument.getWarrantyId());
-        existing.setBrandId(productDocument.getBrandId());
-        existing.setWarehouseProducts(productDocument.getWarehouseProducts());
-        existing.setReviewIds(productDocument.getReviewIds());
+        existing.setBrand(productDocument.getBrand());
+        existing.setCategories(productDocument.getCategories());
+        existing.setWarranty(productDocument.getWarranty());
+        existing.setReviews(productDocument.getReviews());
+        existing.setWarehouseStock(productDocument.getWarehouseStock());
 
         return productMongoRepository.save(existing);
     }
@@ -66,4 +66,3 @@ public class ProductMongoService {
         productMongoRepository.deleteByProductId(productId);
     }
 }
-

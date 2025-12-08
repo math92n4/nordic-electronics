@@ -39,22 +39,21 @@ public class ProductDocument extends BaseDocument {
     @Field("weight")
     private BigDecimal weight;
 
-    @Field("category_ids")
+    @Field("brand")
+    private BrandEmbedded brand;
+
+    @Field("categories")
     @Builder.Default
-    private List<UUID> categoryIds = new ArrayList<>();
+    private List<CategoryEmbedded> categories = new ArrayList<>();
 
-    @Field("warranty_id")
-    private UUID warrantyId;
+    @Field("warranty")
+    private WarrantyEmbedded warranty;
 
-    @Field("brand_id")
-    private UUID brandId;
-
-    @Field("warehouse_products")
+    @Field("reviews")
     @Builder.Default
-    private List<WarehouseProductEmbedded> warehouseProducts = new ArrayList<>();
+    private List<ReviewEmbedded> reviews = new ArrayList<>();
 
-    @Field("review_ids")
+    @Field("warehouse_stock")
     @Builder.Default
-    private List<UUID> reviewIds = new ArrayList<>();
+    private List<WarehouseStockEmbedded> warehouseStock = new ArrayList<>();
 }
-

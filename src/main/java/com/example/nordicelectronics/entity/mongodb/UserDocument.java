@@ -45,12 +45,13 @@ public class UserDocument extends BaseDocument {
     @Field("is_admin")
     private boolean isAdmin;
 
-    @Field("address_ids")
+    // EMBEDDED: Addresses belong to this user (1:few relationship)
+    @Field("addresses")
     @Builder.Default
-    private List<UUID> addressIds = new ArrayList<>();
+    private List<AddressEmbedded> addresses = new ArrayList<>();
 
+    // References only - orders are large and accessed separately
     @Field("order_ids")
     @Builder.Default
     private List<UUID> orderIds = new ArrayList<>();
 }
-

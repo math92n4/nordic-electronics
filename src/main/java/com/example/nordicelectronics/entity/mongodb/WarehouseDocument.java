@@ -29,11 +29,10 @@ public class WarehouseDocument extends BaseDocument {
     @Field("phone_number")
     private String phoneNumber;
 
-    @Field("warehouse_products")
+    @Field("address")
+    private AddressEmbedded address;
+
+    @Field("products")
     @Builder.Default
-    private List<WarehouseProductEmbedded> warehouseProducts = new ArrayList<>();
-
-    @Field("address_id")
-    private UUID addressId;
+    private List<WarehouseProductEmbedded> products = new ArrayList<>();
 }
-

@@ -27,7 +27,7 @@ public class OrderMongoService {
     }
 
     public List<OrderDocument> getByUserId(UUID userId) {
-        return orderMongoRepository.findByUserId(userId);
+        return orderMongoRepository.findByCustomerUserId(userId);
     }
 
     public List<OrderDocument> getByStatus(OrderStatus status) {
@@ -44,9 +44,9 @@ public class OrderMongoService {
     public OrderDocument update(UUID orderId, OrderDocument orderDocument) {
         OrderDocument existing = getByOrderId(orderId);
         
-        existing.setUserId(orderDocument.getUserId());
-        existing.setPaymentId(orderDocument.getPaymentId());
-        existing.setAddressId(orderDocument.getAddressId());
+        existing.setCustomer(orderDocument.getCustomer());
+        existing.setShippingAddress(orderDocument.getShippingAddress());
+        existing.setPayment(orderDocument.getPayment());
         existing.setOrderDate(orderDocument.getOrderDate());
         existing.setOrderStatus(orderDocument.getOrderStatus());
         existing.setTotalAmount(orderDocument.getTotalAmount());
@@ -55,7 +55,7 @@ public class OrderMongoService {
         existing.setShippingCost(orderDocument.getShippingCost());
         existing.setDiscountAmount(orderDocument.getDiscountAmount());
         existing.setOrderProducts(orderDocument.getOrderProducts());
-        existing.setCouponId(orderDocument.getCouponId());
+        existing.setCoupon(orderDocument.getCoupon());
 
         return orderMongoRepository.save(existing);
     }
@@ -64,4 +64,3 @@ public class OrderMongoService {
         orderMongoRepository.deleteByOrderId(orderId);
     }
 }
-
