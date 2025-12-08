@@ -87,10 +87,6 @@
 
               const {url: stripeUrl, orderId, sessionId} = response.body;
 
-              // Step 6: Simulate Stripe payment success by calling webhook endpoint
-              // You can either:
-              // a) Call a real Stripe webhook simulation endpoint if available
-              // b) Directly POST to your webhook endpoint to mark payment completed
               cy.request({
                   method: 'POST',
                   url: '/api/postgresql/stripe/webhook',
@@ -103,7 +99,7 @@
                       }
                   },
                   headers: {
-                      'Stripe-Signature': 'test_signature' // optional if your webhook verifies signature
+                      'Stripe-Signature': 'test_signature'
                   }
               }).then((res) => {
                   expect(res.status).to.eq(200);
