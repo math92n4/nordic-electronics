@@ -8,7 +8,7 @@
       cy.visit(URL)
   })
 
-  describe.skip('Should show the correct link in navbar', () => {
+  describe('Should show the correct link in navbar', () => {
       navTitles.forEach((title) => {
           it(`Should show ${title} in nav`, () => {
               cy.get('.nav-menu').contains(title).should('exist')
@@ -18,7 +18,7 @@
 
   const landingPageSections = ["Best Selling Products", "Best Reviewed Products"];
 
-  describe.skip('Should show products in landing page sections',() => {
+  describe('Should show products in landing page sections',() => {
       landingPageSections.forEach((section) => {
           it(`Should show products in ${section}`, () => {
 
@@ -108,6 +108,14 @@
               }).then((res) => {
                   expect(res.status).to.eq(200);
               });
+
+              cy.visit(URL + "/orders");
+              const shownOrderId = "#" + orderId.slice(0,8);
+
+              cy.contains(shownOrderId)
+                  .parent()
+                  .find(".order-status")
+                  .should("have.text", "confirmed");
 
           });
       })
