@@ -2,6 +2,7 @@ package com.example.nordicelectronics.service;
 
 import com.example.nordicelectronics.entity.Address;
 import com.example.nordicelectronics.entity.User;
+import com.example.nordicelectronics.entity.dto.address.AddressRequestDTO;
 import com.example.nordicelectronics.repositories.sql.AddressRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -41,14 +42,21 @@ public class AddressService {
         return addressRepository.save(address);
     }
 
-    public Address saveForUser(String email, Address address) {
+    public Address saveForUser(String email, AddressRequestDTO address) {
         User user = userService.findByEmail(email);
 
         if (user.getAddress() != null) {
             throw new IllegalStateException("User already has an address.");
         }
 
-        Address saved = addressRepository.save(address);
+        Address saved = Address.builder()
+                .city(address.getCity())
+                .zip(address.getZip())
+                .street(address.getStreet())
+                .streetNumber(address.getStreetNumber())
+                .build();
+
+        addressRepository.save(saved);
 
         user.setAddress(java.util.Collections.singletonList(saved));
         userService.save(user);
@@ -56,7 +64,7 @@ public class AddressService {
         return saved;
     }
 
-    public Address update(UUID id, Address address) {
+    public Address update(UUID id, AddressRequestDTO address) {
         Address existing = getById(id);
 
         existing.setStreet(address.getStreet());
@@ -68,7 +76,7 @@ public class AddressService {
         return addressRepository.save(existing);
     }
 
-    public Address updateForUser(String email, Address address) {
+    public Address updateForUser(String email, AddressRequestDTO address) {
         User user = userService.findByEmail(email);
         Address existing = getByUserId(user.getUserId());
         return update(existing.getAddressId(), address);

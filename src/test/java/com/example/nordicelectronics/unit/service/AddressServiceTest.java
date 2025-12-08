@@ -2,6 +2,7 @@ package com.example.nordicelectronics.unit.service;
 
 import com.example.nordicelectronics.entity.Address;
 import com.example.nordicelectronics.entity.User;
+import com.example.nordicelectronics.entity.dto.address.AddressRequestDTO;
 import com.example.nordicelectronics.repositories.sql.AddressRepository;
 import com.example.nordicelectronics.service.AddressService;
 import com.example.nordicelectronics.service.UserService;
@@ -131,10 +132,24 @@ class AddressServiceTest {
 
     @Test
     void saveForUser_whenUserAlreadyHasAddress_throws() {
-        User existingUserWithAddress = makeUser(UUID.randomUUID(), Collections.singletonList(makeAddress(UUID.randomUUID())));
-        when(userService.findByEmail("x@x.com")).thenReturn(existingUserWithAddress);
+        // user already has 1 address
+        User existingUserWithAddress = makeUser(
+                UUID.randomUUID(),
+                Collections.singletonList(makeAddress(UUID.randomUUID()))
+        );
 
-        assertThrows(IllegalStateException.class, () -> addressService.saveForUser("x@x.com", makeAddress(UUID.randomUUID())));
+        when(userService.findByEmail("x@x.com"))
+                .thenReturn(existingUserWithAddress);
+
+        // DTO instead of Address entity
+        AddressRequestDTO dto = new AddressRequestDTO();
+        dto.setCity("TestCity");
+        dto.setStreet("TestStreet");
+        dto.setZip("1234");
+
+        assertThrows(IllegalStateException.class,
+                () -> addressService.saveForUser("x@x.com", dto));
+
         verify(userService).findByEmail("x@x.com");
         verify(addressRepository, never()).save(any());
     }
@@ -142,22 +157,38 @@ class AddressServiceTest {
     @Test
     void saveForUser_succeedsAndSavesUser() {
         UUID addrId = UUID.randomUUID();
+
+        AddressRequestDTO dto = new AddressRequestDTO();
+        dto.setStreet("Main");
+        dto.setCity("City");
+        dto.setZip("12345");
+
+        // The Address instance the service will create from DTO
         Address toSave = makeAddress(addrId);
+
         User userWithoutAddress = makeUser(UUID.randomUUID(), null);
 
+        // Mock: user exists
         when(userService.findByEmail("ok@ok.com")).thenReturn(userWithoutAddress);
-        when(addressRepository.save(toSave)).thenReturn(toSave);
 
-        Address saved = addressService.saveForUser("ok@ok.com", toSave);
+        // Mock: repository returns saved address
+        when(addressRepository.save(any(Address.class))).thenReturn(toSave);
 
-        assertSame(toSave, saved);
-        // after save, userService.save should be called and user's address set
+        Address saved = addressService.saveForUser("ok@ok.com", dto);
+
+        // returned value is the saved entity
+        assertEquals(toSave.getCity(), saved.getCity());
+        assertEquals(toSave.getStreet(), saved.getStreet());
+        assertEquals(toSave.getZip(), saved.getZip());
+
+        // interactions
         verify(userService).findByEmail("ok@ok.com");
-        verify(addressRepository).save(toSave);
+        verify(addressRepository).save(any(Address.class));
         verify(userService).save(userWithoutAddress);
+
+        // user's address list updated
         assertNotNull(userWithoutAddress.getAddress());
         assertEquals(1, userWithoutAddress.getAddress().size());
-        assertSame(toSave, userWithoutAddress.getAddress().get(0));
     }
 
     @Test
@@ -166,7 +197,7 @@ class AddressServiceTest {
         Address existing = makeAddress(id);
         existing.setCity("OldCity");
 
-        Address patch = new Address();
+        AddressRequestDTO patch = new AddressRequestDTO();
         patch.setStreet("NewStreet");
         patch.setStreetNumber("9B");
         patch.setCity("NewCity");
@@ -189,24 +220,34 @@ class AddressServiceTest {
     void updateForUser_delegatesToUpdate() {
         UUID userId = UUID.randomUUID();
         UUID addrId = UUID.randomUUID();
-        Address stored = makeAddress(addrId);
-        User userWithStoredAddress = makeUser(userId, Collections.singletonList(stored));
 
-        Address patch = new Address();
-        patch.setCity("UpdatedCity");
+        Address stored = makeAddress(addrId);
+        User userWithStoredAddress =
+                makeUser(userId, Collections.singletonList(stored));
+
+        AddressRequestDTO patchDto = new AddressRequestDTO();
+        patchDto.setCity("UpdatedCity");
 
         when(userService.findByEmail("who@who.com")).thenReturn(userWithStoredAddress);
         when(userService.findById(userId)).thenReturn(userWithStoredAddress);
         when(addressRepository.findById(addrId)).thenReturn(Optional.of(stored));
-        when(addressRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Address res = addressService.updateForUser("who@who.com", patch);
+        // repository.save returns the argument (updated stored)
+        when(addressRepository.save(any(Address.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        Address res = addressService.updateForUser("who@who.com", patchDto);
+
+        // verify returned value
         assertEquals("UpdatedCity", res.getCity());
+        assertEquals("UpdatedCity", stored.getCity()); // patch applied
+
+        // verify interactions
         verify(userService).findByEmail("who@who.com");
-        // AddressService.updateForUser triggers two repository lookups:
-        // 1) getByUserId -> getById(addrId)
-        // 2) update -> getById(addrId)
+
+        // If updateForUser calls two findById() operations:
         verify(addressRepository, times(2)).findById(addrId);
+
         verify(addressRepository).save(stored);
     }
 
