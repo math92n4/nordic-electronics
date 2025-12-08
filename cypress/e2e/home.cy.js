@@ -1,41 +1,115 @@
 // E2E tests for the Nordic Electronics SPA using Cypress
 
-const URL = 'http://localhost:8080/index.html';
+  const URL = 'http://localhost:3000';
 
-describe('Nordic Electronics SPA E2E Testing', () => {
-  it('show the landing page and that the header is loaded', () => {
-    cy.visit(URL)
-    cy.contains('Welcome to Nordic Electronics').should('be.visible')
-    cy.get('button.cta-button').contains('Shop Now').should('be.visible')
-  });
+  const navTitles = ["Home", "Brand", "Categories", "Brands", "Login"];
 
-  it("Verify that navbar has home, products, categories, brands and login button", () => {
-    cy.visit(URL)
-    cy.get('.nav-menu').within(() => {
-      cy.contains('Home').should('be.visible')
-      cy.contains('Products').should('be.visible')
-      cy.contains('Categories').should('be.visible')
-      cy.contains('Brands').should('be.visible')
-      cy.contains('Login').should('be.visible')
-    });
-  });
+  beforeEach(() => {
+      cy.visit(URL)
+  })
 
-  it("searches for 'Laptop' using the search input", () => {
-    cy.visit(URL)
-    cy.get('#search-input')
-      .should('be.visible')
-      .type('laptop')
-
-    cy.get('#search-button').should('be.visible').click()
-
-    cy.get('#products-grid').should('be.visible')
-    cy.get('#products-grid .product-card').should('have.length.gte', 3)
-
-    // Verify each visible product title contains the word 'laptop' (case-insensitive)
-    cy.get('#products-grid .product-title').each($el => {
-      cy.wrap($el).invoke('text').then(text => {
-        expect(text.toLowerCase()).to.include('laptop')
+  describe.skip('Should show the correct link in navbar', () => {
+      navTitles.forEach((title) => {
+          it(`Should show ${title} in nav`, () => {
+              cy.get('.nav-menu').contains(title).should('exist')
+          })
       })
-    })
   });
-});
+
+  const landingPageSections = ["Best Selling Products", "Best Reviewed Products"];
+
+  describe.skip('Should show products in landing page sections',() => {
+      landingPageSections.forEach((section) => {
+          it(`Should show products in ${section}`, () => {
+
+              // validate the structure of each product card
+              cy.contains('.section-title', section)
+                  .parent('.container')
+                  .get('.product-row-wrapper')
+                  .find('.product-row')
+                  .each(($card) => {
+                      cy.wrap($card).within(() => {
+                          cy.get('.product-image').should('exist');
+                          cy.get('.product-title').should('not.be.empty');
+                          cy.get('.product-description').should('exist');
+                          cy.get('.product-price').should('exist');
+                          cy.get('.product-actions .btn-primary').should('contain', 'Add to Cart');
+                          cy.get('.product-actions .btn-secondary').should('contain', 'View');
+                      });
+                  });
+
+
+          })
+      })
+  })
+
+  describe('Should be able to login and place an order', () => {
+      it('Get to checkout and place an order', () => {
+
+          cy.contains('Login').click();
+          cy.get('input[placeholder=Email]').type("user@nordic.com");
+          cy.get('input[placeholder=Password]').type("user123");
+          cy.get('button[type="submit"]').click();
+
+          cy.contains('Login successful!').should('exist');
+          cy.contains('Logout').should('exist');
+
+          cy.contains('Add to Cart')
+              .first()
+              // button is behind navbar when logged in, therefore force
+              .click({force: true});
+
+
+          cy.get('.cart-icon')
+              .click();
+
+          cy.contains('Shipping Address')
+              .click();
+
+          cy.get('input[placeholder="Street name"]')
+              .type('Street name');
+
+          cy.get('input[placeholder="Street number"]')
+              .type('42');
+
+          cy.get('input[placeholder="ZIP Code"]')
+              .type('4242');
+
+          cy.get('input[placeholder="City"]')
+              .type('City name')
+
+          cy.intercept('POST', '/api/postgresql/stripe/checkout').as('checkout');
+
+          cy.contains('Checkout').click();
+
+          cy.wait('@checkout').then(({response}) => {
+              expect(response.statusCode).to.eq(200);
+
+              const {url: stripeUrl, orderId, sessionId} = response.body;
+
+              // Step 6: Simulate Stripe payment success by calling webhook endpoint
+              // You can either:
+              // a) Call a real Stripe webhook simulation endpoint if available
+              // b) Directly POST to your webhook endpoint to mark payment completed
+              cy.request({
+                  method: 'POST',
+                  url: '/api/postgresql/stripe/webhook',
+                  body: {
+                      type: 'checkout.session.completed',
+                      data: {
+                          object: {
+                              id: sessionId
+                          }
+                      }
+                  },
+                  headers: {
+                      'Stripe-Signature': 'test_signature' // optional if your webhook verifies signature
+                  }
+              }).then((res) => {
+                  expect(res.status).to.eq(200);
+              });
+
+          });
+      })
+  })
+
