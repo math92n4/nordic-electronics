@@ -2,6 +2,7 @@ package com.example.nordicelectronics.repositories.sql;
 
 import com.example.nordicelectronics.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -9,7 +10,7 @@ import java.util.UUID;
 
 import java.util.Optional;
 
-public interface ProductRepository extends JpaRepository<Product, UUID> {
+public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpecificationExecutor<Product> {
 
     Optional<Product> findBySku(String sku);
 
