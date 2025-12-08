@@ -1,10 +1,12 @@
 package com.example.nordicelectronics.controller.postgresql;
 
+import com.example.nordicelectronics.entity.Order;
 import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.User;
 import com.example.nordicelectronics.entity.dto.address.AddressRequestDTO;
 import com.example.nordicelectronics.entity.dto.order.OrderProductRequestDTO;
 import com.example.nordicelectronics.entity.dto.order.OrderRequestDTO;
+import com.example.nordicelectronics.entity.enums.OrderStatus;
 import com.example.nordicelectronics.exception.StripeApiException;
 import com.example.nordicelectronics.repositories.sql.ProductRepository;
 import com.example.nordicelectronics.service.OrderService;
@@ -195,7 +197,7 @@ public class StripeController {
                     : BigDecimal.ZERO;
 
             // Create Stripe session with discount
-            Map<String, Object> stripeResponse = createStripeSession(cart, successUrl, cancelUrl, stripeKey, discountAmount);
+            Map<String, Object> stripeResponse = createStripeSession(cart, successUrl, cancelUrl, stripeKey, discountAmount, orderId);
             String checkoutUrl = (String) stripeResponse.get("url");
             String sessionId = (String) stripeResponse.get("id");
 
@@ -342,13 +344,15 @@ public class StripeController {
         }
     }
 
-    private Map<String, Object> createStripeSession(List<Map<String, Object>> cart, String successUrl, String cancelUrl, String stripeKey, BigDecimal discountAmount) throws StripeApiException {
+    private Map<String, Object> createStripeSession(List<Map<String, Object>> cart, String successUrl, String cancelUrl, String stripeKey, BigDecimal discountAmount, String orderId) throws StripeApiException {
         try {
             StringBuilder form = new StringBuilder();
             append(form, "mode", "payment");
             append(form, "payment_method_types[]", "card");
             append(form, "success_url", successUrl);
             append(form, "cancel_url", cancelUrl);
+            // use this in the webhook
+            append(form, "metadata[orderId]", orderId);
 
             // Calculate total cart amount for discount distribution
             BigDecimal totalCartAmount = BigDecimal.ZERO;
@@ -403,6 +407,10 @@ public class StripeController {
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(form.toString()))
                     .build();
+
+            Order order = orderService.getOrderById(UUID.fromString(orderId));
+            order.setOrderStatus(OrderStatus.confirmed);
+            orderService.save(order);
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
