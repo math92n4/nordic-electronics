@@ -494,7 +494,8 @@ public class PostgresSeeder implements CommandLineRunner {
         List<Address> addresses = addressRepository.findAll();
 
         // INCREASED from 50 to 150 orders for better sales analytics
-        for (int i = 0; i < 150; i++) {
+        // DECREASED from 150 to 150 on 8/12/2025
+        for (int i = 0; i < 50; i++) {
             User user = users.get(random.nextInt(users.size()));
 
             // Get user's addresses or use any address
@@ -571,8 +572,9 @@ public class PostgresSeeder implements CommandLineRunner {
         Random random = new Random();
 
         // INCREASED from 75 to 250 reviews for better review analytics
+        // 8/12/2025 I reduced it from 250 to 50
         // This ensures most products will have multiple reviews for the materialized view
-        for (int i = 0; i < 250; i++) {
+        for (int i = 0; i < 50; i++) {
             User user = users.get(random.nextInt(users.size()));
             Product product = products.get(random.nextInt(products.size()));
             Order order = orders.get(random.nextInt(orders.size()));

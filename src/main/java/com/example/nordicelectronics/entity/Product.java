@@ -60,12 +60,12 @@ public class Product extends BaseEntity {
     @JsonManagedReference
     private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 
-        @Transient
-        public int getStockQuantity() {
-            return warehouseProducts.stream()
-                    .mapToInt(WarehouseProduct::getStockQuantity)
-                    .sum();
-        }
+//        @Transient
+//        public int getStockQuantity() {
+//            return warehouseProducts.stream()
+//                    .mapToInt(WarehouseProduct::getStockQuantity)
+//                    .sum();
+//        }
 
     @OneToMany(mappedBy = "product")
     @JsonIgnore
