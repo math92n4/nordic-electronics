@@ -1,6 +1,7 @@
 package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.Address;
+import com.example.nordicelectronics.entity.dto.address.AddressRequestDTO;
 import com.example.nordicelectronics.service.AddressService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,7 +30,7 @@ public class AddressController {
     @Operation(summary="Save address for user", description="Creates a new address for a user")
     @PostMapping("")
     public ResponseEntity<Address> save(@AuthenticationPrincipal UserDetails userDetails, 
-                                       @RequestBody Address address) {
+                                       @RequestBody AddressRequestDTO address) {
         Address savedAddress = addressService.saveForUser(userDetails.getUsername(), address);
         return new ResponseEntity<>(savedAddress, HttpStatus.CREATED);
     }
@@ -37,7 +38,7 @@ public class AddressController {
     @Operation(summary="Update address for user", description="Updates an existing address for a user")
     @PutMapping("")
     public ResponseEntity<Address> update(@AuthenticationPrincipal UserDetails userDetails,
-                                          @RequestBody Address address) {
+                                          @RequestBody AddressRequestDTO address) {
         Address updatedAddress = addressService.updateForUser(userDetails.getUsername(), address);
         return ResponseEntity.ok(updatedAddress);
     }
