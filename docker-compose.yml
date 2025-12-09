@@ -101,7 +101,8 @@ services:
       - "8080:8080"
 
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -111,15 +112,15 @@ services:
   k6:
     image: grafana/k6
     container_name: k6
-    profiles: [ "loadtest" ]
+    profiles: ["loadtest"]
     volumes:
       - ./k6-tests:/scripts
-    entrypoint: [ "k6", "run", "/scripts/product_load_test.js" ]
+    entrypoint: ["k6", "run", "/scripts/product_load_test.js"]
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: frontend
     restart: always
     volumes:
