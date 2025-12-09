@@ -16,23 +16,19 @@ COPY . .
 # Build the application with custom outDir for production
 RUN VITE_BUILD_OUT_DIR=dist npm run build
 
+RUN ls -la /app/dist && test -f /app/dist/index.html || (echo "Build failed: index.html not found" && exit 1)
+
 # Production stage
 FROM nginx:alpine
 
 # Copy built files from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration (optional - nginx default config works for SPA)
-# For SPA routing, we need to configure nginx to serve index.html for all routes
-RUN echo 'server { \
-    listen 80; \
-    server_name _; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Test nginx configuration
+RUN nginx -t
 
 # Expose port 80
 EXPOSE 80
