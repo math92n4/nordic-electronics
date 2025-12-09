@@ -3,6 +3,7 @@ package com.example.nordicelectronics.entity.mongodb;
 import com.example.nordicelectronics.entity.enums.OrderStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -24,6 +25,7 @@ public class OrderDocument extends BaseDocument {
     private String id;
 
     @Field("order_id")
+    @Indexed(unique = true)
     private UUID orderId;
 
     @Field("customer")
@@ -36,9 +38,11 @@ public class OrderDocument extends BaseDocument {
     private PaymentEmbedded payment;
 
     @Field("order_date")
+    @Indexed
     private LocalDateTime orderDate;
 
     @Field("status")
+    @Indexed
     private OrderStatus orderStatus;
 
     @Field("total_amount")

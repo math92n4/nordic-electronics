@@ -3,6 +3,7 @@ package com.example.nordicelectronics.entity.mongodb;
 import com.example.nordicelectronics.entity.enums.DiscountType;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -22,9 +23,11 @@ public class CouponDocument extends BaseDocument {
     private String id;
 
     @Field("coupon_id")
+    @Indexed(unique = true)
     private UUID couponId;
 
     @Field("code")
+    @Indexed(unique = true)
     private String code;
 
     @Field("discount_type")
@@ -48,4 +51,3 @@ public class CouponDocument extends BaseDocument {
     @Field("is_active")
     private boolean isActive;
 }
-

@@ -2,6 +2,7 @@ package com.example.nordicelectronics.entity.mongodb;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -22,12 +23,15 @@ public class ProductDocument extends BaseDocument {
     private String id;
 
     @Field("product_id")
+    @Indexed(unique = true)
     private UUID productId;
 
     @Field("sku")
+    @Indexed(unique = true)
     private String sku;
 
     @Field("name")
+    @Indexed
     private String name;
 
     @Field("description")
