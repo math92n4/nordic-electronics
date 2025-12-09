@@ -3,6 +3,7 @@ package com.example.nordicelectronics.entity.mongodb;
 import lombok.*;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -12,10 +13,11 @@ import java.util.UUID;
 @Builder
 public class WarehouseProductEmbedded implements Serializable {
 
-    private UUID warehouseId;
-    
     private UUID productId;
-
+    
+    private String productName;
+    private String productSku;
+    private BigDecimal productPrice;
+    
     private int stockQuantity;
 }
-

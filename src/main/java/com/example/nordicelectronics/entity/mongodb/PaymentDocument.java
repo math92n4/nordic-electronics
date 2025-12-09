@@ -4,6 +4,7 @@ import com.example.nordicelectronics.entity.enums.PaymentMethod;
 import com.example.nordicelectronics.entity.enums.PaymentStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -23,9 +24,11 @@ public class PaymentDocument extends BaseDocument {
     private String id;
 
     @Field("payment_id")
+    @Indexed(unique = true)
     private UUID paymentId;
 
     @Field("order_id")
+    @Indexed
     private UUID orderId;
 
     @Field("payment_method")
@@ -40,4 +43,3 @@ public class PaymentDocument extends BaseDocument {
     @Field("amount")
     private BigDecimal amount;
 }
-

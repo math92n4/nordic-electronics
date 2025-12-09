@@ -47,7 +47,7 @@ public class UserMongoService {
         existing.setDateOfBirth(userDocument.getDateOfBirth());
         existing.setPassword(userDocument.getPassword());
         existing.setAdmin(userDocument.isAdmin());
-        existing.setAddressIds(userDocument.getAddressIds());
+        existing.setAddresses(userDocument.getAddresses());
         existing.setOrderIds(userDocument.getOrderIds());
 
         return userMongoRepository.save(existing);
@@ -57,4 +57,3 @@ public class UserMongoService {
         userMongoRepository.deleteByUserId(userId);
     }
 }
-

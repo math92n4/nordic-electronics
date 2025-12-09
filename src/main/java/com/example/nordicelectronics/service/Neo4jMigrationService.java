@@ -8,9 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,7 +53,7 @@ public class Neo4jMigrationService {
             clearNeo4jData();
             results.put("cleared", "Successfully cleared existing Neo4j data");
 
-            // Migrate in order of dependencies (simple nodes first, then nodes with relationships)
+            // Phase 1: Migrate independent nodes (no relationships needed)
             int brandsCount = migrateBrands();
             results.put("brands", brandsCount);
 
@@ -68,25 +66,30 @@ public class Neo4jMigrationService {
             int usersCount = migrateUsers();
             results.put("users", usersCount);
 
-            int addressesCount = migrateAddresses();
-            results.put("addresses", addressesCount);
-
             int couponsCount = migrateCoupons();
             results.put("coupons", couponsCount);
 
-            int productsCount = migrateProducts();
-            results.put("products", productsCount);
+            // Phase 2: Migrate addresses (depends on User)
+            int addressesCount = migrateAddressesWithRelationships();
+            results.put("addresses", addressesCount);
 
-            int warehousesCount = migrateWarehouses();
+            // Phase 3: Migrate warehouses (depends on Address)
+            int warehousesCount = migrateWarehousesWithRelationships();
             results.put("warehouses", warehousesCount);
 
-            int ordersCount = migrateOrders();
+            // Phase 4: Migrate products (depends on Brand, Category, Warranty, Warehouse)
+            int productsCount = migrateProductsWithRelationships();
+            results.put("products", productsCount);
+
+            // Phase 5: Migrate orders (depends on User, Address, Coupon, Product)
+            int ordersCount = migrateOrdersWithRelationships();
             results.put("orders", ordersCount);
 
-            int paymentsCount = migratePayments();
+            // Phase 6: Migrate payments and reviews (depend on Order/Product)
+            int paymentsCount = migratePaymentsWithRelationships();
             results.put("payments", paymentsCount);
 
-            int reviewsCount = migrateReviews();
+            int reviewsCount = migrateReviewsWithRelationships();
             results.put("reviews", reviewsCount);
 
             long duration = System.currentTimeMillis() - startTime;
@@ -119,6 +122,8 @@ public class Neo4jMigrationService {
         brandNeo4jRepository.deleteAll();
         log.info("Neo4j data cleared");
     }
+
+    // ==================== Phase 1: Independent nodes ====================
 
     private int migrateBrands() {
         log.info("Migrating brands to Neo4j...");
@@ -164,17 +169,6 @@ public class Neo4jMigrationService {
         return userNodes.size();
     }
 
-    private int migrateAddresses() {
-        log.info("Migrating addresses to Neo4j...");
-        List<Address> addresses = addressRepository.findAll();
-        List<AddressNode> addressNodes = addresses.stream()
-                .map(this::convertToAddressNode)
-                .collect(Collectors.toList());
-        addressNeo4jRepository.saveAll(addressNodes);
-        log.info("Migrated {} addresses to Neo4j", addressNodes.size());
-        return addressNodes.size();
-    }
-
     private int migrateCoupons() {
         log.info("Migrating coupons to Neo4j...");
         List<Coupon> coupons = couponRepository.findAll();
@@ -186,62 +180,222 @@ public class Neo4jMigrationService {
         return couponNodes.size();
     }
 
-    private int migrateProducts() {
-        log.info("Migrating products to Neo4j...");
-        List<Product> products = productRepository.findAll();
-        List<ProductNode> productNodes = products.stream()
-                .map(this::convertToProductNode)
-                .collect(Collectors.toList());
-        productNeo4jRepository.saveAll(productNodes);
-        log.info("Migrated {} products to Neo4j", productNodes.size());
-        return productNodes.size();
+    // ==================== Phase 2: Addresses (depends on User) ====================
+
+    private int migrateAddressesWithRelationships() {
+        log.info("Migrating addresses with relationships to Neo4j...");
+        List<Address> addresses = addressRepository.findAll();
+        List<AddressNode> addressNodes = new ArrayList<>();
+
+        for (Address address : addresses) {
+            AddressNode node = convertToAddressNode(address);
+
+            // Set relationship to User
+            if (address.getUser() != null) {
+                userNeo4jRepository.findByUserId(address.getUser().getUserId())
+                        .ifPresent(node::setUser);
+            }
+
+            addressNodes.add(node);
+        }
+
+        addressNeo4jRepository.saveAll(addressNodes);
+        log.info("Migrated {} addresses with relationships to Neo4j", addressNodes.size());
+        return addressNodes.size();
     }
 
-    private int migrateWarehouses() {
-        log.info("Migrating warehouses to Neo4j...");
+    // ==================== Phase 3: Warehouses (depends on Address) ====================
+
+    private int migrateWarehousesWithRelationships() {
+        log.info("Migrating warehouses with relationships to Neo4j...");
         List<Warehouse> warehouses = warehouseRepository.findAll();
-        List<WarehouseNode> warehouseNodes = warehouses.stream()
-                .map(this::convertToWarehouseNode)
-                .collect(Collectors.toList());
+        List<WarehouseNode> warehouseNodes = new ArrayList<>();
+
+        for (Warehouse warehouse : warehouses) {
+            WarehouseNode node = convertToWarehouseNode(warehouse);
+
+            // Set relationship to Address
+            if (warehouse.getAddress() != null) {
+                addressNeo4jRepository.findByAddressId(warehouse.getAddress().getAddressId())
+                        .ifPresent(node::setAddress);
+            }
+
+            warehouseNodes.add(node);
+        }
+
         warehouseNeo4jRepository.saveAll(warehouseNodes);
-        log.info("Migrated {} warehouses to Neo4j", warehouseNodes.size());
+        log.info("Migrated {} warehouses with relationships to Neo4j", warehouseNodes.size());
         return warehouseNodes.size();
     }
 
-    private int migrateOrders() {
-        log.info("Migrating orders to Neo4j...");
+    // ==================== Phase 4: Products (depends on Brand, Category, Warranty, Warehouse) ====================
+
+    private int migrateProductsWithRelationships() {
+        log.info("Migrating products with relationships to Neo4j...");
+        List<Product> products = productRepository.findAll();
+        List<ProductNode> productNodes = new ArrayList<>();
+
+        for (Product product : products) {
+            ProductNode node = convertToProductNode(product);
+
+            // Set relationship to Brand
+            if (product.getBrand() != null) {
+                brandNeo4jRepository.findByBrandId(product.getBrand().getBrandId())
+                        .ifPresent(node::setBrand);
+            }
+
+            // Set relationship to Warranty
+            if (product.getWarranty() != null) {
+                warrantyNeo4jRepository.findByWarrantyId(product.getWarranty().getWarrantyId())
+                        .ifPresent(node::setWarranty);
+            }
+
+            // Set relationships to Categories
+            if (product.getCategories() != null && !product.getCategories().isEmpty()) {
+                Set<CategoryNode> categoryNodes = new HashSet<>();
+                for (Category category : product.getCategories()) {
+                    categoryNeo4jRepository.findByCategoryId(category.getCategoryId())
+                            .ifPresent(categoryNodes::add);
+                }
+                node.setCategories(categoryNodes);
+            }
+
+            // Set relationships to Warehouses (via WarehouseProductRelationship)
+            if (product.getWarehouseProducts() != null && !product.getWarehouseProducts().isEmpty()) {
+                List<WarehouseProductRelationship> warehouseRelationships = new ArrayList<>();
+                for (WarehouseProduct wp : product.getWarehouseProducts()) {
+                    warehouseNeo4jRepository.findByWarehouseId(wp.getWarehouse().getWarehouseId())
+                            .ifPresent(warehouseNode -> {
+                                WarehouseProductRelationship rel = WarehouseProductRelationship.builder()
+                                        .warehouseId(wp.getWarehouse().getWarehouseId())
+                                        .productId(product.getProductId())
+                                        .stockQuantity(wp.getStockQuantity())
+                                        .warehouse(warehouseNode)
+                                        .build();
+                                warehouseRelationships.add(rel);
+                            });
+                }
+                node.setWarehouseProducts(warehouseRelationships);
+            }
+
+            productNodes.add(node);
+        }
+
+        productNeo4jRepository.saveAll(productNodes);
+        log.info("Migrated {} products with relationships to Neo4j", productNodes.size());
+        return productNodes.size();
+    }
+
+    // ==================== Phase 5: Orders (depends on User, Address, Coupon, Product) ====================
+
+    private int migrateOrdersWithRelationships() {
+        log.info("Migrating orders with relationships to Neo4j...");
         List<Order> orders = orderRepository.findAll();
-        List<OrderNode> orderNodes = orders.stream()
-                .map(this::convertToOrderNode)
-                .collect(Collectors.toList());
+        List<OrderNode> orderNodes = new ArrayList<>();
+
+        for (Order order : orders) {
+            OrderNode node = convertToOrderNode(order);
+
+            // Set relationship to User
+            if (order.getUser() != null) {
+                userNeo4jRepository.findByUserId(order.getUser().getUserId())
+                        .ifPresent(node::setUser);
+            }
+
+            // Set relationship to Address
+            if (order.getAddress() != null) {
+                addressNeo4jRepository.findByAddressId(order.getAddress().getAddressId())
+                        .ifPresent(node::setAddress);
+            }
+
+            // Set relationship to Coupon
+            if (order.getCoupon() != null) {
+                couponNeo4jRepository.findByCouponId(order.getCoupon().getCouponId())
+                        .ifPresent(node::setCoupon);
+            }
+
+            // Set relationships to Products (via OrderProductRelationship)
+            if (order.getOrderProducts() != null && !order.getOrderProducts().isEmpty()) {
+                List<OrderProductRelationship> productRelationships = new ArrayList<>();
+                for (OrderProduct op : order.getOrderProducts()) {
+                    productNeo4jRepository.findByProductId(op.getProduct().getProductId())
+                            .ifPresent(productNode -> {
+                                OrderProductRelationship rel = OrderProductRelationship.builder()
+                                        .orderId(order.getOrderId())
+                                        .productId(op.getProduct().getProductId())
+                                        .quantity(op.getQuantity())
+                                        .unitPrice(op.getUnitPrice())
+                                        .totalPrice(op.getTotalPrice())
+                                        .product(productNode)
+                                        .build();
+                                productRelationships.add(rel);
+                            });
+                }
+                node.setOrderProducts(productRelationships);
+            }
+
+            orderNodes.add(node);
+        }
+
         orderNeo4jRepository.saveAll(orderNodes);
-        log.info("Migrated {} orders to Neo4j", orderNodes.size());
+        log.info("Migrated {} orders with relationships to Neo4j", orderNodes.size());
         return orderNodes.size();
     }
 
-    private int migratePayments() {
-        log.info("Migrating payments to Neo4j...");
+    // ==================== Phase 6: Payments and Reviews ====================
+
+    private int migratePaymentsWithRelationships() {
+        log.info("Migrating payments with relationships to Neo4j...");
         List<Payment> payments = paymentRepository.findAll();
-        List<PaymentNode> paymentNodes = payments.stream()
-                .map(this::convertToPaymentNode)
-                .collect(Collectors.toList());
+        List<PaymentNode> paymentNodes = new ArrayList<>();
+
+        for (Payment payment : payments) {
+            PaymentNode node = convertToPaymentNode(payment);
+
+            // Set relationship to Order
+            if (payment.getOrder() != null) {
+                orderNeo4jRepository.findByOrderId(payment.getOrder().getOrderId())
+                        .ifPresent(node::setOrder);
+            }
+
+            paymentNodes.add(node);
+        }
+
         paymentNeo4jRepository.saveAll(paymentNodes);
-        log.info("Migrated {} payments to Neo4j", paymentNodes.size());
+        log.info("Migrated {} payments with relationships to Neo4j", paymentNodes.size());
         return paymentNodes.size();
     }
 
-    private int migrateReviews() {
-        log.info("Migrating reviews to Neo4j...");
+    private int migrateReviewsWithRelationships() {
+        log.info("Migrating reviews with relationships to Neo4j...");
         List<Review> reviews = reviewRepository.findAll();
-        List<ReviewNode> reviewNodes = reviews.stream()
-                .map(this::convertToReviewNode)
-                .collect(Collectors.toList());
+        List<ReviewNode> reviewNodes = new ArrayList<>();
+
+        for (Review review : reviews) {
+            ReviewNode node = convertToReviewNode(review);
+
+            // Set relationship to User
+            if (review.getUser() != null) {
+                userNeo4jRepository.findByUserId(review.getUser().getUserId())
+                        .ifPresent(node::setUser);
+            }
+
+            // Set relationship to Product
+            if (review.getProduct() != null) {
+                productNeo4jRepository.findByProductId(review.getProduct().getProductId())
+                        .ifPresent(node::setProduct);
+            }
+
+            reviewNodes.add(node);
+        }
+
         reviewNeo4jRepository.saveAll(reviewNodes);
-        log.info("Migrated {} reviews to Neo4j", reviewNodes.size());
+        log.info("Migrated {} reviews with relationships to Neo4j", reviewNodes.size());
         return reviewNodes.size();
     }
 
-    // Conversion methods
+    // ==================== Conversion methods (properties only) ====================
+
     private BrandNode convertToBrandNode(Brand brand) {
         BrandNode node = BrandNode.builder()
                 .brandId(brand.getBrandId())
@@ -413,4 +567,3 @@ public class Neo4jMigrationService {
         return node;
     }
 }
-

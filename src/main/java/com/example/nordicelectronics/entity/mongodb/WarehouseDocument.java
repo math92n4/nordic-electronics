@@ -2,6 +2,7 @@ package com.example.nordicelectronics.entity.mongodb;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -21,6 +22,7 @@ public class WarehouseDocument extends BaseDocument {
     private String id;
 
     @Field("warehouse_id")
+    @Indexed(unique = true)
     private UUID warehouseId;
 
     @Field("name")
@@ -29,11 +31,10 @@ public class WarehouseDocument extends BaseDocument {
     @Field("phone_number")
     private String phoneNumber;
 
-    @Field("warehouse_products")
+    @Field("address")
+    private AddressEmbedded address;
+
+    @Field("products")
     @Builder.Default
-    private List<WarehouseProductEmbedded> warehouseProducts = new ArrayList<>();
-
-    @Field("address_id")
-    private UUID addressId;
+    private List<WarehouseProductEmbedded> products = new ArrayList<>();
 }
-

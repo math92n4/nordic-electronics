@@ -2,6 +2,7 @@ package com.example.nordicelectronics.entity.mongodb;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -22,12 +23,15 @@ public class ProductDocument extends BaseDocument {
     private String id;
 
     @Field("product_id")
+    @Indexed(unique = true)
     private UUID productId;
 
     @Field("sku")
+    @Indexed(unique = true)
     private String sku;
 
     @Field("name")
+    @Indexed
     private String name;
 
     @Field("description")
@@ -39,22 +43,21 @@ public class ProductDocument extends BaseDocument {
     @Field("weight")
     private BigDecimal weight;
 
-    @Field("category_ids")
+    @Field("brand")
+    private BrandEmbedded brand;
+
+    @Field("categories")
     @Builder.Default
-    private List<UUID> categoryIds = new ArrayList<>();
+    private List<CategoryEmbedded> categories = new ArrayList<>();
 
-    @Field("warranty_id")
-    private UUID warrantyId;
+    @Field("warranty")
+    private WarrantyEmbedded warranty;
 
-    @Field("brand_id")
-    private UUID brandId;
-
-    @Field("warehouse_products")
+    @Field("reviews")
     @Builder.Default
-    private List<WarehouseProductEmbedded> warehouseProducts = new ArrayList<>();
+    private List<ReviewEmbedded> reviews = new ArrayList<>();
 
-    @Field("review_ids")
+    @Field("warehouse_stock")
     @Builder.Default
-    private List<UUID> reviewIds = new ArrayList<>();
+    private List<WarehouseStockEmbedded> warehouseStock = new ArrayList<>();
 }
-

@@ -37,8 +37,8 @@ public class WarehouseMongoService {
         
         existing.setName(warehouseDocument.getName());
         existing.setPhoneNumber(warehouseDocument.getPhoneNumber());
-        existing.setWarehouseProducts(warehouseDocument.getWarehouseProducts());
-        existing.setAddressId(warehouseDocument.getAddressId());
+        existing.setAddress(warehouseDocument.getAddress());
+        existing.setProducts(warehouseDocument.getProducts());
 
         return warehouseMongoRepository.save(existing);
     }
@@ -47,4 +47,3 @@ public class WarehouseMongoService {
         warehouseMongoRepository.deleteByWarehouseId(warehouseId);
     }
 }
-

@@ -2,6 +2,7 @@ package com.example.nordicelectronics.entity.mongodb;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -22,6 +23,7 @@ public class UserDocument extends BaseDocument {
     private String id;
 
     @Field("user_id")
+    @Indexed(unique = true)
     private UUID userId;
 
     @Field("first_name")
@@ -31,6 +33,7 @@ public class UserDocument extends BaseDocument {
     private String lastName;
 
     @Field("email")
+    @Indexed(unique = true)
     private String email;
 
     @Field("phone_number")
@@ -45,12 +48,13 @@ public class UserDocument extends BaseDocument {
     @Field("is_admin")
     private boolean isAdmin;
 
-    @Field("address_ids")
+    // EMBEDDED: Addresses belong to this user (1:few relationship)
+    @Field("addresses")
     @Builder.Default
-    private List<UUID> addressIds = new ArrayList<>();
+    private List<AddressEmbedded> addresses = new ArrayList<>();
 
+    // References only - orders are large and accessed separately
     @Field("order_ids")
     @Builder.Default
     private List<UUID> orderIds = new ArrayList<>();
 }
-
