@@ -437,11 +437,13 @@ public class PostgresSeeder implements CommandLineRunner {
                         .productId(product.getProductId())
                         .build();
 
+                int stockQuantity = random.nextInt(51);
+
                 WarehouseProduct wp = WarehouseProduct.builder()
                         .id(key)
                         .warehouse(warehouse)
                         .product(product)
-                        .stockQuantity(random.nextInt(200) + 10)
+                        .stockQuantity(stockQuantity)
                         .build();
 
                 warehouseProducts.add(warehouseProductRepository.save(wp));

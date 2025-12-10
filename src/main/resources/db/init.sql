@@ -199,7 +199,7 @@ CREATE TABLE order_product (
 CREATE TABLE warehouse_product (
                                    warehouse_id UUID NOT NULL REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
                                    product_id UUID NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
-                                   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),  -- BVA: 0 to max stock, no negative
+                                   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0 AND stock_quantity <= 50),  -- BVA: 0 to max stock, no negative
                                    PRIMARY KEY (warehouse_id, product_id)
 );
 
