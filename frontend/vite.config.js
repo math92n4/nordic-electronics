@@ -10,7 +10,9 @@ export default defineConfig({
   root: __dirname,
   publicDir: path.resolve(__dirname, "public"),
   build: {
-    outDir: path.resolve(__dirname, "../src/main/resources/static"),
+    outDir:
+      process.env.VITE_BUILD_OUT_DIR ||
+      path.resolve(__dirname, "../src/main/resources/static"),
     emptyOutDir: false, // Don't delete existing files like CSS
     assetsDir: "js", // Put JS files in js/ directory to match Spring Boot expectations
   },

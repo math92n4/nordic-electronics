@@ -1,0 +1,47 @@
+name: CD - Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Production Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            echo "Starting deployment..."
+
+            cd ~/nordic-electronics
+
+            git pull origin main
+
+            echo "Rebuilding and restarting Docker containers..."
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --build
+            docker image prune -f
+
+            sleep 20
+
+            echo "Checking container status..."
+            docker compose -f docker-compose.prod.yml ps
+
+            echo "Deployment complete!"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "Deployment succeeded!"
+          else
+            echo "Deployment failed!"
+          fi

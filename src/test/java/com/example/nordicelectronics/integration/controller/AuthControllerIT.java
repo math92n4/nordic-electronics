@@ -68,66 +68,27 @@ class AuthControllerIT extends BaseIntegrationTest {
 
 
     // ============================================
-    // EP/BVA TESTS - Email Format
+    // NOTE: EP/BVA validation tests for Email, Password, Phone, and DateOfBirth
+    // have been moved to unit tests in:
+    // - unit/entity/registration/EmailValidatorTest.java
+    // - unit/entity/registration/PasswordValidatorTest.java
+    // - unit/entity/registration/DanishPhoneValidatorTest.java
+    // - unit/entity/registration/DateOfBirthValidatorTest.java
+    //
+    // This file now contains only integration tests that require database access.
+    // ============================================
+
+    // ============================================
+    // DATABASE-DEPENDENT TESTS - Email Uniqueness
     // ============================================
 
     @Nested
-    @DisplayName("EP/BVA - Email Format Validation")
-    class EmailValidationEPBVATests {
+    @DisplayName("Database Tests - Email Uniqueness")
+    class EmailUniquenessTests {
 
         @Test
-        @DisplayName("EP: Valid email - contains @ and valid domain")
-        void epValidEmailWithAtAndDomain() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("validuser@nordic.com");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid email - missing @ symbol")
-        void epInvalidEmailMissingAt() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("invalidemail.com");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Invalid email")));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid email - missing domain after @")
-        void epInvalidEmailMissingDomain() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("user@");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Invalid email")));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid email - missing TLD (no dot in domain)")
-        void epInvalidEmailMissingTLD() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("user@nodomain");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid email - already exists (uniqueness)")
-        void epInvalidEmailNotUnique() throws Exception {
+        @DisplayName("Should fail when email already exists (uniqueness constraint)")
+        void shouldFailWhenEmailAlreadyExists() throws Exception {
             // First registration
             Map<String, Object> request1 = createValidRegistrationRequest("unique@nordic.com");
             mockMvc.perform(post(BASE_URL + "/register")
@@ -135,7 +96,7 @@ class AuthControllerIT extends BaseIntegrationTest {
                             .content(objectMapper.writeValueAsString(request1)))
                     .andExpect(status().isOk());
 
-            // Second registration with same email
+            // Second registration with same email - requires DB to check uniqueness
             Map<String, Object> request2 = createValidRegistrationRequest("unique@nordic.com");
             mockMvc.perform(post(BASE_URL + "/register")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -143,354 +104,6 @@ class AuthControllerIT extends BaseIntegrationTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value(containsString("User already exists")));
-        }
-    }
-
-    // ============================================
-    // EP/BVA TESTS - Password Length
-    // ============================================
-
-    @Nested
-    @DisplayName("EP/BVA - Password Length Validation")
-    class PasswordLengthEPBVATests {
-
-        @Test
-        @DisplayName("BVA: Password with 7 characters - invalid (below minimum)")
-        void bvaPassword7Chars() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("pass7@nordic.com");
-            request.put("password", "1234567"); // 7 chars
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Password must be at least 8 characters")));
-        }
-
-        @Test
-        @DisplayName("BVA: Password with 8 characters - valid (at minimum)")
-        void bvaPassword8Chars() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("pass8@nordic.com");
-            request.put("password", "12345678"); // 8 chars
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("BVA: Password with 9 characters - valid (just above minimum)")
-        void bvaPassword9Chars() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("pass9@nordic.com");
-            request.put("password", "123456789"); // 9 chars
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("BVA: Password with 36 characters - valid (middle of range)")
-        void bvaPassword36Chars() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("pass36@nordic.com");
-            request.put("password", "a".repeat(36)); // 36 chars
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("BVA: Password with 63 characters - valid (just below maximum)")
-        void bvaPassword63Chars() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("pass63@nordic.com");
-            request.put("password", "a".repeat(63)); // 63 chars
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("BVA: Password with 64 characters - valid (at maximum)")
-        void bvaPassword64Chars() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("pass64@nordic.com");
-            request.put("password", "a".repeat(64)); // 64 chars
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("BVA: Password with 65 characters - invalid (above maximum)")
-        void bvaPassword65Chars() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("pass65@nordic.com");
-            request.put("password", "a".repeat(65)); // 65 chars
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("64 characters")));
-        }
-
-        @Test
-        @DisplayName("EP: Password in valid range (8-64)")
-        void epPasswordValidRange() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("passvalid@nordic.com");
-            request.put("password", "validPassword123"); // 16 chars - in valid range
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("EP: Password below valid range (<8)")
-        void epPasswordBelowRange() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("passlow@nordic.com");
-            request.put("password", "short"); // 5 chars - below valid range
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
-        }
-
-        @Test
-        @DisplayName("EP: Password above valid range (>64)")
-        void epPasswordAboveRange() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("passhigh@nordic.com");
-            request.put("password", "a".repeat(100)); // 100 chars - above valid range
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
-        }
-    }
-
-    // ============================================
-    // EP/BVA TESTS - Date of Birth (Age)
-    // ============================================
-
-    @Nested
-    @DisplayName("EP/BVA - Date of Birth (Age) Validation")
-    class DateOfBirthEPBVATests {
-
-        @Test
-        @DisplayName("BVA: User exactly 17 years old - invalid")
-        void bvaAge17Years() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("age17@nordic.com");
-            request.put("dateOfBirth", LocalDate.now().minusYears(17).toString());
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("18 years old")));
-        }
-
-        @Test
-        @DisplayName("BVA: User exactly 18 years old - valid (at boundary)")
-        void bvaAge18Years() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("age18@nordic.com");
-            request.put("dateOfBirth", LocalDate.now().minusYears(18).toString());
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("BVA: User exactly 19 years old - valid (just above boundary)")
-        void bvaAge19Years() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("age19@nordic.com");
-            request.put("dateOfBirth", LocalDate.now().minusYears(19).toString());
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("EP: User under 18 - invalid")
-        void epAgeUnder18() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("agechild@nordic.com");
-            request.put("dateOfBirth", LocalDate.now().minusYears(10).toString());
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("18 years old")));
-        }
-
-        @Test
-        @DisplayName("EP: User over 18 - valid")
-        void epAgeOver18() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("ageadult@nordic.com");
-            request.put("dateOfBirth", LocalDate.now().minusYears(30).toString());
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-    }
-
-    // ============================================
-    // EP/BVA TESTS - Phone Number
-    // ============================================
-
-    @Nested
-    @DisplayName("EP/BVA - Phone Number Validation")
-    class PhoneNumberEPBVATests {
-
-        @Test
-        @DisplayName("EP: Valid phone - 8 digits with valid Danish prefix")
-        void epValidPhone8DigitsDanishPrefix() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("phone1@nordic.com");
-            request.put("phoneNumber", "20123456"); // Valid: starts with 2, 8 digits
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid phone - contains letters")
-        void epInvalidPhoneWithLetters() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("phone2@nordic.com");
-            request.put("phoneNumber", "2012abc6");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Invalid phone number")));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid phone - only 7 digits")
-        void epInvalidPhone7Digits() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("phone3@nordic.com");
-            request.put("phoneNumber", "2012345"); // 7 digits
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Invalid phone number")));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid phone - 9 digits")
-        void epInvalidPhone9Digits() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("phone4@nordic.com");
-            request.put("phoneNumber", "201234567"); // 9 digits
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Invalid phone number")));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid phone - invalid Danish prefix (starts with 1)")
-        void epInvalidPhoneInvalidPrefix() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("phone5@nordic.com");
-            request.put("phoneNumber", "10123456"); // Invalid prefix
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Invalid phone number")));
-        }
-
-        @Test
-        @DisplayName("EP: Valid phone - prefix 30 (valid Danish mobile)")
-        void epValidPhonePrefix30() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("phone6@nordic.com");
-            request.put("phoneNumber", "30123456"); // Valid: starts with 30
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("EP: Valid phone - prefix 40 (valid Danish mobile)")
-        void epValidPhonePrefix40() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("phone7@nordic.com");
-            request.put("phoneNumber", "40123456"); // Valid: starts with 40
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid phone - special characters")
-        void epInvalidPhoneSpecialChars() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("phone8@nordic.com");
-            request.put("phoneNumber", "20-12-34-56");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Invalid phone number")));
-        }
-
-        @Test
-        @DisplayName("EP: Invalid phone - empty string")
-        void epInvalidPhoneEmpty() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("phone9@nordic.com");
-            request.put("phoneNumber", "");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
         }
     }
 
@@ -658,15 +271,16 @@ class AuthControllerIT extends BaseIntegrationTest {
     }
 
     // ============================================
-    // POST /register TESTS
+    // POST /register TESTS - Database Integration Tests
+    // Note: Input validation tests moved to unit/entity/registration/*ValidatorTest.java
     // ============================================
 
     @Nested
-    @DisplayName("POST /register - User Registration")
+    @DisplayName("POST /register - User Registration (Database Tests)")
     class RegisterUserTests {
 
         @Test
-        @DisplayName("Should successfully register a new user")
+        @DisplayName("Should successfully register a new user and persist to database")
         void shouldSuccessfullyRegisterNewUser() throws Exception {
             Map<String, Object> request = createValidRegistrationRequest("newuser@nordic.com");
 
@@ -682,7 +296,7 @@ class AuthControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should fail when email already exists")
+        @DisplayName("Should fail when email already exists (database constraint)")
         void shouldFailWhenEmailAlreadyExists() throws Exception {
             Map<String, Object> request = createValidRegistrationRequest(testUser.getEmail());
 
@@ -695,126 +309,7 @@ class AuthControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should fail when email is invalid format")
-        void shouldFailWhenEmailIsInvalidFormat() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("invalid-email");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Invalid email")));
-        }
-
-        @Test
-        @DisplayName("Should fail when email has invalid TLD")
-        void shouldFailWhenEmailHasInvalidTLD() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("user@example.xyz");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("valid TLD")));
-        }
-
-        @Test
-        @DisplayName("Should fail when password is too short")
-        void shouldFailWhenPasswordTooShort() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("newuser@nordic.com");
-            request.put("password", "short");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Password must be at least 8 characters")));
-        }
-
-        @Test
-        @DisplayName("Should fail when password is null")
-        void shouldFailWhenPasswordIsNull() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("newuser@nordic.com");
-            request.remove("password");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
-        }
-
-        @Test
-        @DisplayName("Should fail when phone number is invalid")
-        void shouldFailWhenPhoneNumberIsInvalid() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("newuser@nordic.com");
-            request.put("phoneNumber", "invalid");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("Invalid phone number")));
-        }
-
-        @Test
-        @DisplayName("Should fail when date of birth makes user under 18")
-        void shouldFailWhenUserIsUnder18() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("newuser@nordic.com");
-            request.put("dateOfBirth", LocalDate.now().minusYears(17).toString());
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("18 years old")));
-        }
-
-        @Test
-        @DisplayName("Should fail when date of birth is null")
-        void shouldFailWhenDateOfBirthIsNull() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("newuser@nordic.com");
-            request.remove("dateOfBirth");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
-        }
-
-        @Test
-        @DisplayName("Should fail when date of birth format is invalid")
-        void shouldFailWhenDateOfBirthFormatIsInvalid() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("newuser@nordic.com");
-            request.put("dateOfBirth", "invalid-date");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
-        }
-
-        @Test
-        @DisplayName("Should fail when email is empty")
-        void shouldFailWhenEmailIsEmpty() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
-        }
-
-        @Test
-        @DisplayName("Should register user with valid Danish phone number")
+        @DisplayName("Should register user with valid Danish phone number and persist")
         void shouldRegisterUserWithValidDanishPhoneNumber() throws Exception {
             Map<String, Object> request = createValidRegistrationRequest("newuser2@nordic.dk");
             request.put("phoneNumber", "31234567");
@@ -828,7 +323,7 @@ class AuthControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should register user with .dk email TLD")
+        @DisplayName("Should register user with .dk email TLD and persist")
         void shouldRegisterUserWithDkEmailTLD() throws Exception {
             Map<String, Object> request = createValidRegistrationRequest("newuser3@nordic.dk");
 
@@ -841,7 +336,7 @@ class AuthControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should set isAdmin to false by default")
+        @DisplayName("Should set isAdmin to false by default when persisting")
         void shouldSetIsAdminToFalseByDefault() throws Exception {
             Map<String, Object> request = createValidRegistrationRequest("newuser4@nordic.com");
 
@@ -1116,15 +611,16 @@ class AuthControllerIT extends BaseIntegrationTest {
     }
 
     // ============================================
-    // EDGE CASE TESTS
+    // EDGE CASE TESTS - Database Integration
+    // Note: Pure validation edge cases moved to unit tests
     // ============================================
 
     @Nested
-    @DisplayName("Edge Case Tests")
+    @DisplayName("Edge Case Tests (Database Integration)")
     class EdgeCaseTests {
 
         @Test
-        @DisplayName("Should handle special characters in password")
+        @DisplayName("Should persist special characters in password correctly")
         void shouldHandleSpecialCharactersInPassword() throws Exception {
             Map<String, Object> request = createValidRegistrationRequest("special@nordic.com");
             request.put("password", "P@ssw0rd!#$%");
@@ -1137,7 +633,7 @@ class AuthControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should handle unicode characters in name")
+        @DisplayName("Should persist unicode characters in name to database")
         void shouldHandleUnicodeCharactersInName() throws Exception {
             Map<String, Object> request = createValidRegistrationRequest("unicode@nordic.com");
             request.put("firstName", "José");
@@ -1153,36 +649,7 @@ class AuthControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should handle maximum length password")
-        void shouldHandleMaximumLengthPassword() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("maxpass@nordic.com");
-            // 64 characters - max length
-            request.put("password", "a".repeat(64));
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("Should fail when password exceeds maximum length")
-        void shouldFailWhenPasswordExceedsMaxLength() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("longpass@nordic.com");
-            // 65 characters - exceeds max length
-            request.put("password", "a".repeat(65));
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value(containsString("64 characters")));
-        }
-
-        @Test
-        @DisplayName("Should handle email with plus sign")
+        @DisplayName("Should persist email with plus sign correctly to database")
         void shouldHandleEmailWithPlusSign() throws Exception {
             Map<String, Object> request = createValidRegistrationRequest("user+tag@nordic.com");
 
@@ -1195,39 +662,13 @@ class AuthControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should handle exactly 18 years old user")
-        void shouldHandleExactly18YearsOldUser() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("adult@nordic.com");
-            request.put("dateOfBirth", LocalDate.now().minusYears(18).toString());
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
-        }
-
-        @Test
-        @DisplayName("Should handle whitespace in email")
-        void shouldHandleWhitespaceInEmail() throws Exception {
-            Map<String, Object> request = createValidRegistrationRequest("  spaces@nordic.com  ");
-
-            mockMvc.perform(post(BASE_URL + "/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
-        }
-
-        @Test
-        @DisplayName("Should handle case sensitivity in email during login")
+        @DisplayName("Should handle case sensitivity in email during login (DB lookup)")
         void shouldHandleCaseSensitivityInEmail() throws Exception {
             Map<String, String> request = new HashMap<>();
             request.put("email", testUser.getEmail().toUpperCase());
             request.put("password", "password123");
 
-            // Email lookup should typically be case-insensitive
-            // This test documents the actual behavior
+            // This test documents the actual database lookup behavior
             mockMvc.perform(post(BASE_URL + "/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))

@@ -287,65 +287,89 @@ export function ProductsPage() {
 
         {/* Filters */}
         <div className="filters">
-          <select
-            id="category-filter"
-            className="filter-select"
-            value={selectedCategory}
-            onChange={e => handleCategoryChange(e.target.value)}
-          >
-            <option value="">All Categories</option>
-            {categories.map((cat, index) => {
-              const catId = cat.categoryId || cat.id;
-              const catIdValue = catId ? String(catId) : "";
-              return (
-                <option key={catIdValue || `cat-${index}`} value={catIdValue}>
-                  {cat.name || "Unnamed Category"}
-                </option>
-              );
-            })}
-          </select>
+          <div className="filter-group">
+            <label htmlFor="category-filter" className="visually-hidden">
+              Filter by category
+            </label>
+            <select
+              id="category-filter"
+              className="filter-select"
+              value={selectedCategory}
+              onChange={e => handleCategoryChange(e.target.value)}
+              aria-label="Filter by category"
+            >
+              <option value="">All Categories</option>
+              {categories.map((cat, index) => {
+                const catId = cat.categoryId || cat.id;
+                const catIdValue = catId ? String(catId) : "";
+                return (
+                  <option key={catIdValue || `cat-${index}`} value={catIdValue}>
+                    {cat.name || "Unnamed Category"}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
 
-          <select
-            id="brand-filter"
-            className="filter-select"
-            value={selectedBrand}
-            onChange={e => handleBrandChange(e.target.value)}
-          >
-            <option value="">All Brands</option>
-            {brands.map((brand, index) => {
-              const brandId = brand.brandId || brand.id;
-              const brandIdValue = brandId ? String(brandId) : "";
-              return (
-                <option
-                  key={brandIdValue || `brand-${index}`}
-                  value={brandIdValue}
-                >
-                  {brand.name || "Unnamed Brand"}
-                </option>
-              );
-            })}
-          </select>
+          <div className="filter-group">
+            <label htmlFor="brand-filter" className="visually-hidden">
+              Filter by brand
+            </label>
+            <select
+              id="brand-filter"
+              className="filter-select"
+              value={selectedBrand}
+              onChange={e => handleBrandChange(e.target.value)}
+              aria-label="Filter by brand"
+            >
+              <option value="">All Brands</option>
+              {brands.map((brand, index) => {
+                const brandId = brand.brandId || brand.id;
+                const brandIdValue = brandId ? String(brandId) : "";
+                return (
+                  <option
+                    key={brandIdValue || `brand-${index}`}
+                    value={brandIdValue}
+                  >
+                    {brand.name || "Unnamed Brand"}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
 
-          <input
-            type="text"
-            id="search-input"
-            className="search-input"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
+          <div className="filter-group">
+            <label htmlFor="search-input" className="visually-hidden">
+              Search products
+            </label>
+            <input
+              type="text"
+              id="search-input"
+              className="search-input"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              aria-label="Search products"
+            />
+          </div>
 
-          <select
-            id="sort-filter"
-            className="filter-select"
-            value={sortOption}
-            onChange={e => handleSortOptionChange(e.target.value)}
-          >
-            <option value="name-asc">Name: A to Z</option>
-            <option value="name-desc">Name: Z to A</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-          </select>
+          <div className="filter-group">
+            <label htmlFor="sort-filter" className="visually-hidden">
+              Sort products
+            </label>
+            <select
+              id="sort-filter"
+              className="filter-select"
+              value={sortOption}
+              onChange={e => handleSortOptionChange(e.target.value)}
+              aria-label="Sort products"
+            >
+              <option value="name-asc">Name: A to Z</option>
+              <option value="name-desc">Name: Z to A</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </select>
+          </div>
         </div>
 
         {/* Results info */}
@@ -455,16 +479,18 @@ export function ProductsPage() {
               onClick={() => handlePageChange(0)}
               disabled={!hasPrevious}
               style={{ padding: "0.5rem 1rem" }}
+              aria-label="Go to first page"
             >
-              <i className="fas fa-angle-double-left"></i>
+              <i className="fas fa-angle-double-left" aria-hidden="true"></i>
             </button>
             <button
               className="btn btn-secondary"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={!hasPrevious}
               style={{ padding: "0.5rem 1rem" }}
+              aria-label="Go to previous page"
             >
-              <i className="fas fa-angle-left"></i> Prev
+              <i className="fas fa-angle-left" aria-hidden="true"></i> Prev
             </button>
 
             {getPageNumbers().map((page, index) =>
@@ -494,16 +520,18 @@ export function ProductsPage() {
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={!hasNext}
               style={{ padding: "0.5rem 1rem" }}
+              aria-label="Go to next page"
             >
-              Next <i className="fas fa-angle-right"></i>
+              Next <i className="fas fa-angle-right" aria-hidden="true"></i>
             </button>
             <button
               className="btn btn-secondary"
               onClick={() => handlePageChange(totalPages - 1)}
               disabled={!hasNext}
               style={{ padding: "0.5rem 1rem" }}
+              aria-label="Go to last page"
             >
-              <i className="fas fa-angle-double-right"></i>
+              <i className="fas fa-angle-double-right" aria-hidden="true"></i>
             </button>
           </div>
         )}
