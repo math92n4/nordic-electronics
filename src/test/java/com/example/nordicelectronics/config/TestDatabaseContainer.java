@@ -16,8 +16,8 @@ public class TestDatabaseContainer {
 
         POSTGRES_CONTAINER.start();
 
-        System.out.println("🚀 PostgreSQL Testcontainer started!");
-        System.out.println("📍 JDBC URL: " + POSTGRES_CONTAINER.getJdbcUrl());
+        System.out.println("PostgreSQL Testcontainer started!");
+        System.out.println("JDBC URL: " + POSTGRES_CONTAINER.getJdbcUrl());
     }
 
     private TestDatabaseContainer() {
