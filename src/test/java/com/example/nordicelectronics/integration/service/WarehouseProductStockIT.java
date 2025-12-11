@@ -117,7 +117,7 @@ public class WarehouseProductStockIT extends BaseIntegrationTest {
         assertThatThrownBy(() -> {
             entityManager.persist(wp);
             entityManager.flush();
-        }).isInstanceOf(ConstraintViolationException.class);
+        }).isInstanceOf(org.hibernate.exception.ConstraintViolationException.class);
     }
 
     @Test
