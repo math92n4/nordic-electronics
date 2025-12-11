@@ -576,7 +576,7 @@ class ProductServiceTest {
 
         // Assert
         assertThat(results).isNotNull();
-        assertThat(results).hasSize(2);
+        assertThat(results).hasSize(3);
         assertThat(results).extracting("sku").containsExactlyInAnyOrder("SKU-001", "SKU-002");
 
         verify(productRepository, times(1)).findAll();
