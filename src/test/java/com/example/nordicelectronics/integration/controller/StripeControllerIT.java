@@ -140,7 +140,7 @@ class StripeControllerIT extends BaseIntegrationTest {
                 .id(warehouseProductKey)
                 .warehouse(testWarehouse)
                 .product(testProduct)
-                .stockQuantity(100)
+                .stockQuantity(50)
                 .build();
         entityManager.persist(warehouseProduct);
 
@@ -592,7 +592,7 @@ class StripeControllerIT extends BaseIntegrationTest {
                     .id(warehouseProductKey2)
                     .warehouse(warehouse)
                     .product(product2)
-                    .stockQuantity(100)
+                    .stockQuantity(50)
                     .build();
             entityManager.persist(warehouseProduct2);
             entityManager.flush();

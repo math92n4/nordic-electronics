@@ -33,7 +33,7 @@ public class WarehouseProductStockIT extends BaseIntegrationTest {
     @Test
     @DisplayName("Should save warehouse product with valid stock quantities")
     void shouldSaveWarehouseProductWithValidStock() {
-        int maxStock = 1000;
+        int maxStock = 50;
         int[] validStocks = {0, 1, maxStock - 1, maxStock};
 
 
@@ -69,7 +69,7 @@ public class WarehouseProductStockIT extends BaseIntegrationTest {
     }
 
     // ====================================================
-    // EP + BVA: Invalid negative stock
+    // EP + BVA: Invalid negative stock (below minimum)
     // ====================================================
     @Test
     @DisplayName("Should not save warehouse product with negative stock")
@@ -86,6 +86,32 @@ public class WarehouseProductStockIT extends BaseIntegrationTest {
                 .warehouse(warehouse)
                 .product(product)
                 .stockQuantity(-1) // invalid
+                .build();
+
+        assertThatThrownBy(() -> {
+            entityManager.persist(wp);
+            entityManager.flush();
+        }).isInstanceOf(ConstraintViolationException.class);
+    }
+
+    // ====================================================
+    // EP + BVA: Invalid stock exceeding maximum (above maximum)
+    // ====================================================
+    @Test
+    @DisplayName("Should not save warehouse product with stock exceeding maximum of 50")
+    void shouldNotSaveWarehouseProductWithStockExceedingMax() {
+        Warehouse warehouse = createAndPersistWarehouse("Overflow Warehouse");
+        Product product = createAndPersistProduct("OverstockProduct", new BigDecimal("75.00"));
+
+        WarehouseProductKey key = new WarehouseProductKey();
+        key.setProductId(product.getProductId());
+        key.setWarehouseId(warehouse.getWarehouseId());
+
+        WarehouseProduct wp = WarehouseProduct.builder()
+                .id(key)
+                .warehouse(warehouse)
+                .product(product)
+                .stockQuantity(51) // invalid - exceeds max of 50
                 .build();
 
         assertThatThrownBy(() -> {
