@@ -48,7 +48,6 @@ export function handleSummary(data) {
     const avgVU = metrics.slow_vus?.values?.avg ? metrics.slow_vus.values.avg.toFixed(2) : 0;
 
     // Safe access for HTTP metrics
-    const p95 = metrics.http_req_duration?.values?.["p(95)"] ? metrics.http_req_duration.values["p(95)"] / 1000 : 0;
     const avg = metrics.http_req_duration?.values?.avg ? metrics.http_req_duration.values.avg / 1000 : 0;
     const max = metrics.http_req_duration?.values?.max ? metrics.http_req_duration.values.max / 1000 : 0;
     const min = metrics.http_req_duration?.values?.min ? metrics.http_req_duration.values.min / 1000 : 0;
@@ -59,7 +58,6 @@ export function handleSummary(data) {
     console.log("\n================= PERFORMANCE SUMMARY =================");
     console.log(`Requests per second:      ${rps.toFixed(2)} RPS`);
     console.log(`Avg request duration:     ${avg.toFixed(2)} seconds`);
-    console.log(`p(95) request duration:   ${p95.toFixed(2)} seconds`);
     console.log(`Min request duration:     ${min.toFixed(2)} seconds`);
     console.log(`Max request duration:     ${max.toFixed(2)} seconds`);
     console.log(`Failure rate:             ${failures.toFixed(2)} %`);
