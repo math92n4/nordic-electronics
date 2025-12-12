@@ -66,18 +66,6 @@ class AuthControllerIT extends BaseIntegrationTest {
         entityManager.clear();
     }
 
-
-    // ============================================
-    // NOTE: EP/BVA validation tests for Email, Password, Phone, and DateOfBirth
-    // have been moved to unit tests in:
-    // - unit/entity/registration/EmailValidatorTest.java
-    // - unit/entity/registration/PasswordValidatorTest.java
-    // - unit/entity/registration/DanishPhoneValidatorTest.java
-    // - unit/entity/registration/DateOfBirthValidatorTest.java
-    //
-    // This file now contains only integration tests that require database access.
-    // ============================================
-
     // ============================================
     // DATABASE-DEPENDENT TESTS - Email Uniqueness
     // ============================================
