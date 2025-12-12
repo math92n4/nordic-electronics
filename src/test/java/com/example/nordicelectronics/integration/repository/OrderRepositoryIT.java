@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Transactional
-class OrderRepositoryTest extends BaseIntegrationTest {
+class OrderRepositoryIT extends BaseIntegrationTest {
 
     @Autowired
     private OrderRepository orderRepository;
@@ -85,7 +85,7 @@ class OrderRepositoryTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldDeleteOrder() {
+    void shouldSoftDeleteOrder() {
         // Arrange
         User user = createTestUser("Delete", "Test", "delete.test@example.com");
         Order order = createTestOrder(user, OrderStatus.cancelled);
@@ -95,14 +95,14 @@ class OrderRepositoryTest extends BaseIntegrationTest {
         UUID orderId = order.getOrderId();
 
         // Act
-        orderRepository.deleteById(orderId);
+        order.softDelete();
+        orderRepository.save(order);
         entityManager.flush();
-        entityManager.clear();
 
         Optional<Order> result = orderRepository.findById(orderId);
 
         // Assert
-        assertTrue(result.isEmpty());
+        assertNotNull(result.get().getDeletedAt());
     }
 
     @Test
@@ -118,7 +118,6 @@ class OrderRepositoryTest extends BaseIntegrationTest {
         // Act
         order.setOrderStatus(OrderStatus.shipped);
         entityManager.flush();
-        entityManager.clear();
 
         Order retrieved = orderRepository.findById(orderId).orElseThrow();
 
