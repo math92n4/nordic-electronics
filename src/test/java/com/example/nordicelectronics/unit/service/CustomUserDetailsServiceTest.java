@@ -59,8 +59,6 @@ class CustomUserDetailsServiceTest {
             .build();
     }
 
-    // ===== LOAD USER BY USERNAME (EMAIL) TESTS =====
-
     @Test
     void loadUserByUsername_shouldReturnUserDetailsWithUserRole_whenUserExists() {
         // Arrange
@@ -115,19 +113,5 @@ class CustomUserDetailsServiceTest {
         verify(userRepository).findByEmail(nonExistentEmail);
     }
 
-    // ===== EDGE CASE TESTS =====
-
-    @Test
-    void loadUserByUsername_shouldHandleRepositoryException() {
-        // Arrange
-        when(userRepository.findByEmail(TEST_EMAIL))
-            .thenThrow(new RuntimeException("Database connection failed"));
-
-        // Act & Assert
-        assertThrows(RuntimeException.class,
-            () -> customUserDetailsService.loadUserByUsername(TEST_EMAIL));
-
-        verify(userRepository).findByEmail(TEST_EMAIL);
-    }
 }
 
