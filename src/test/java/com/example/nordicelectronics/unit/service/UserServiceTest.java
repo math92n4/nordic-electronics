@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -32,24 +33,104 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+
+    // GET ALL
+
     @Test
     void getAllUsers_ShouldReturnList() {
-        List<User> users = List.of(new User());
+        User user = User.builder()
+                .firstName("Mathias")
+                .build();
+        User user1 = User.builder()
+                .firstName("Pia")
+                .build();
+        List<User> users = List.of(user, user1);
+
         when(userRepository.findAll()).thenReturn(users);
 
         assertEquals(users, userService.getAllUsers());
         verify(userRepository).findAll();
     }
 
+    // REGISTER USER
+
     @Test
     void save_ShouldReturnSavedUser() {
-        User user = new User();
-        when(userRepository.save(user)).thenReturn(user);
+        String firstName = "Mathias";
+        String lastName = "Wulff";
+        String email = "test@example.com";
+        String phone = "20345678";
+        String password = "Password123";
+        LocalDate dob = LocalDate.of(1998, 8, 29);
 
-        assertEquals(user, userService.save(user));
-        verify(userRepository).save(user);
+        when(userRepository.existsByEmail(email)).thenReturn(false);
+        when(passwordEncoder.encode(password)).thenReturn("encodedPassword");
+
+        User savedUser = User.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email)
+                .phoneNumber(phone)
+                .password("encodedPassword")
+                .dateOfBirth(dob)
+                .isAdmin(false)
+                .build();
+
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        User result = userService.registerUser(
+                firstName, lastName, email, phone, password, dob, false
+        );
+
+        assertEquals(email, result.getEmail());
+        assertEquals("encodedPassword", result.getPassword());
+        assertEquals(firstName, result.getFirstName());
+        assertEquals(lastName, result.getLastName());
+        assertFalse(result.isAdmin());
+
+        verify(userRepository).existsByEmail(email);
+        verify(passwordEncoder).encode(password);
+        verify(userRepository).save(any(User.class));
     }
 
+    @Test
+    void registerUser_ShouldFail_WhenEmailIsInvalid() {
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(
+                "Mads", "Winkler", "mads@example.jj", "123", "StrongPass123!", LocalDate.of(1990, 1, 1), false
+        ));
+    }
+
+    @Test
+    void registerUser_ShouldFail_WhenUserHasInvalidPassword() {
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(
+                "Mads", "Winkler", "mads@example.com", "20345678", "Str", LocalDate.of(1990, 1, 1), false
+        ));
+    }
+
+    @Test
+    void registerUser_ShouldFail_WhenPhoneIsInvalid() {
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(
+                "Mads", "Winkler", "mads@example.com", "2034", "StrongPass123!", LocalDate.of(1990, 1, 1), false
+        ));
+    }
+
+    @Test
+    void registerUser_ShouldFail_WhenUserIsUnder18() {
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(
+                "Mads", "Winkler", "mads@example.com", "20345678", "StrongPass123!", LocalDate.now().minusYears(17), false
+        ));
+    }
+
+    @Test
+    void registerUser_ShouldThrowException_WhenEmailAlreadyExists() {
+        when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
+
+        assertThrows(RuntimeException.class, () -> userService.registerUser(
+                "Jane", "Doe", "taken@example.com", "50223344", "StrongPass123!", LocalDate.of(1990, 1, 1), false
+        ));
+    }
+
+    // FIND BY EMAIL
     @Test
     void findByEmail_ShouldReturnUser_WhenExists() {
         User user = new User();
@@ -65,6 +146,7 @@ class UserServiceTest {
         assertThrows(RuntimeException.class, () -> userService.findByEmail("unknown@example.com"));
     }
 
+    // FIND BY ID
     @Test
     void findById_ShouldReturnUser_WhenExists() {
         UUID id = UUID.randomUUID();
@@ -80,59 +162,6 @@ class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> userService.findById(id));
-    }
-
-    @Test
-    void registerUser_ShouldSaveUser_WhenValidInput() {
-        // Given
-        String email = "john@example.com";
-        String password = "StrongPass123!";
-        String phone = "50223344";
-        LocalDate dob = LocalDate.of(1995, 5, 10);
-
-        when(userRepository.existsByEmail(email)).thenReturn(false);
-        when(passwordEncoder.encode(password)).thenReturn("encodedpassword");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // When
-        User user = userService.registerUser(
-                "John", "Doe", email, phone, password, dob, false);
-
-        // Then
-        assertNotNull(user);
-        assertEquals("John", user.getFirstName());
-        assertEquals("Doe", user.getLastName());
-        assertEquals(email, user.getEmail());
-        assertEquals("encodedpassword", user.getPassword());
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    void registerUser_ShouldThrowException_WhenEmailAlreadyExists() {
-        // Given
-        when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
-
-        // Expect
-        assertThrows(RuntimeException.class, () -> userService.registerUser(
-                "Jane", "Doe", "taken@example.com", "50223344", "StrongPass123!", LocalDate.of(1990, 1, 1), false
-        ));
-    }
-
-    @Test
-    void registerUser_ShouldFail_WhenPhoneIsInvalid() {
-        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(
-                "Mads", "Winkler", "mads@example.com", "123", "StrongPass123!", LocalDate.of(1990, 1, 1), false
-        ));
-    }
-
-    @Test
-    void registerUser_ShouldFail_WhenUserIsUnder18() {
-        // dateOfBirthValidator should reject this
-        LocalDate tooYoung = LocalDate.now().minusYears(10);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(
-                "Kid", "Test", "kid@example.com", "50223344", "StrongPass123!", tooYoung, false
-        ));
     }
 
 
