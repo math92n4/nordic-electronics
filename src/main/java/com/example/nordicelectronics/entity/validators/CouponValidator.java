@@ -20,22 +20,6 @@ import java.util.Objects;
 
         private CouponValidator() {}
 
-        /**
-         * Checks if a Coupons generated UUID is valid or not.
-         */
-        public static boolean hasValidIdLength(String id) {
-            if (id == null || id.isBlank()) return false;
-
-            if (id.length() != 36) {
-                return false;
-            } else {
-                return true;
-            }
-        }
-
-        /**
-         * Checks if a Coupons code length is valid or not.
-         */
         public static boolean hasValidCouponCodeLength(String code) {
             if (code == null || code.isBlank()) return false;
 
@@ -46,10 +30,6 @@ import java.util.Objects;
             }
         }
 
-        /**
-         * Checks if a Coupons discount type is valid or not.
-         *
-         */
         public static boolean isValidDiscountType(DiscountType discountType) {
             if (discountType == null) {
                 return false;
@@ -57,10 +37,6 @@ import java.util.Objects;
             return discountType == DiscountType.percentage || discountType == DiscountType.fixed_amount;
         }
 
-        /**
-         * Checks if a Coupons discount value is positive or not.
-         * In other words, if it's valid or not.
-         */
         public static boolean discountValueIsPositive(BigDecimal discountValue) {
             if (discountValue == null) return false;
 
@@ -71,10 +47,6 @@ import java.util.Objects;
             }
         }
 
-        /**
-         * Checks if a Coupons minimum order value is positive or not.
-         * In other words, if it's valid or not.
-         */
         public static boolean minimumOrderValueIsPositive(BigDecimal minimumOrderValue) {
             if (minimumOrderValue == null) return false;
 
@@ -105,24 +77,6 @@ import java.util.Objects;
             if (timesUsed < 0) return false;
             return timesUsed < usageLimit;
         }
-
-    /**
-     * Check date-only validity (both ends inclusive).
-     *
-     * Returns true when the supplied checkDate falls between startDate and expiryDate (inclusive).
-     * Returns false if any argument is null.
-     */
-    public static boolean isValidOnDate(LocalDate startDate, LocalDate expiryDate, LocalDate checkDate) {
-        if (startDate == null || expiryDate == null || checkDate == null) {
-            return false;
-        }
-
-        boolean isBeforeStart = checkDate.isBefore(startDate);
-        boolean isAfterExpiry = checkDate.isAfter(expiryDate);
-
-        // valid when it's not before the start and not after the expiry
-        return !isBeforeStart && !isAfterExpiry;
-    }
 
     /**
      * Check datetime validity (both ends inclusive).

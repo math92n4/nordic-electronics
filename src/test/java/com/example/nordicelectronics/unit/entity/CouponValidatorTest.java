@@ -5,53 +5,51 @@ import com.example.nordicelectronics.entity.enums.DiscountType;
 import com.example.nordicelectronics.entity.validators.CouponValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class CouponValidatorTest {
 
-    @Test
-    void hasValidIdLength_shouldReturnTrue_forValidUUID() {
-        UUID validUuid = UUID.randomUUID();
-        String validUuidString = validUuid.toString();
+    @ParameterizedTest
+    @MethodSource("couponIsValidBetweenStartAndEndDate")
+    void isValid_Between_StartAndEndDate(LocalDateTime time) {
+        LocalDateTime startDateTime = LocalDateTime.of(2025, 11, 26, 3, 0);
+        LocalDateTime expiryDateTime = LocalDateTime.of(2025, 12, 1, 3, 0);
 
-        assertTrue(CouponValidator.hasValidIdLength(validUuidString));
-        assertEquals(36, validUuidString.length()); // Confirm UUID string length is 36
+        assertTrue(CouponValidator.isValidAtTimeAndDate(startDateTime, expiryDateTime, time));
+    }
+
+    @ParameterizedTest
+    @MethodSource("couponIsInvalidOutsideStartAndEndDate")
+    void isInvalid_Outside_StartAndEndDate(LocalDateTime time) {
+        LocalDateTime startDateTime = LocalDateTime.of(2025, 11, 26, 3, 0);
+        LocalDateTime expiryDateTime = LocalDateTime.of(2025, 12, 1, 3, 0);
+
+        assertFalse(CouponValidator.isValidAtTimeAndDate(startDateTime, expiryDateTime, time));
     }
 
     @Test
-    void hasValidIdLength_shouldReturnFalse_forNullAndBlankIds() {
-        // BOUNDARY VALUE TESTING: Testing null and edge cases with real null values
-        assertFalse(CouponValidator.hasValidIdLength(null));
-        assertFalse(CouponValidator.hasValidIdLength(""));
-        assertFalse(CouponValidator.hasValidIdLength("   "));
+    void isValidAtTimeAndDate_shouldReturnFalse_forNullInputs() {
+        // NULL PARAMETER TESTING for datetime methods
+        LocalDateTime validDateTime = LocalDateTime.of(2025, 11, 26, 3, 0);
+
+        assertFalse(CouponValidator.isValidAtTimeAndDate(null, validDateTime, validDateTime));
+        assertFalse(CouponValidator.isValidAtTimeAndDate(validDateTime, null, validDateTime));
+        assertFalse(CouponValidator.isValidAtTimeAndDate(validDateTime, validDateTime, null));
+        assertFalse(CouponValidator.isValidAtTimeAndDate(null, null, null));
     }
-
-    @Test
-    void hasValidIdLength_shouldReturnFalse_forInvalidLengths() {
-        // REAL STRING DATA: Testing actual string lengths, no stubs needed
-        // Too short
-        assertFalse(CouponValidator.hasValidIdLength("123")); // 3 chars
-        assertFalse(CouponValidator.hasValidIdLength("12345678-1234-1234-1234-12345678901")); // 35 chars
-
-        // Too long
-        assertFalse(CouponValidator.hasValidIdLength("12345678-1234-1234-1234-1234567890123")); // 37 chars
-        assertFalse(CouponValidator.hasValidIdLength("12345678-1234-1234-1234-1234567890123456")); // 41 chars
-    }
-
-    // ===== COUPON CODE VALIDATION TESTS =====
-    // Uses PARAMETERIZED TESTING with real string data
 
     @ParameterizedTest
     @ValueSource(strings = {"ABC", "SALE20", "DISCOUNT", "WINTER2024SALE"})
     void hasValidCouponCodeLength_shouldReturnTrue_forValidCodes(String code) {
-        // REAL DATA INPUT: JUnit provides real strings, no mocking required
         assertTrue(CouponValidator.hasValidCouponCodeLength(code));
         assertTrue(code.length() >= 3 && code.length() <= 20);
     }
@@ -169,87 +167,6 @@ class CouponValidatorTest {
         assertFalse(CouponValidator.isExpiryDateValid(yesterday));
         assertFalse(CouponValidator.isExpiryDateValid(lastWeek));
         assertFalse(CouponValidator.isExpiryDateValid(lastYear));
-    }
-
-    // ===== DATE RANGE VALIDATION TESTS (Business Scenario) =====
-    // Uses FIXED DATE RANGES - no time dependencies, fully deterministic
-
-    @Test
-    void isValidOnDate_shouldFollowBusinessRules_forDateRanges() {
-        // BUSINESS SCENARIO WITH FIXED DATES: 2025-11-26 to 2025-12-01
-        // Uses real LocalDate.of() - no mocking needed for fixed dates
-        LocalDate startDate = LocalDate.of(2025, 11, 26);
-        LocalDate expiryDate = LocalDate.of(2025, 12, 1);
-
-        // BOUNDARY VALUE ANALYSIS with real dates
-        // BVA: Invalid (before start)
-        assertFalse(CouponValidator.isValidOnDate(startDate, expiryDate, LocalDate.of(2025, 11, 25)));
-
-        // BVA: Valid (on start date)
-        assertTrue(CouponValidator.isValidOnDate(startDate, expiryDate, LocalDate.of(2025, 11, 26)));
-
-        // EP: Valid (within range)
-        assertTrue(CouponValidator.isValidOnDate(startDate, expiryDate, LocalDate.of(2025, 11, 30)));
-
-        // BVA: Valid (on expiry date - inclusive)
-        assertTrue(CouponValidator.isValidOnDate(startDate, expiryDate, LocalDate.of(2025, 12, 1)));
-
-        // BVA: Invalid (after expiry)
-        assertFalse(CouponValidator.isValidOnDate(startDate, expiryDate, LocalDate.of(2025, 12, 2)));
-    }
-
-    @Test
-    void isValidOnDate_shouldReturnFalse_forNullInputs() {
-        // NULL PARAMETER TESTING: Testing all null combinations
-        LocalDate validDate = LocalDate.of(2025, 11, 26);
-
-        assertFalse(CouponValidator.isValidOnDate(null, validDate, validDate));
-        assertFalse(CouponValidator.isValidOnDate(validDate, null, validDate));
-        assertFalse(CouponValidator.isValidOnDate(validDate, validDate, null));
-        assertFalse(CouponValidator.isValidOnDate(null, null, null));
-    }
-
-    // ===== DATETIME RANGE VALIDATION TESTS =====
-    // Uses FIXED DATETIME RANGES - testing time-precision boundaries
-
-    @Test
-    void isValidAtTimeAndDate_shouldFollowBusinessRules_forDateTimeRanges() {
-        // BUSINESS SCENARIO WITH PRECISE TIMES: 2025-11-26T03:00 to 2025-12-01T03:00
-        // Uses real LocalDateTime.of() - testing minute-level precision
-        LocalDateTime startDateTime = LocalDateTime.of(2025, 11, 26, 3, 0);
-        LocalDateTime expiryDateTime = LocalDateTime.of(2025, 12, 1, 3, 0);
-
-        // TIME-BOUNDARY VALUE ANALYSIS: Testing minute-level precision
-        // BVA: Invalid (1 minute before start)
-        assertFalse(CouponValidator.isValidAtTimeAndDate(startDateTime, expiryDateTime,
-            LocalDateTime.of(2025, 11, 26, 2, 59)));
-
-        // BVA: Valid (exactly at start)
-        assertTrue(CouponValidator.isValidAtTimeAndDate(startDateTime, expiryDateTime,
-            LocalDateTime.of(2025, 11, 26, 3, 0)));
-
-        // EP: Valid (within range)
-        assertTrue(CouponValidator.isValidAtTimeAndDate(startDateTime, expiryDateTime,
-            LocalDateTime.of(2025, 11, 30, 12, 0)));
-
-        // BVA: Valid (exactly at expiry - inclusive)
-        assertTrue(CouponValidator.isValidAtTimeAndDate(startDateTime, expiryDateTime,
-            LocalDateTime.of(2025, 12, 1, 3, 0)));
-
-        // BVA: Invalid (1 minute after expiry)
-        assertFalse(CouponValidator.isValidAtTimeAndDate(startDateTime, expiryDateTime,
-            LocalDateTime.of(2025, 12, 1, 3, 1)));
-    }
-
-    @Test
-    void isValidAtTimeAndDate_shouldReturnFalse_forNullInputs() {
-        // NULL PARAMETER TESTING for datetime methods
-        LocalDateTime validDateTime = LocalDateTime.of(2025, 11, 26, 3, 0);
-
-        assertFalse(CouponValidator.isValidAtTimeAndDate(null, validDateTime, validDateTime));
-        assertFalse(CouponValidator.isValidAtTimeAndDate(validDateTime, null, validDateTime));
-        assertFalse(CouponValidator.isValidAtTimeAndDate(validDateTime, validDateTime, null));
-        assertFalse(CouponValidator.isValidAtTimeAndDate(null, null, null));
     }
 
     // ===== PERCENTAGE VALIDATION TESTS =====
@@ -380,7 +297,6 @@ class CouponValidatorTest {
         validCoupon.setActive(true);
 
         // COMPREHENSIVE VALIDATION: Testing all validator methods against real entity
-        assertTrue(CouponValidator.hasValidIdLength(validCoupon.getCouponId().toString()));
         assertTrue(CouponValidator.hasValidCouponCodeLength(validCoupon.getCode()));
         assertTrue(CouponValidator.isValidDiscountType(validCoupon.getDiscountType()));
         assertTrue(CouponValidator.discountValueIsPositive(validCoupon.getDiscountValue()));
@@ -411,5 +327,28 @@ class CouponValidatorTest {
         assertFalse(CouponValidator.isExpiryDateValid(invalidCoupon.getExpiryDate()));
         assertFalse(CouponValidator.canBeUsed(invalidCoupon.getUsageLimit(), invalidCoupon.getTimesUsed()));
         assertEquals(0, CouponValidator.remainingUses(invalidCoupon.getUsageLimit(), invalidCoupon.getTimesUsed()));
+    }
+
+    // Test Data Providers
+        // Start Date:  2025/11/26T03:00
+        // End Date:    2025/12/01T03:00
+    static Stream<LocalDateTime> couponIsValidBetweenStartAndEndDate() {
+        return Stream.of(
+                LocalDateTime.of(2025, 11, 26, 3, 0),           // Exact start moment
+                LocalDateTime.of(2025, 12, 1, 2, 0),            // 1 Hour Before expiry moment
+                LocalDateTime.of(2025, 12, 1, 2, 59),           // 1 Minute before expiry moment
+                LocalDateTime.of(2025, 12, 1, 2, 59, 59), // 1 second before expiry moment
+                LocalDateTime.of(2025, 12, 1, 3,0)              // Exact end moment
+        );
+    }
+
+    static Stream<LocalDateTime> couponIsInvalidOutsideStartAndEndDate() {
+        return Stream.of(
+                LocalDateTime.of(2025, 11, 26, 2, 59),              // One minute before start
+                LocalDateTime.of(2025, 11, 26, 2, 59, 59),  // One second before start
+                LocalDateTime.of(2025, 12, 1, 3, 1),                // One minute after start
+                LocalDateTime.of(2025, 12, 1, 3, 0, 1)      // One second after start
+        );
+
     }
 }

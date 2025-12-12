@@ -68,7 +68,7 @@ CREATE TABLE warehouse (
 CREATE TYPE discount_type_enum AS ENUM ('percentage', 'fixed_amount');
 CREATE TABLE coupon (
                         coupon_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                        code VARCHAR(50) NOT NULL UNIQUE,
+                        code VARCHAR(50) NOT NULL UNIQUE, -- TODO: Change to 20
                         discount_type discount_type_enum NOT NULL,
                         discount_value NUMERIC(5, 2) NOT NULL CHECK (discount_value >= 0 AND discount_value <= 100),  -- BVA: 0-100%
                         minimum_order_value NUMERIC(12, 2) NOT NULL,

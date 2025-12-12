@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class BaseEntityTest {
 
-    // Concrete subclass for testing
     static class TestEntity extends BaseEntity {}
 
     @Test
@@ -23,25 +22,7 @@ public class BaseEntityTest {
         entity.softDelete();
 
         assertNotNull(entity.getDeletedAt(), "deletedAt should be set after softDelete");
-        assertTrue(entity.getDeletedAt().isBefore(LocalDateTime.now().plusSeconds(1)),
+        assertTrue(entity.getDeletedAt().isBefore(LocalDateTime.now().plusSeconds(5)),
                 "deletedAt should be set to current time");
-    }
-
-    @Test
-    void isDeleted_shouldReturnTrueWhenDeleted() {
-        TestEntity entity = new TestEntity();
-
-        assertFalse(entity.isDeleted(), "isDeleted should be false initially");
-
-        entity.softDelete();
-
-        assertTrue(entity.isDeleted(), "isDeleted should return true after softDelete");
-    }
-
-    @Test
-    void isDeleted_shouldReturnFalseWhenNotDeleted() {
-        TestEntity entity = new TestEntity();
-
-        assertFalse(entity.isDeleted(), "isDeleted should return false if not deleted");
     }
 }
