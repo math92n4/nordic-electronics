@@ -1,0 +1,2947 @@
+{
+	"info": {
+		"_postman_id": "13796a2c-9a5f-437a-9ce3-526e7a289f8b",
+		"name": "API Tests Exam",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50525527",
+		"_collection_link": "https://danieljappe-5d5cb7b3-9042858.postman.co/workspace/96155d23-1436-49a9-8072-fd9ae1c072b2/collection/50525527-13796a2c-9a5f-437a-9ce3-526e7a289f8b?action=share&source=collection_link&creator=50525527"
+	},
+	"item": [
+		{
+			"name": "Postgresql - User, Order, Product, Coupon, Warranty",
+			"item": [
+				{
+					"name": "User / Auth",
+					"item": [
+						{
+							"name": "Register a new user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response has success field\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"success\");",
+											"    pm.expect(json.success).to.be.true;",
+											"});",
+											"",
+											"pm.test(\"Response contains user object\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"user\");",
+											"    pm.expect(json.user).to.have.property(\"userId\");",
+											"    pm.expect(json.user).to.have.property(\"email\");",
+											"});",
+											"",
+											"if (pm.response.json().user && pm.response.json().user.userId) {",
+											"    pm.collectionVariables.set(\"userId\", pm.response.json().user.userId);",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"user\",\n    \"lastName\": \"user\",\n    \"email\": \"user4@nordic.com\",\n    \"phoneNumber\": \"20123456\",\n    \"password\": \"user1234\",\n    \"dateOfBirth\": \"2000-01-15\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/auth/register",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"auth",
+										"register"
+									]
+								},
+								"description": "Registers a new user with the provided details"
+							},
+							"response": [
+								{
+									"name": "Demo User",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"firstName\": \"user\",\n  \"lastName\": \"user\",\n  \"email\": \"user2@nordic.com\",\n  \"phoneNumber\": \"12345678\",\n  \"password\": \"user123\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"auth",
+												"register"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{}"
+								},
+								{
+									"name": "Admin User",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"firstName\": \"admin\",\n  \"lastName\": \"admin\",\n  \"email\": \"admin2@nordic.com\",\n  \"phoneNumber\": \"87654321\",\n  \"password\": \"admin123\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"auth",
+												"register"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{}"
+								}
+							]
+						},
+						{
+							"name": "User login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response has success field\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"success\");",
+											"    pm.expect(json.success).to.be.true;",
+											"});",
+											"",
+											"pm.test(\"Response contains user object\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"user\");",
+											"    pm.expect(json.user).to.have.property(\"userId\");",
+											"});",
+											"",
+											"if (pm.response.json().user && pm.response.json().user.userId) {",
+											"    pm.collectionVariables.set(\"userId\", pm.response.json().user.userId);",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"user2@nordic.com\",\n  \"password\": \"user1234\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/auth/login",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"auth",
+										"login"
+									]
+								},
+								"description": "Authenticates a user and establishes a session"
+							},
+							"response": [
+								{
+									"name": "Demo User Login",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"email\": \"user@nordic.com\",\n  \"password\": \"user123\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"auth",
+												"login"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{}"
+								},
+								{
+									"name": "Admin User Login",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"email\": \"admin@nordic.com\",\n  \"password\": \"admin123\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"auth",
+												"login"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{}"
+								}
+							]
+						},
+						{
+							"name": "Negative Tests",
+							"item": [
+								{
+									"name": "Register - Duplicate email",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400 or 409\", function () {",
+													"    pm.expect(pm.response.code).to.be.oneOf([400, 409]);",
+													"});",
+													"",
+													"pm.test(\"Response contains error message\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"message\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"firstName\": \"user\",\n    \"lastName\": \"user\",\n    \"email\": \"user2@nordic.com\",\n    \"phoneNumber\": \"20123456\",\n    \"password\": \"user1234\",\n    \"dateOfBirth\": \"2000-01-15\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"auth",
+												"register"
+											]
+										}
+									}
+								},
+								{
+									"name": "Register - Invalid email",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"firstName\": \"user\",\n    \"lastName\": \"user\",\n    \"email\": \"invalid-email\",\n    \"phoneNumber\": \"20123456\",\n    \"password\": \"user1234\",\n    \"dateOfBirth\": \"2000-01-15\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"auth",
+												"register"
+											]
+										}
+									}
+								},
+								{
+									"name": "Register - Invalid phone number",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"firstName\": \"user\",\n    \"lastName\": \"user\",\n    \"email\": \"test@nordic.com\",\n    \"phoneNumber\": \"123\",\n    \"password\": \"user1234\",\n    \"dateOfBirth\": \"2000-01-15\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"auth",
+												"register"
+											]
+										}
+									}
+								},
+								{
+									"name": "Login - Invalid credentials",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400 or 401\", function () {",
+													"    pm.expect(pm.response.code).to.be.oneOf([400, 401]);",
+													"});",
+													"",
+													"pm.test(\"Response contains error message\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"message\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"email\": \"user2@nordic.com\",\n  \"password\": \"wrongpassword\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"auth",
+												"login"
+											]
+										}
+									}
+								},
+								{
+									"name": "Login - Non-existent user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400 or 401\", function () {",
+													"    pm.expect(pm.response.code).to.be.oneOf([400, 401]);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"email\": \"nonexistent@nordic.com\",\n  \"password\": \"password123\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"auth",
+												"login"
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Setup",
+					"item": [
+						{
+							"name": "Save address for user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Response contains addressId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"addressId\");",
+											"    if (json.addressId) {",
+											"        pm.collectionVariables.set(\"addressId\", json.addressId);",
+											"    }",
+											"});",
+											"",
+											"pm.test(\"Response contains address fields\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"street\");",
+											"    pm.expect(json).to.have.property(\"city\");",
+											"    pm.expect(json).to.have.property(\"zip\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"street\": \"Guldbergsgade\",\n    \"streetNumber\": \"20\",\n    \"zip\": \"2300\",\n    \"city\": \"København\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/address",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"address"
+									]
+								},
+								"description": "Creates a new address for a user"
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"createdAt\": \"1990-10-03T06:30:27.446Z\",\n  \"updatedAt\": \"1976-06-17T13:28:06.221Z\",\n  \"deletedAt\": \"1962-10-17T17:33:56.069Z\",\n  \"addressId\": \"9a2d9de1-359b-fd52-dbb1-2ca15c199ba8\",\n  \"user\": {\n    \"createdAt\": \"1989-10-15T04:19:38.024Z\",\n    \"updatedAt\": \"1995-11-16T06:32:15.209Z\",\n    \"deletedAt\": \"2021-02-12T23:51:31.567Z\",\n    \"userId\": \"678ec0ba-6f35-e107-423f-0a88231e7189\",\n    \"firstName\": \"string\",\n    \"lastName\": \"string\",\n    \"email\": \"string\",\n    \"phoneNumber\": \"string\",\n    \"dateOfBirth\": \"2011-08-09\",\n    \"address\": [\n      {\n        \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n      },\n      {\n        \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n      }\n    ],\n    \"orders\": [\n      {\n        \"createdAt\": \"1952-04-10T01:55:23.914Z\",\n        \"updatedAt\": \"1958-02-11T07:02:09.068Z\",\n        \"deletedAt\": \"1975-02-19T03:54:38.155Z\",\n        \"orderId\": \"c239098e-dea0-4f55-b836-f2df2d161041\",\n        \"user\": {\n          \"value\": \"<Circular reference to #/components/schemas/User detected>\"\n        },\n        \"address\": {\n          \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n        },\n        \"orderDate\": \"1959-03-17T07:48:01.547Z\",\n        \"orderStatus\": \"cancelled\",\n        \"totalAmount\": 3823.615748040896,\n        \"subtotal\": 8627.33666314205,\n        \"taxAmount\": 4016.727984771191,\n        \"shippingCost\": 40.800454580010026,\n        \"discountAmount\": 1422.9926085607358,\n        \"coupon\": {\n          \"createdAt\": \"1992-03-10T05:29:01.710Z\",\n          \"updatedAt\": \"1949-02-21T05:47:18.160Z\",\n          \"deletedAt\": \"1974-03-04T02:07:39.746Z\",\n          \"couponId\": \"9b87e284-8dde-4112-a005-c421d1a02673\",\n          \"code\": \"string\",\n          \"discountType\": \"fixed_amount\",\n          \"discountValue\": 5657.726742248296,\n          \"minimumOrderValue\": 8521.514551984044,\n          \"expiryDate\": \"2004-06-13\",\n          \"usageLimit\": 1872,\n          \"timesUsed\": 6553,\n          \"active\": true,\n          \"deleted\": false\n        },\n        \"deleted\": false\n      },\n      {\n        \"createdAt\": \"1995-08-05T22:06:19.627Z\",\n        \"updatedAt\": \"1984-08-04T15:13:07.085Z\",\n        \"deletedAt\": \"2003-08-01T02:00:16.029Z\",\n        \"orderId\": \"da6422c1-399a-db92-f747-4c7248151294\",\n        \"user\": {\n          \"value\": \"<Circular reference to #/components/schemas/User detected>\"\n        },\n        \"address\": {\n          \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n        },\n        \"orderDate\": \"1998-10-04T01:34:54.174Z\",\n        \"orderStatus\": \"returned\",\n        \"totalAmount\": 2287.6708982650593,\n        \"subtotal\": 9939.511955979358,\n        \"taxAmount\": 18.278472406445534,\n        \"shippingCost\": 6602.583690253663,\n        \"discountAmount\": 3201.3766088093676,\n        \"coupon\": {\n          \"createdAt\": \"1968-08-16T08:48:38.439Z\",\n          \"updatedAt\": \"2002-05-30T03:28:40.930Z\",\n          \"deletedAt\": \"2002-11-25T04:28:24.527Z\",\n          \"couponId\": \"f0e54e50-b706-1620-2fd7-a0e40df1f2f8\",\n          \"code\": \"string\",\n          \"discountType\": \"fixed_amount\",\n          \"discountValue\": 2911.784466223235,\n          \"minimumOrderValue\": 6352.768099375623,\n          \"expiryDate\": \"2001-12-25\",\n          \"usageLimit\": 9949,\n          \"timesUsed\": 494,\n          \"active\": true,\n          \"deleted\": false\n        },\n        \"deleted\": false\n      }\n    ],\n    \"admin\": false,\n    \"deleted\": true\n  },\n  \"street\": \"string\",\n  \"streetNumber\": \"string\",\n  \"zip\": \"string\",\n  \"city\": \"string\",\n  \"deleted\": true\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/address",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"address"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"createdAt\": \"1990-10-03T06:30:27.446Z\",\n  \"updatedAt\": \"1976-06-17T13:28:06.221Z\",\n  \"deletedAt\": \"1962-10-17T17:33:56.069Z\",\n  \"addressId\": \"9a2d9de1-359b-fd52-dbb1-2ca15c199ba8\",\n  \"user\": {\n    \"createdAt\": \"1989-10-15T04:19:38.024Z\",\n    \"updatedAt\": \"1995-11-16T06:32:15.209Z\",\n    \"deletedAt\": \"2021-02-12T23:51:31.567Z\",\n    \"userId\": \"678ec0ba-6f35-e107-423f-0a88231e7189\",\n    \"firstName\": \"string\",\n    \"lastName\": \"string\",\n    \"email\": \"string\",\n    \"phoneNumber\": \"string\",\n    \"dateOfBirth\": \"2011-08-09\",\n    \"address\": [\n      {\n        \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n      },\n      {\n        \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n      }\n    ],\n    \"orders\": [\n      {\n        \"createdAt\": \"1952-04-10T01:55:23.914Z\",\n        \"updatedAt\": \"1958-02-11T07:02:09.068Z\",\n        \"deletedAt\": \"1975-02-19T03:54:38.155Z\",\n        \"orderId\": \"c239098e-dea0-4f55-b836-f2df2d161041\",\n        \"user\": {\n          \"value\": \"<Circular reference to #/components/schemas/User detected>\"\n        },\n        \"address\": {\n          \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n        },\n        \"orderDate\": \"1959-03-17T07:48:01.547Z\",\n        \"orderStatus\": \"cancelled\",\n        \"totalAmount\": 3823.615748040896,\n        \"subtotal\": 8627.33666314205,\n        \"taxAmount\": 4016.727984771191,\n        \"shippingCost\": 40.800454580010026,\n        \"discountAmount\": 1422.9926085607358,\n        \"coupon\": {\n          \"createdAt\": \"1992-03-10T05:29:01.710Z\",\n          \"updatedAt\": \"1949-02-21T05:47:18.160Z\",\n          \"deletedAt\": \"1974-03-04T02:07:39.746Z\",\n          \"couponId\": \"9b87e284-8dde-4112-a005-c421d1a02673\",\n          \"code\": \"string\",\n          \"discountType\": \"fixed_amount\",\n          \"discountValue\": 5657.726742248296,\n          \"minimumOrderValue\": 8521.514551984044,\n          \"expiryDate\": \"2004-06-13\",\n          \"usageLimit\": 1872,\n          \"timesUsed\": 6553,\n          \"active\": true,\n          \"deleted\": false\n        },\n        \"deleted\": false\n      },\n      {\n        \"createdAt\": \"1995-08-05T22:06:19.627Z\",\n        \"updatedAt\": \"1984-08-04T15:13:07.085Z\",\n        \"deletedAt\": \"2003-08-01T02:00:16.029Z\",\n        \"orderId\": \"da6422c1-399a-db92-f747-4c7248151294\",\n        \"user\": {\n          \"value\": \"<Circular reference to #/components/schemas/User detected>\"\n        },\n        \"address\": {\n          \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n        },\n        \"orderDate\": \"1998-10-04T01:34:54.174Z\",\n        \"orderStatus\": \"returned\",\n        \"totalAmount\": 2287.6708982650593,\n        \"subtotal\": 9939.511955979358,\n        \"taxAmount\": 18.278472406445534,\n        \"shippingCost\": 6602.583690253663,\n        \"discountAmount\": 3201.3766088093676,\n        \"coupon\": {\n          \"createdAt\": \"1968-08-16T08:48:38.439Z\",\n          \"updatedAt\": \"2002-05-30T03:28:40.930Z\",\n          \"deletedAt\": \"2002-11-25T04:28:24.527Z\",\n          \"couponId\": \"f0e54e50-b706-1620-2fd7-a0e40df1f2f8\",\n          \"code\": \"string\",\n          \"discountType\": \"fixed_amount\",\n          \"discountValue\": 2911.784466223235,\n          \"minimumOrderValue\": 6352.768099375623,\n          \"expiryDate\": \"2001-12-25\",\n          \"usageLimit\": 9949,\n          \"timesUsed\": 494,\n          \"active\": true,\n          \"deleted\": false\n        },\n        \"deleted\": false\n      }\n    ],\n    \"admin\": false,\n    \"deleted\": true\n  },\n  \"street\": \"string\",\n  \"streetNumber\": \"string\",\n  \"zip\": \"string\",\n  \"city\": \"string\",\n  \"deleted\": true\n}"
+								}
+							]
+						},
+						{
+							"name": "Get address for user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response contains addressId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"addressId\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/address",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"address"
+									]
+								}
+							}
+						},
+						{
+							"name": "Create new brand",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Response contains brandId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"brandId\");",
+											"    if (json.brandId) {",
+											"        pm.collectionVariables.set(\"brandId\", json.brandId);",
+											"    }",
+											"});",
+											"",
+											"pm.test(\"Response contains name\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Sony\",\n    \"description\": \"Japanese electronics manufacturer\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/brands",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"brands"
+									]
+								},
+								"description": "Creates a new brand and returns the created brand."
+							},
+							"response": []
+						},
+						{
+							"name": "Get all brands",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/brands",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"brands"
+									]
+								}
+							}
+						},
+						{
+							"name": "Create new category",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Response contains categoryId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"categoryId\");",
+											"    if (json.categoryId) {",
+											"        pm.collectionVariables.set(\"categoryId\", json.categoryId);",
+											"    }",
+											"});",
+											"",
+											"pm.test(\"Response contains name\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Electronics\",\n    \"description\": \"Electronic devices and gadgets\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/categories",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"categories"
+									]
+								},
+								"description": "Creates a new category and returns the created category."
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"createdAt\": \"1956-05-15T07:53:41.394Z\",\n  \"updatedAt\": \"2011-05-20T14:00:30.729Z\",\n  \"deletedAt\": \"1960-08-18T09:50:33.944Z\",\n  \"categoryId\": \"9cb8fcac-9a2a-c0f5-214e-253e19f59b7f\",\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"deleted\": false\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/categories",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"categories"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"createdAt\": \"1956-05-15T07:53:41.394Z\",\n  \"updatedAt\": \"2011-05-20T14:00:30.729Z\",\n  \"deletedAt\": \"1960-08-18T09:50:33.944Z\",\n  \"categoryId\": \"9cb8fcac-9a2a-c0f5-214e-253e19f59b7f\",\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"deleted\": false\n}"
+								}
+							]
+						},
+						{
+							"name": "Get all categories",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/categories",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"categories"
+									]
+								}
+							}
+						},
+						{
+							"name": "Create new warehouse",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Response contains warehouseId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"warehouseId\");",
+											"    if (json.warehouseId) {",
+											"        pm.collectionVariables.set(\"warehouseId\", json.warehouseId);",
+											"    }",
+											"});",
+											"",
+											"pm.test(\"Response contains name\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"name\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Warehouse\",\n  \"phoneNumber\": \"12345678\",\n  \"addressId\": \"{{addressId}}\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/warehouses",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"warehouses"
+									]
+								},
+								"description": "Creates a new warehouse and returns the created warehouse."
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"string\",\n  \"phoneNumber\": \"string\",\n  \"addressId\": \"5abbe462-d875-c773-d0ca-bb64f626f8e2\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/warehouses",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"warehouses"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"warehouseId\": \"857331f5-fb31-6a39-4bda-60eb4868ad56\",\n  \"name\": \"string\",\n  \"phoneNumber\": \"string\",\n  \"addressId\": \"b5975c77-e6b3-208f-d778-5a06d7af698a\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get all warehouses",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/warehouses",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"warehouses"
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Warranty",
+					"item": [
+						{
+							"name": "Create new warranty",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"POST: Status code is 201 if logged in\", function () {\r",
+											"    pm.response.to.have.status(201);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"GET: Content-Type is JSON\", function () {\r",
+											"    pm.response.to.have.header(\"Content-Type\", 'application/json');\r",
+											"});\r",
+											"\r",
+											"pm.test(\"GET: Response body is an Object\", function () {\r",
+											"    const json = pm.response.json();\r",
+											"    pm.expect(json).to.be.an(\"Object\");\r",
+											"});\r",
+											"\r",
+											"pm.collectionVariables.set(\"warrantyId\", pm.response.json().warrantyId);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"startDate\": \"2025-01-01\",\n    \"endDate\": \"2027-01-01\",\n    \"description\": \"2 Year Standard Warranty\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/warranties",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"warranties"
+									]
+								},
+								"description": "Creates a new warranty and returns the created warranty."
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"createdAt\": \"2007-08-30T07:12:04.688Z\",\n  \"updatedAt\": \"1984-06-25T02:47:52.952Z\",\n  \"deletedAt\": \"2007-07-27T05:31:50.379Z\",\n  \"warrantyId\": \"daf28b26-cde4-0e3a-29ca-17cc0b94a2f0\",\n  \"startDate\": \"2014-03-03\",\n  \"endDate\": \"1949-04-13\",\n  \"description\": \"string\",\n  \"deleted\": true\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/warranties",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"warranties"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"createdAt\": \"2007-08-30T07:12:04.688Z\",\n  \"updatedAt\": \"1984-06-25T02:47:52.952Z\",\n  \"deletedAt\": \"2007-07-27T05:31:50.379Z\",\n  \"warrantyId\": \"daf28b26-cde4-0e3a-29ca-17cc0b94a2f0\",\n  \"startDate\": \"2014-03-03\",\n  \"endDate\": \"1949-04-13\",\n  \"description\": \"string\",\n  \"deleted\": true\n}"
+								}
+							]
+						},
+						{
+							"name": "Get all warranties",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/warranties",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"warranties"
+									]
+								}
+							}
+						},
+						{
+							"name": "Get warranty by ID",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response contains warrantyId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"warrantyId\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/warranties/{{warrantyId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"warranties",
+										"{{warrantyId}}"
+									]
+								}
+							}
+						},
+						{
+							"name": "Negative Tests",
+							"item": [
+								{
+									"name": "Get warranty by invalid ID",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/warranties/00000000-0000-0000-0000-000000000000",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"warranties",
+												"00000000-0000-0000-0000-000000000000"
+											]
+										}
+									}
+								},
+								{
+									"name": "Create warranty with invalid dates",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"startDate\": \"2027-01-01\",\n    \"endDate\": \"2025-01-01\",\n    \"description\": \"Invalid Warranty\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/warranties",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"warranties"
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Product",
+					"item": [
+						{
+							"name": "Create a new PostgreSQL product",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Check status code = 201",
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"// If status is 201, run additional tests",
+											"if (pm.response.code === 201) {",
+											"    ",
+											"    pm.test(\"GET: Content-Type is JSON\", function () {",
+											"        pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+											"    });",
+											"",
+											"    pm.test(\"GET: Response body is an Object\", function () {",
+											"        const json = pm.response.json();",
+											"        pm.expect(json).to.be.an(\"object\");",
+											"    });",
+											"}",
+											"",
+											"pm.collectionVariables.set(\"productId\", pm.response.json().productId); //",
+											"",
+											"// Handle 500 error case",
+											"const body = pm.response.json();",
+											"if (body.status === 500) {",
+											"    pm.test(\"Error message is 'Internal Server Error'\", function () {",
+											"        pm.expect(body.error).to.eql(\"Internal Server Error\");",
+											"    });",
+											"}",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"sku\": \"PROD-006\",\n  \"name\": \"SuperWidget\",\n  \"description\": \"High-quality widget for daily use\",\n  \"price\": 5396.35,\n  \"weight\": 2451.55,\n  \"warrantyId\": \"{{warrantyId}}\",\n  \"brandId\": \"{{brandId}}\",\n  \"categoryIds\": [\"{{categoryId}}\"]\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/products",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"products"
+									]
+								},
+								"description": "Creates a new product and returns the created product."
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"sku\": \"string\",\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"price\": 5396.35494091508,\n  \"weight\": 2451.5453933287113,\n  \"warrantyId\": \"8b168cde-3b0b-d289-7579-f2d170216cff\",\n  \"brandId\": \"36b4f1d7-7eb7-4846-ad7f-48227097ad37\",\n  \"categoryIds\": [\n    \"9c390c19-3200-e2f4-9f77-7edc5b1afabb\",\n    \"1e658b88-7b13-f32a-e0de-a295b66fc916\"\n  ]\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/products",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"products"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"productId\": \"f39f55bb-2503-a10d-8637-494c9a867d2c\",\n  \"sku\": \"string\",\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"price\": 6379.10255348948,\n  \"weight\": 6157.130972930256,\n  \"warrantyId\": \"eafcfe80-d3c0-affa-51e9-73c81d656141\",\n  \"brandId\": \"d8b75d7c-1b1b-c731-07e4-d7a3d1ccfe64\",\n  \"categoryIds\": [\n    \"1de89e5b-b924-87b3-55cc-51550c4f281a\",\n    \"1e56204c-5e89-584f-56cf-8d3e40d931ef\"\n  ],\n  \"reviewIds\": [\n    \"f0503d3b-4470-b797-fe64-bb5bf494c5b3\",\n    \"8a71b56c-fff0-abf1-8b60-b9724b14eea5\"\n  ]\n}"
+								}
+							]
+						},
+						{
+							"name": "Get all products",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/products",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"products"
+									]
+								}
+							}
+						},
+						{
+							"name": "Get PostgreSQL product by ID",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is JSON\", function () {",
+											"    pm.response.to.have.header(\"Content-Type\", \"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Response body is an Object\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.be.an(\"object\");",
+											"});",
+											"",
+											"pm.test(\"Response contains productId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"productId\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/products/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"products",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{productId}}"
+										}
+									]
+								},
+								"description": "Fetches a product by its unique ID."
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/products/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"products",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "f00d5585-272e-a1cf-8b1b-7b40f23ff3e7"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"productId\": \"f39f55bb-2503-a10d-8637-494c9a867d2c\",\n  \"sku\": \"string\",\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"price\": 6379.10255348948,\n  \"weight\": 6157.130972930256,\n  \"warrantyId\": \"eafcfe80-d3c0-affa-51e9-73c81d656141\",\n  \"brandId\": \"d8b75d7c-1b1b-c731-07e4-d7a3d1ccfe64\",\n  \"categoryIds\": [\n    \"1de89e5b-b924-87b3-55cc-51550c4f281a\",\n    \"1e56204c-5e89-584f-56cf-8d3e40d931ef\"\n  ],\n  \"reviewIds\": [\n    \"f0503d3b-4470-b797-fe64-bb5bf494c5b3\",\n    \"8a71b56c-fff0-abf1-8b60-b9724b14eea5\"\n  ]\n}"
+								}
+							]
+						},
+						{
+							"name": "Create warehouse product",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Response contains stockQuantity\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"stockQuantity\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\"warehouseId\": \"{{warehouseId}}\",\n\"productId\": \"{{productId}}\",\n  \"stockQuantity\": 49\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/warehouse-products",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"warehouse-products"
+									]
+								},
+								"description": "Creates a new warehouse product entry in the system."
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"id\": {\n    \"warehouseId\": \"5d6bf4c3-ac9b-0809-a672-a7d4ef1cea2e\",\n    \"productId\": \"d366f6a6-4318-190b-d562-4634741e92bc\"\n  },\n  \"warehouse\": {\n    \"createdAt\": \"2004-02-11T00:46:29.741Z\",\n    \"updatedAt\": \"2023-08-09T19:26:09.017Z\",\n    \"deletedAt\": \"2022-12-05T04:09:27.034Z\",\n    \"warehouseId\": \"82fe085b-84d8-af8d-c835-c47bbaa46f17\",\n    \"name\": \"string\",\n    \"phoneNumber\": \"string\",\n    \"address\": {\n      \"createdAt\": \"1967-12-17T16:06:13.070Z\",\n      \"updatedAt\": \"1955-08-15T10:29:12.375Z\",\n      \"deletedAt\": \"2012-12-12T22:34:24.645Z\",\n      \"addressId\": \"51a81895-a920-b321-e0ad-02b83054d970\",\n      \"user\": {\n        \"createdAt\": \"2008-02-10T18:01:37.032Z\",\n        \"updatedAt\": \"2005-05-12T04:08:47.145Z\",\n        \"deletedAt\": \"2011-08-31T21:39:22.706Z\",\n        \"userId\": \"7a835189-a33b-0d10-57ac-f8f7dc705d9d\",\n        \"firstName\": \"string\",\n        \"lastName\": \"string\",\n        \"email\": \"string\",\n        \"phoneNumber\": \"string\",\n        \"dateOfBirth\": \"1951-11-12\",\n        \"address\": [\n          {\n            \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n          },\n          {\n            \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n          }\n        ],\n        \"orders\": [\n          {\n            \"createdAt\": \"1967-06-02T00:25:18.236Z\",\n            \"updatedAt\": \"1985-01-17T14:25:34.718Z\",\n            \"deletedAt\": \"1997-11-25T14:11:14.518Z\",\n            \"orderId\": \"208101c2-ee67-4859-e248-ab234afd3df2\",\n            \"user\": {\n              \"value\": \"<Circular reference to #/components/schemas/User detected>\"\n            },\n            \"address\": {\n              \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n            },\n            \"orderDate\": \"1995-09-19T18:08:56.881Z\",\n            \"orderStatus\": \"cancelled\",\n            \"totalAmount\": 8893.648468659987,\n            \"subtotal\": 2694.8745662036554,\n            \"taxAmount\": 158.254332495944,\n            \"shippingCost\": 4000.542398341214,\n            \"discountAmount\": 5411.916787573916,\n            \"coupon\": {\n              \"createdAt\": \"1987-07-17T12:58:24.213Z\",\n              \"updatedAt\": \"1959-07-22T19:21:52.237Z\",\n              \"deletedAt\": \"1952-07-04T01:14:43.237Z\",\n              \"couponId\": \"76eb12a7-e76d-fcec-18f7-5df012282ef6\",\n              \"code\": \"string\",\n              \"discountType\": \"percentage\",\n              \"discountValue\": 9327.911481165498,\n              \"minimumOrderValue\": 3852.3569846129412,\n              \"expiryDate\": \"2010-02-09\",\n              \"usageLimit\": 9761,\n              \"timesUsed\": 3072,\n              \"active\": true,\n              \"deleted\": true\n            },\n            \"deleted\": false\n          },\n          {\n            \"createdAt\": \"1949-07-04T11:01:35.808Z\",\n            \"updatedAt\": \"2002-04-15T21:54:26.570Z\",\n            \"deletedAt\": \"1954-01-09T10:09:35.472Z\",\n            \"orderId\": \"f0ae35a6-bcb4-d473-97f0-88defe45bf63\",\n            \"user\": {\n              \"value\": \"<Circular reference to #/components/schemas/User detected>\"\n            },\n            \"address\": {\n              \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n            },\n            \"orderDate\": \"1963-09-03T00:34:07.555Z\",\n            \"orderStatus\": \"pending\",\n            \"totalAmount\": 691.8399761231808,\n            \"subtotal\": 1451.5770270648786,\n            \"taxAmount\": 2944.887100356077,\n            \"shippingCost\": 5935.798293260388,\n            \"discountAmount\": 9382.555343387861,\n            \"coupon\": {\n              \"createdAt\": \"2008-03-23T00:58:20.702Z\",\n              \"updatedAt\": \"1965-08-06T20:27:23.623Z\",\n              \"deletedAt\": \"1949-08-06T01:51:42.942Z\",\n              \"couponId\": \"629e6d6c-20ff-c130-eed4-44467d4dd7d2\",\n              \"code\": \"string\",\n              \"discountType\": \"percentage\",\n              \"discountValue\": 8794.148747977624,\n              \"minimumOrderValue\": 2767.8003048506116,\n              \"expiryDate\": \"2009-07-10\",\n              \"usageLimit\": 1201,\n              \"timesUsed\": 5078,\n              \"active\": false,\n              \"deleted\": true\n            },\n            \"deleted\": false\n          }\n        ],\n        \"admin\": false,\n        \"deleted\": false\n      },\n      \"street\": \"string\",\n      \"streetNumber\": \"string\",\n      \"zip\": \"string\",\n      \"city\": \"string\",\n      \"deleted\": false\n    },\n    \"deleted\": false\n  },\n  \"product\": {\n    \"value\": \"<Circular reference to #/components/schemas/Product detected>\"\n  },\n  \"stockQuantity\": 249\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/warehouse-products",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"warehouse-products"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"id\": {\n    \"warehouseId\": \"5d6bf4c3-ac9b-0809-a672-a7d4ef1cea2e\",\n    \"productId\": \"d366f6a6-4318-190b-d562-4634741e92bc\"\n  },\n  \"warehouse\": {\n    \"createdAt\": \"2004-02-11T00:46:29.741Z\",\n    \"updatedAt\": \"2023-08-09T19:26:09.017Z\",\n    \"deletedAt\": \"2022-12-05T04:09:27.034Z\",\n    \"warehouseId\": \"82fe085b-84d8-af8d-c835-c47bbaa46f17\",\n    \"name\": \"string\",\n    \"phoneNumber\": \"string\",\n    \"address\": {\n      \"createdAt\": \"1967-12-17T16:06:13.070Z\",\n      \"updatedAt\": \"1955-08-15T10:29:12.375Z\",\n      \"deletedAt\": \"2012-12-12T22:34:24.645Z\",\n      \"addressId\": \"51a81895-a920-b321-e0ad-02b83054d970\",\n      \"user\": {\n        \"createdAt\": \"2008-02-10T18:01:37.032Z\",\n        \"updatedAt\": \"2005-05-12T04:08:47.145Z\",\n        \"deletedAt\": \"2011-08-31T21:39:22.706Z\",\n        \"userId\": \"7a835189-a33b-0d10-57ac-f8f7dc705d9d\",\n        \"firstName\": \"string\",\n        \"lastName\": \"string\",\n        \"email\": \"string\",\n        \"phoneNumber\": \"string\",\n        \"dateOfBirth\": \"1951-11-12\",\n        \"address\": [\n          {\n            \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n          },\n          {\n            \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n          }\n        ],\n        \"orders\": [\n          {\n            \"createdAt\": \"1967-06-02T00:25:18.236Z\",\n            \"updatedAt\": \"1985-01-17T14:25:34.718Z\",\n            \"deletedAt\": \"1997-11-25T14:11:14.518Z\",\n            \"orderId\": \"208101c2-ee67-4859-e248-ab234afd3df2\",\n            \"user\": {\n              \"value\": \"<Circular reference to #/components/schemas/User detected>\"\n            },\n            \"address\": {\n              \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n            },\n            \"orderDate\": \"1995-09-19T18:08:56.881Z\",\n            \"orderStatus\": \"cancelled\",\n            \"totalAmount\": 8893.648468659987,\n            \"subtotal\": 2694.8745662036554,\n            \"taxAmount\": 158.254332495944,\n            \"shippingCost\": 4000.542398341214,\n            \"discountAmount\": 5411.916787573916,\n            \"coupon\": {\n              \"createdAt\": \"1987-07-17T12:58:24.213Z\",\n              \"updatedAt\": \"1959-07-22T19:21:52.237Z\",\n              \"deletedAt\": \"1952-07-04T01:14:43.237Z\",\n              \"couponId\": \"76eb12a7-e76d-fcec-18f7-5df012282ef6\",\n              \"code\": \"string\",\n              \"discountType\": \"percentage\",\n              \"discountValue\": 9327.911481165498,\n              \"minimumOrderValue\": 3852.3569846129412,\n              \"expiryDate\": \"2010-02-09\",\n              \"usageLimit\": 9761,\n              \"timesUsed\": 3072,\n              \"active\": true,\n              \"deleted\": true\n            },\n            \"deleted\": false\n          },\n          {\n            \"createdAt\": \"1949-07-04T11:01:35.808Z\",\n            \"updatedAt\": \"2002-04-15T21:54:26.570Z\",\n            \"deletedAt\": \"1954-01-09T10:09:35.472Z\",\n            \"orderId\": \"f0ae35a6-bcb4-d473-97f0-88defe45bf63\",\n            \"user\": {\n              \"value\": \"<Circular reference to #/components/schemas/User detected>\"\n            },\n            \"address\": {\n              \"value\": \"<Circular reference to #/components/schemas/Address detected>\"\n            },\n            \"orderDate\": \"1963-09-03T00:34:07.555Z\",\n            \"orderStatus\": \"pending\",\n            \"totalAmount\": 691.8399761231808,\n            \"subtotal\": 1451.5770270648786,\n            \"taxAmount\": 2944.887100356077,\n            \"shippingCost\": 5935.798293260388,\n            \"discountAmount\": 9382.555343387861,\n            \"coupon\": {\n              \"createdAt\": \"2008-03-23T00:58:20.702Z\",\n              \"updatedAt\": \"1965-08-06T20:27:23.623Z\",\n              \"deletedAt\": \"1949-08-06T01:51:42.942Z\",\n              \"couponId\": \"629e6d6c-20ff-c130-eed4-44467d4dd7d2\",\n              \"code\": \"string\",\n              \"discountType\": \"percentage\",\n              \"discountValue\": 8794.148747977624,\n              \"minimumOrderValue\": 2767.8003048506116,\n              \"expiryDate\": \"2009-07-10\",\n              \"usageLimit\": 1201,\n              \"timesUsed\": 5078,\n              \"active\": false,\n              \"deleted\": true\n            },\n            \"deleted\": false\n          }\n        ],\n        \"admin\": false,\n        \"deleted\": false\n      },\n      \"street\": \"string\",\n      \"streetNumber\": \"string\",\n      \"zip\": \"string\",\n      \"city\": \"string\",\n      \"deleted\": false\n    },\n    \"deleted\": false\n  },\n  \"product\": {\n    \"value\": \"<Circular reference to #/components/schemas/Product detected>\"\n  },\n  \"stockQuantity\": 249\n}"
+								}
+							]
+						},
+						{
+							"name": "Negative Tests",
+							"item": [
+								{
+									"name": "Get product by invalid ID",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"Response contains error message\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"message\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/products/00000000-0000-0000-0000-000000000000",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"products",
+												"00000000-0000-0000-0000-000000000000"
+											]
+										}
+									}
+								},
+								{
+									"name": "Create product with invalid warrantyId",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400 or 404\", function () {",
+													"    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"sku\": \"PROD-999\",\n  \"name\": \"Test Product\",\n  \"description\": \"Test\",\n  \"price\": 100,\n  \"weight\": 1,\n  \"warrantyId\": \"00000000-0000-0000-0000-000000000000\",\n  \"brandId\": \"{{brandId}}\",\n  \"categoryIds\": [\"{{categoryId}}\"]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/products",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"products"
+											]
+										}
+									}
+								},
+								{
+									"name": "Create product with missing required fields",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Test Product\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/products",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"products"
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Order",
+					"item": [
+						{
+							"name": "Create new order",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response contains orderId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"orderId\");",
+											"});",
+											"",
+											"pm.test(\"Response contains totalAmount\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"totalAmount\");",
+											"});",
+											"",
+											"if (pm.response.json().orderId) {",
+											"    pm.collectionVariables.set(\"orderId\", pm.response.json().orderId);",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"userId\": \"{{userId}}\",\n  \"address\": {\n    \"street\": \"string\",\n    \"streetNumber\": \"string\",\n    \"zip\": \"2200\",\n    \"city\": \"string\"\n  },\n  \"orderProducts\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 1,\n      \"warehouseId\": \"{{warehouseId}}\"\n    }\n  ],\n  \"couponCode\": \"\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/orders/create",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"orders",
+										"create"
+									]
+								},
+								"description": "Creates a new PostgreSQL order and returns the created order as a DTO."
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"userId\": \"4447eeee-bc2e-1d88-b273-11dbe7a7fc2d\",\n  \"address\": {\n    \"street\": \"string\",\n    \"streetNumber\": \"string\",\n    \"zip\": \"string\",\n    \"city\": \"string\"\n  },\n  \"orderProducts\": [\n    {\n      \"productId\": \"c778df26-347a-ed7b-c8ad-6d9ca9948cdf\",\n      \"quantity\": 9975,\n      \"warehouseId\": \"36eb7ede-926d-c4f1-56d5-e41b2a2ee7a2\"\n    },\n    {\n      \"productId\": \"b9a12a25-ddc8-6d14-900d-a1553406403e\",\n      \"quantity\": 3558,\n      \"warehouseId\": \"dc4f195f-fd9a-f1f6-cc8d-db7e58665a68\"\n    }\n  ],\n  \"couponCode\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/orders/create",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"orders",
+												"create"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"orderId\": \"e7998d5a-32cd-c2cf-738d-88a863c12516\",\n  \"user\": {\n    \"userId\": \"4936a9a3-22bb-f840-d5f5-71d1966613b6\",\n    \"firstName\": \"string\",\n    \"lastName\": \"string\",\n    \"email\": \"string\"\n  },\n  \"address\": {\n    \"addressId\": \"ac73b39a-1ec1-2a52-1b71-b0d4bb682468\",\n    \"street\": \"string\",\n    \"streetNumber\": \"string\",\n    \"zip\": \"string\",\n    \"city\": \"string\"\n  },\n  \"status\": \"string\",\n  \"orderDate\": \"1999-02-26T23:49:55.364Z\",\n  \"totalAmount\": 4797.704201691772,\n  \"subtotal\": 9531.912209721833,\n  \"taxAmount\": 4037.8333975239334,\n  \"shippingCost\": 5619.458066024144,\n  \"discountAmount\": 7358.322773337931,\n  \"orderProducts\": [\n    {\n      \"product\": {\n        \"productId\": \"2781469b-7c9c-8f36-d5c9-5efc88ad15c2\",\n        \"name\": \"string\",\n        \"description\": \"string\",\n        \"price\": 1132.1774983374032,\n        \"weight\": 8328.047103513287,\n        \"warrantyId\": \"2515bcc8-9adf-3870-2e6f-d8f6f6f7f51d\",\n        \"brandId\": \"4853012b-4f86-0b98-69d8-bec9b0b77bd2\"\n      },\n      \"quantity\": 898,\n      \"unitPrice\": 2401.811421720985,\n      \"totalPrice\": 6168.003803684376\n    },\n    {\n      \"product\": {\n        \"productId\": \"b07cf2cc-eaf0-7415-db30-218b0045a03b\",\n        \"name\": \"string\",\n        \"description\": \"string\",\n        \"price\": 2783.50188427521,\n        \"weight\": 674.4042513388825,\n        \"warrantyId\": \"c25b5057-0a9a-0edd-9089-ac6d862fd556\",\n        \"brandId\": \"bf117b09-2127-0f91-a154-e8c110c0a23e\"\n      },\n      \"quantity\": 9682,\n      \"unitPrice\": 3893.5389694322307,\n      \"totalPrice\": 2239.394958004608\n    }\n  ]\n}"
+								}
+							]
+						},
+						{
+							"name": "Get orders by user ID",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/orders/by-user?userId={{userId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"orders",
+										"by-user"
+									],
+									"query": [
+										{
+											"key": "userId",
+											"value": "{{userId}}"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Negative Tests",
+							"item": [
+								{
+									"name": "Create order with invalid userId",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400 or 404\", function () {",
+													"    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"address\": {\n    \"street\": \"Test\",\n    \"streetNumber\": \"1\",\n    \"zip\": \"2200\",\n    \"city\": \"Copenhagen\"\n  },\n  \"orderProducts\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 1,\n      \"warehouseId\": \"{{warehouseId}}\"\n    }\n  ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/orders/create",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"orders",
+												"create"
+											]
+										}
+									}
+								},
+								{
+									"name": "Create order with invalid productId",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400 or 404\", function () {",
+													"    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"userId\": \"{{userId}}\",\n  \"address\": {\n    \"street\": \"Test\",\n    \"streetNumber\": \"1\",\n    \"zip\": \"2200\",\n    \"city\": \"Copenhagen\"\n  },\n  \"orderProducts\": [\n    {\n      \"productId\": \"00000000-0000-0000-0000-000000000000\",\n      \"quantity\": 1,\n      \"warehouseId\": \"{{warehouseId}}\"\n    }\n  ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/orders/create",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"orders",
+												"create"
+											]
+										}
+									}
+								},
+								{
+									"name": "Create order without address",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"userId\": \"{{userId}}\",\n  \"orderProducts\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 1,\n      \"warehouseId\": \"{{warehouseId}}\"\n    }\n  ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/orders/create",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"orders",
+												"create"
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Coupon",
+					"item": [
+						{
+							"name": "Create a new coupon",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Response contains couponId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"couponId\");",
+											"});",
+											"",
+											"pm.test(\"Response contains code\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"code\");",
+											"});",
+											"",
+											"if (pm.response.json().couponId) {",
+											"    pm.collectionVariables.set(\"couponId\", pm.response.json().couponId);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"CODE\",\n  \"discountType\": \"percentage\",\n  \"discountValue\": 50,\n  \"minimumOrderValue\": 2473.260720711881,\n  \"expiryDate\": \"2030-08-30\",\n  \"usageLimit\": 20,\n  \"isActive\": true\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/coupons/create",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"coupons",
+										"create"
+									]
+								},
+								"description": "Creates a new coupon and returns the created coupon."
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"code\": \"string\",\n  \"discountType\": \"percentage\",\n  \"discountValue\": 6635.401188251338,\n  \"minimumOrderValue\": 2473.260720711881,\n  \"expiryDate\": \"2001-08-30\",\n  \"usageLimit\": 5639,\n  \"isActive\": false\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/coupons/create",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"coupons",
+												"create"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "*/*"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"couponId\": \"3e11b7c3-c081-14ed-1e67-9d40b30ea72a\",\n  \"code\": \"string\",\n  \"discountType\": \"percentage\",\n  \"discountValue\": 9004.861678263343,\n  \"minimumOrderValue\": 8822.465858910258,\n  \"expiryDate\": \"1962-06-08\",\n  \"usageLimit\": 7329,\n  \"timesUsed\": 1916,\n  \"isActive\": false\n}"
+								}
+							]
+						},
+						{
+							"name": "Get all active coupons",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/coupons/get-active",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"coupons",
+										"get-active"
+									]
+								}
+							}
+						},
+						{
+							"name": "Get coupon by ID",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response contains couponId\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"couponId\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/coupons/get-by-id?couponId={{couponId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"coupons",
+										"get-by-id"
+									],
+									"query": [
+										{
+											"key": "couponId",
+											"value": "{{couponId}}"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Negative Tests",
+							"item": [
+								{
+									"name": "Get coupon by invalid ID",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/coupons/get-by-id?couponId=00000000-0000-0000-0000-000000000000",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"coupons",
+												"get-by-id"
+											],
+											"query": [
+												{
+													"key": "couponId",
+													"value": "00000000-0000-0000-0000-000000000000"
+												}
+											]
+										}
+									}
+								},
+								{
+									"name": "Create coupon with invalid discount value",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"code\": \"INVALID\",\n  \"discountType\": \"percentage\",\n  \"discountValue\": 150,\n  \"minimumOrderValue\": 100,\n  \"expiryDate\": \"2030-08-30\",\n  \"usageLimit\": 20,\n  \"isActive\": true\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/postgresql/coupons/create",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"postgresql",
+												"coupons",
+												"create"
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Clean up / Delete",
+					"item": [
+						{
+							"name": "Delete warehouse product",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/warehouse-products/{{warehouseId}}/{{productId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"warehouse-products",
+										"{{warehouseId}}",
+										"{{productId}}"
+									]
+								}
+							}
+						},
+						{
+							"name": "Delete product",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/products/{{productId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"products",
+										"{{productId}}"
+									]
+								}
+							}
+						},
+						{
+							"name": "Delete warranty",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/warranties/{{warrantyId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"warranties",
+										"{{warrantyId}}"
+									]
+								}
+							}
+						},
+						{
+							"name": "Delete warehouse",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/warehouses/{{warehouseId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"warehouses",
+										"{{warehouseId}}"
+									]
+								}
+							}
+						},
+						{
+							"name": "Delete brand",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/brands/{{brandId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"brands",
+										"{{brandId}}"
+									]
+								}
+							}
+						},
+						{
+							"name": "Delete category",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/categories/{{categoryId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"categories",
+										"{{categoryId}}"
+									]
+								}
+							}
+						},
+						{
+							"name": "Delete address",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/postgresql/address",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"postgresql",
+										"address"
+									]
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "addressId",
+			"value": ""
+		},
+		{
+			"key": "warehouseId",
+			"value": ""
+		},
+		{
+			"key": "brandId",
+			"value": ""
+		},
+		{
+			"key": "categoryId",
+			"value": ""
+		},
+		{
+			"key": "warrantyId",
+			"value": ""
+		},
+		{
+			"key": "productId",
+			"value": ""
+		}
+	]
+}

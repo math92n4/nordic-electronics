@@ -41,7 +41,7 @@ public class OrderService {
 
     public Order getOrderById(UUID orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Order not found with ID: " + orderId));
     }
 
     public List<Order> getOrdersByIds(List<UUID> orderIds) {
@@ -61,10 +61,10 @@ public class OrderService {
         // 1. VALIDATE USER
         // =====================================================
         User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + dto.getUserId()));
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User not found with ID: " + dto.getUserId()));
 
         if (user.getDeletedAt() != null) {
-            throw new RuntimeException("User has been deleted");
+            throw new IllegalStateException("User has been deleted");
         }
 
         // =====================================================
@@ -72,20 +72,32 @@ public class OrderService {
         // =====================================================
         Address address;
 
-        if (dto.getAddress() != null) {
-            address = Address.builder()
-                    .street(dto.getAddress().getStreet())
-                    .streetNumber(dto.getAddress().getStreetNumber())
-                    .zip(dto.getAddress().getZip())
-                    .city(dto.getAddress().getCity())
-                    .user(user)
-                    .build();
-            address = addressRepository.save(address);
-        } else if (user.getAddress() != null && !user.getAddress().isEmpty()) {
-            address = user.getAddress().get(0);
-        } else {
-            throw new IllegalArgumentException("Order must contain a valid address");
+        if (dto.getAddress() == null) {
+            throw new IllegalArgumentException("Order must contain an address in the request");
         }
+
+        // Validate address fields
+        if (dto.getAddress().getStreet() == null || dto.getAddress().getStreet().isBlank()) {
+            throw new IllegalArgumentException("Address street is required");
+        }
+        if (dto.getAddress().getStreetNumber() == null || dto.getAddress().getStreetNumber().isBlank()) {
+            throw new IllegalArgumentException("Address street number is required");
+        }
+        if (dto.getAddress().getZip() == null || dto.getAddress().getZip().isBlank()) {
+            throw new IllegalArgumentException("Address zip code is required");
+        }
+        if (dto.getAddress().getCity() == null || dto.getAddress().getCity().isBlank()) {
+            throw new IllegalArgumentException("Address city is required");
+        }
+
+        address = Address.builder()
+                .street(dto.getAddress().getStreet())
+                .streetNumber(dto.getAddress().getStreetNumber())
+                .zip(dto.getAddress().getZip())
+                .city(dto.getAddress().getCity())
+                .user(user)
+                .build();
+        address = addressRepository.save(address);
 
         // CRITICAL: Flush to ensure address is visible to stored procedure
         entityManager.flush();
@@ -97,7 +109,7 @@ public class OrderService {
 
         for (OrderProductRequestDTO productDto : dto.getOrderProducts()) {
             Product product = productRepository.findById(productDto.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found: " + productDto.getProductId()));
+                    .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Product not found: " + productDto.getProductId()));
 
             BigDecimal itemTotal = product.getPrice()
                     .multiply(BigDecimal.valueOf(productDto.getQuantity()));

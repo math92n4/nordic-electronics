@@ -465,8 +465,8 @@ public class PostgresSeeder implements CommandLineRunner {
         for (String code : couponCodes) {
             DiscountType discountType = random.nextBoolean() ? DiscountType.percentage : DiscountType.fixed_amount;
             BigDecimal discountValue = discountType == DiscountType.percentage
-                    ? BigDecimal.valueOf(random.nextInt(30) + 5)
-                    : BigDecimal.valueOf(random.nextInt(500) + 50);
+                    ? BigDecimal.valueOf(random.nextInt(30) + 5)   // 5-34%
+                    : BigDecimal.valueOf(random.nextInt(50) + 10); // 10-59 (fixed amount, max 100)
 
             int usageLimit = random.nextInt(50) + 1;  // 1-50
             int timesUsed = random.nextInt(usageLimit + 1);  // 0 to usageLimit

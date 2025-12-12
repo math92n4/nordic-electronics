@@ -49,7 +49,7 @@ class CouponServiceTest {
             .discountValue(BigDecimal.valueOf(25))
             .minimumOrderValue(BigDecimal.valueOf(100))
             .expiryDate(LocalDate.of(2025, 12, 31))
-            .usageLimit(100)
+            .usageLimit(50)
             .timesUsed(10)
             .isActive(true)
             .build();
@@ -73,7 +73,7 @@ class CouponServiceTest {
         assertEquals(BigDecimal.valueOf(25), result.getDiscountValue());
         assertEquals(BigDecimal.valueOf(100), result.getMinimumOrderValue());
         assertEquals(LocalDate.of(2025, 12, 31), result.getExpiryDate());
-        assertEquals(100, result.getUsageLimit());
+        assertEquals(50, result.getUsageLimit());
         assertEquals(10, result.getTimesUsed());
         assertTrue(result.getIsActive());
 
@@ -204,8 +204,8 @@ class CouponServiceTest {
             .discountValue(BigDecimal.valueOf(20))
             .minimumOrderValue(BigDecimal.valueOf(50))
             .expiryDate(LocalDate.of(2024, 12, 31))
-            .usageLimit(200)
-            .timesUsed(200)
+            .usageLimit(50)
+            .timesUsed(50)
             .isActive(false)
             .build();
 
@@ -223,8 +223,8 @@ class CouponServiceTest {
         assertEquals("EXPIRED20", resultCoupon.getCode());
         assertEquals(DiscountType.percentage, resultCoupon.getDiscountType());
         assertFalse(resultCoupon.getIsActive());
-        assertEquals(200, resultCoupon.getTimesUsed());
-        assertEquals(200, resultCoupon.getUsageLimit());
+        assertEquals(50, resultCoupon.getTimesUsed());
+        assertEquals(50, resultCoupon.getUsageLimit());
 
         verify(couponRepository).findAllByIsActive(false);
     }
@@ -255,7 +255,7 @@ class CouponServiceTest {
             .discountValue(BigDecimal.valueOf(15))
             .minimumOrderValue(BigDecimal.valueOf(75))
             .expiryDate(LocalDate.of(2026, 3, 15))
-            .usageLimit(75)
+            .usageLimit(50)
             .isActive(true)
             .build();
 
@@ -266,7 +266,7 @@ class CouponServiceTest {
             .discountValue(BigDecimal.valueOf(15))
             .minimumOrderValue(BigDecimal.valueOf(75))
             .expiryDate(LocalDate.of(2026, 3, 15))
-            .usageLimit(75)
+            .usageLimit(50)
             .timesUsed(0)
             .isActive(true)
             .build();
@@ -283,7 +283,7 @@ class CouponServiceTest {
         assertEquals(BigDecimal.valueOf(15), result.getDiscountValue());
         assertEquals(BigDecimal.valueOf(75), result.getMinimumOrderValue());
         assertEquals(LocalDate.of(2026, 3, 15), result.getExpiryDate());
-        assertEquals(75, result.getUsageLimit());
+        assertEquals(50, result.getUsageLimit());
         assertEquals(0, result.getTimesUsed());
         assertTrue(result.getIsActive());
 

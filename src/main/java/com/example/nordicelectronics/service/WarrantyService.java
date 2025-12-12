@@ -2,6 +2,7 @@ package com.example.nordicelectronics.service;
 
 import com.example.nordicelectronics.entity.Brand;
 import com.example.nordicelectronics.entity.Warranty;
+import com.example.nordicelectronics.entity.validator.WarrantyValidator.WarrantyValidator;
 import com.example.nordicelectronics.repositories.sql.WarrantyRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -22,15 +23,20 @@ public class WarrantyService {
 
     public Warranty getById(UUID id) {
         return warrantyRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Brand not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Warranty not found"));
     }
 
     public Warranty save(Warranty warranty) {
-        return warrantyRepository.save(warranty);
-    }
+    WarrantyValidator.validateWarrantyDates(warranty.getStartDate(), warranty.getEndDate());
+    WarrantyValidator.validateDescription(warranty.getDescription());
+    return warrantyRepository.save(warranty);
+}
 
     public Warranty update(UUID id, Warranty warranty) {
         Warranty existing = getById(id);
+        
+        WarrantyValidator.validateWarrantyDates(warranty.getStartDate(), warranty.getEndDate());
+        WarrantyValidator.validateDescription(warranty.getDescription());
 
         existing.setStartDate(warranty.getStartDate());
         existing.setEndDate(warranty.getEndDate());
