@@ -2,8 +2,7 @@ package com.example.nordicelectronics.entity;
 
 import com.example.nordicelectronics.entity.enums.DiscountType;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcType;
@@ -29,8 +28,7 @@ public class Coupon extends BaseEntity {
     private UUID couponId;
 
     @Column(name = "code", nullable = false, unique = true)
-    @Min(3)
-    @Max(20)
+    @Size(min = 3, max = 20)
     private String code;
 
     @Enumerated(EnumType.STRING)
