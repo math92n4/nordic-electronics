@@ -54,7 +54,6 @@ public class CouponService {
             Coupon saved = couponRepository.save(coupon);
             return CouponMapper.toResponseDTO(saved);
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
             throw new IllegalArgumentException("Coupon is not saved, not valid");
         }
     }
