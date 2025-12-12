@@ -67,7 +67,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Run Integration Tests
-        run: mvn failsafe:integration-test failsafe:verify
+        run: mvn -B compile test-compile failsafe:integration-test failsafe:verify
 
       - name: Upload integration test results
         if: always()
