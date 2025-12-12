@@ -133,6 +133,10 @@ public class ProductService {
 
     @Transactional
     public ProductResponseDTO save(ProductRequestDTO dto) {
+        if (productRepository.findBySku(dto.getSku()).isPresent()) {
+            throw new IllegalArgumentException("SKU already exists: " + dto.getSku());
+        }
+
         Product product = ProductMapper.toEntity(dto);
 
         Brand brand = brandService.getById(dto.getBrandId());

@@ -253,46 +253,6 @@ public class StripeController {
         ));
     }
 
-    @Operation(summary = "Stripe webhook endpoint")
-    @PostMapping("/webhook")
-    public ResponseEntity<String> handleWebhook(@RequestBody String payload, @RequestHeader(value = "Stripe-Signature", required = false) String signature) {
-        try {
-            log.info("Received Stripe webhook");
-
-            // Parse the webhook payload
-            Map<String, Object> event = objectMapper.readValue(payload, new TypeReference<Map<String, Object>>() {});
-            String eventType = (String) event.get("type");
-
-            if ("checkout.session.completed".equals(eventType)) {
-                Map<String, Object> data = (Map<String, Object>) event.get("data");
-                Map<String, Object> object = (Map<String, Object>) data.get("object");
-                String sessionId = (String) object.get("id");
-
-                log.info("Payment completed for session: {}", sessionId);
-                
-                // Update order status in PostgreSQL
-                try {
-                    // Try to find order by sessionId from session (if available)
-                    // In production, you might want to store sessionId -> orderId mapping in database
-                    // For now, we'll try to find the most recent pending order for the user
-                    // This is a simplified approach - in production, store sessionId in order metadata
-                    
-                    // Alternative: Store sessionId in order metadata or create a mapping table
-                    // For now, we'll update orders that are still pending
-                    // The order should already be created in the checkout endpoint
-                    log.info("Order should already be created and processed via sp_ProcessOrder");
-                } catch (Exception e) {
-                    log.error("Error updating order status in webhook: {}", e.getMessage(), e);
-                }
-            }
-
-            return ResponseEntity.ok("OK");
-        } catch (Exception ex) {
-            log.error("Error processing webhook", ex);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ERROR_SESSION_KEY);
-        }
-    }
-
     @Operation(summary = "Get user orders")
     @GetMapping("/orders")
     public ResponseEntity<List<Map<String, Object>>> getUserOrders(HttpSession session) {

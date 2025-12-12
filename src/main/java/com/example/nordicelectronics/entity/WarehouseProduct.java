@@ -3,6 +3,7 @@ package com.example.nordicelectronics.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import lombok.*;
 
 import java.io.Serializable;
@@ -32,5 +33,6 @@ public class WarehouseProduct implements Serializable {
 
     @Column(nullable = false)
     @Min(0)
+    @Max(50)
     private int stockQuantity;
 }
