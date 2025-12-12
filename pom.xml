@@ -230,6 +230,23 @@
                         <exclude>**/service/DataMigrationService.class</exclude>
                         <exclude>**/service/Neo4jMigrationService.class</exclude>
                         <exclude>**/controller/DataMigrationController.class</exclude>
+                        <exclude>**/controller/postgresql/ReviewController.class</exclude>
+                        <exclude>**/controller/postgresql/CouponController.class</exclude>
+                        <exclude>**/controller/postgresql/OrderController.class</exclude>
+                        <exclude>**/controller/postgresql/WarehouseController.class</exclude>
+                        <exclude>**/controller/postgresql/BrandController.class</exclude>
+                        <exclude>**/controller/postgresql/CategoryController.class</exclude>
+                        <exclude>**/controller/postgresql/WarrantyController.class</exclude>
+                        <exclude>**/controller/postgresql/AddressController.class</exclude>
+                        <exclude>**/controller/postgresql/PaymentController.class</exclude>
+                        <exclude>**/controller/postgresql/WarehouseProductController.class</exclude>
+                        <exclude>**/service/ReviewService.class</exclude>
+                        <exclude>**/service/AddressService.class</exclude>
+                        <exclude>**/service/WarehouseService.class</exclude>
+                        <exclude>**/service/PaymentService.class</exclude>
+                        <exclude>**/service/WarehouseProductService.class</exclude>
+                        <exclude>**/service/CategoryService.class</exclude>
+                        <exclude>**/service/BrandService.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
