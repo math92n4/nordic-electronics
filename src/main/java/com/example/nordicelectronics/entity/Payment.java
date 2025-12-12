@@ -5,6 +5,7 @@ import com.example.nordicelectronics.entity.enums.PaymentStatus;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
@@ -14,11 +15,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
-@Builder
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "payment")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "order"}) // Add "order" to prevent circular dependency with Order
 @SQLRestriction("deleted_at IS NULL")

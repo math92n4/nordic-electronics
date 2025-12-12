@@ -3,11 +3,15 @@ package com.example.nordicelectronics.service;
 import com.example.nordicelectronics.entity.Coupon;
 import com.example.nordicelectronics.entity.dto.coupon.CouponRequestDTO;
 import com.example.nordicelectronics.entity.dto.coupon.CouponResponseDTO;
+import com.example.nordicelectronics.entity.enums.DiscountType;
 import com.example.nordicelectronics.entity.mapper.CouponMapper;
+import com.example.nordicelectronics.entity.validators.CouponValidator;
 import com.example.nordicelectronics.repositories.sql.CouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -45,8 +49,35 @@ public class CouponService {
 
     public CouponResponseDTO save(CouponRequestDTO dto) {
         Coupon coupon = CouponMapper.toEntity(dto);
-        Coupon saved = couponRepository.save(coupon);
-        return CouponMapper.toResponseDTO(saved);
+        try {
+            validateCoupon(coupon);
+            Coupon saved = couponRepository.save(coupon);
+            return CouponMapper.toResponseDTO(saved);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Coupon is not saved, not valid");
+        }
+    }
+
+    private static void validateCoupon(Coupon coupon) {
+        if (coupon == null) {
+            throw new IllegalArgumentException("Coupon cannot be null");
+        }
+
+        CouponValidator.validateCouponCode(coupon.getCode());
+        CouponValidator.validateMinimumOrderValue(coupon.getMinimumOrderValue());
+        CouponValidator.validateDiscountValue(coupon.getDiscountValue());
+
+        CouponValidator.validateNextUse(coupon.getUsageLimit(), coupon.getTimesUsed());
+
+        /*CouponValidator.validateDateTimeInRange(
+                coupon.getCreatedAt(),
+                coupon.getExpiryDate().atStartOfDay(),
+                LocalDateTime.now()
+        );*/
+
+        if (coupon.getDiscountType() == DiscountType.percentage) {
+            CouponValidator.validatePercentage(coupon.getDiscountValue());
+        }
     }
 
 }

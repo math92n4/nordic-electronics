@@ -2,7 +2,10 @@ package com.example.nordicelectronics.entity;
 
 import com.example.nordicelectronics.entity.enums.DiscountType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
@@ -12,11 +15,11 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
-@Builder
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "coupon")
 @SQLRestriction("deleted_at IS NULL")
 public class Coupon extends BaseEntity {
@@ -26,6 +29,8 @@ public class Coupon extends BaseEntity {
     private UUID couponId;
 
     @Column(name = "code", nullable = false, unique = true)
+    @Min(3)
+    @Max(20)
     private String code;
 
     @Enumerated(EnumType.STRING)
