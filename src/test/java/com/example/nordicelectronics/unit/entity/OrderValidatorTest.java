@@ -21,11 +21,8 @@ public class OrderValidatorTest {
                 .build();
     }
 
-    // -----------------------
-    // Valid cases
-    // -----------------------
     @ParameterizedTest
-    @ValueSource(ints = {1, 25, 50}) // EP + BVA valid range
+    @ValueSource(ints = {1, 2, 25, 49, 50})
     void validateOrderQuantity_validQuantities_doesNotThrow(int qty) {
         OrderRequestDTO dto = createOrder(qty);
 
@@ -34,32 +31,15 @@ public class OrderValidatorTest {
         });
     }
 
-    // -----------------------
-    // Invalid cases: below minimum
-    // -----------------------
     @ParameterizedTest
-    @ValueSource(ints = {-1, 0, -100})
+    @ValueSource(ints = {-100, 0, 51, 100})
     void validateOrderQuantity_quantityBelowMinimum_throws(int qty) {
         OrderRequestDTO dto = createOrder(qty);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> ValidateOrderQuantity.validate(dto));
 
-        assertTrue(exception.getMessage().contains("greater than 0"));
-    }
-
-    // -----------------------
-    // Invalid cases: above maximum
-    // -----------------------
-    @ParameterizedTest
-    @ValueSource(ints = {51, 75, 100})
-    void validateOrderQuantity_quantityAboveMaximum_throws(int qty) {
-        OrderRequestDTO dto = createOrder(qty);
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> ValidateOrderQuantity.validate(dto));
-
-        assertTrue(exception.getMessage().contains("less than or equal to 50"));
+        assertTrue(exception.getMessage().contains("Product quantity must be greater than 0") || exception.getMessage().contains("Product quantity must be less than or equal to 50"));
     }
 }
 

@@ -49,30 +49,35 @@ public class CouponService {
 
     public CouponResponseDTO save(CouponRequestDTO dto) {
         Coupon coupon = CouponMapper.toEntity(dto);
-        if (!isValid(coupon)) {
-            throw new IllegalArgumentException();
+        try {
+            validateCoupon(coupon);
+            Coupon saved = couponRepository.save(coupon);
+            return CouponMapper.toResponseDTO(saved);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Coupon is not saved, not valid");
         }
-        Coupon saved = couponRepository.save(coupon);
-        return CouponMapper.toResponseDTO(saved);
     }
 
-    private static boolean isValid(Coupon coupon) {
-        if (!CouponValidator.hasValidCouponCodeLength(coupon.getCode())) return false;
-        if (!CouponValidator.isValidDiscountType(coupon.getDiscountType())) return false;
-        if (!CouponValidator.minimumOrderValueIsPositive(coupon.getMinimumOrderValue())) return false;
-        if (!CouponValidator.discountValueIsPositive(coupon.getDiscountValue())) return false;
-        if (!CouponValidator.isExpiryDateValid(coupon.getExpiryDate())) return false;
-        if (!CouponValidator.canBeUsed(coupon.getUsageLimit(), coupon.getTimesUsed())) return false;
-        if (!CouponValidator.isValidAtTimeAndDate(
-                coupon.getCreatedAt(),
-                coupon.getExpiryDate().atStartOfDay(),
-                LocalDateTime.now())) return false;
-
-        if (coupon.getDiscountType() == DiscountType.percentage) {
-            if (!CouponValidator.isValidPercentage(coupon.getDiscountValue())) return false;
+    private static void validateCoupon(Coupon coupon) {
+        if (coupon == null) {
+            throw new IllegalArgumentException("Coupon cannot be null");
         }
 
-        return true;
+        CouponValidator.validateCouponCode(coupon.getCode());
+        CouponValidator.validateMinimumOrderValue(coupon.getMinimumOrderValue());
+        CouponValidator.validateDiscountValue(coupon.getDiscountValue());
+
+        CouponValidator.validateNextUse(coupon.getUsageLimit(), coupon.getTimesUsed());
+
+        CouponValidator.validateDateTimeInRange(
+                coupon.getCreatedAt(),
+                coupon.getExpiryDate().atStartOfDay(),
+                LocalDateTime.now()
+        );
+
+        if (coupon.getDiscountType() == DiscountType.percentage) {
+            CouponValidator.validatePercentage(coupon.getDiscountValue());
+        }
     }
 
 }
