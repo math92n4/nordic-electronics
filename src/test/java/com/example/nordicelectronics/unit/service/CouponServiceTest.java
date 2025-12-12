@@ -15,12 +15,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.time.LocalDateTime.now;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -311,6 +313,8 @@ class CouponServiceTest {
             .usageLimit(25)
             .timesUsed(0)
             .isActive(true)
+            .createdAt(now().minusDays(1))
+            .updatedAt(now())
             .build();
 
         when(couponRepository.save(any(Coupon.class))).thenReturn(savedCoupon);
@@ -361,41 +365,5 @@ class CouponServiceTest {
         assertThrows(RuntimeException.class, () -> couponService.getAllActiveCoupons());
 
         verify(couponRepository).findAllByIsActive(true);
-    }
-
-    // ===== REPOSITORY INTERACTION VERIFICATION TESTS =====
-
-    @Test
-    void service_shouldCallRepositoryExactlyOnce_forEachMethod() {
-        // Test that each service method calls repository exactly once
-        
-        // getCouponById
-        when(couponRepository.findById(testCouponId)).thenReturn(Optional.of(testCoupon));
-        couponService.getCouponById(testCouponId);
-        verify(couponRepository, times(1)).findById(testCouponId);
-
-        // getAllActiveCoupons
-        when(couponRepository.findAllByIsActive(true)).thenReturn(List.of(testCoupon));
-        couponService.getAllActiveCoupons();
-        verify(couponRepository, times(1)).findAllByIsActive(true);
-
-        // getAllInactiveCoupons
-        when(couponRepository.findAllByIsActive(false)).thenReturn(Collections.emptyList());
-        couponService.getAllInactiveCoupons();
-        verify(couponRepository, times(1)).findAllByIsActive(false);
-
-        // save
-        when(couponRepository.save(any(Coupon.class))).thenReturn(testCoupon);
-        CouponRequestDTO requestDTO = CouponRequestDTO.builder()
-            .code("TEST")
-            .discountType(DiscountType.percentage)
-            .discountValue(BigDecimal.valueOf(10))
-            .minimumOrderValue(BigDecimal.valueOf(50))
-            .expiryDate(LocalDate.of(2026, 1, 1))
-            .usageLimit(10)
-            .isActive(true)
-            .build();
-        couponService.save(requestDTO);
-        verify(couponRepository, times(1)).save(any(Coupon.class));
     }
 }

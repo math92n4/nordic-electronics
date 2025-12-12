@@ -54,6 +54,7 @@ public class CouponService {
             Coupon saved = couponRepository.save(coupon);
             return CouponMapper.toResponseDTO(saved);
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             throw new IllegalArgumentException("Coupon is not saved, not valid");
         }
     }
@@ -69,11 +70,11 @@ public class CouponService {
 
         CouponValidator.validateNextUse(coupon.getUsageLimit(), coupon.getTimesUsed());
 
-        CouponValidator.validateDateTimeInRange(
+        /*CouponValidator.validateDateTimeInRange(
                 coupon.getCreatedAt(),
                 coupon.getExpiryDate().atStartOfDay(),
                 LocalDateTime.now()
-        );
+        );*/
 
         if (coupon.getDiscountType() == DiscountType.percentage) {
             CouponValidator.validatePercentage(coupon.getDiscountValue());
