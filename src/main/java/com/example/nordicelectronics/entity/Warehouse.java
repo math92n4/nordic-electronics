@@ -32,6 +32,7 @@ public class Warehouse extends BaseEntity {
 
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
+    @Builder.Default
     private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL)

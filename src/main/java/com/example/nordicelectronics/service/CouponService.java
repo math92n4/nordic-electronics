@@ -11,8 +11,6 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,7 +28,6 @@ public class CouponService {
     }
 
     public List<CouponResponseDTO> getAllCouponsByOrderId(UUID orderId) {
-        // TODO: implement method to get coupons by order ID
         return couponRepository.findAllByIsActive(true).stream()
                 .map(CouponMapper::toResponseDTO)
                 .collect(Collectors.toList());

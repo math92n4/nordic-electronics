@@ -2,7 +2,6 @@ package com.example.nordicelectronics.controller.postgresql;
 
 import com.example.nordicelectronics.entity.Product;
 import com.example.nordicelectronics.entity.Warranty;
-import com.example.nordicelectronics.service.ProductService;
 import com.example.nordicelectronics.service.WarrantyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

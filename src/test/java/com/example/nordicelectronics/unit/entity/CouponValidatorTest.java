@@ -1,7 +1,6 @@
 package com.example.nordicelectronics.unit.entity;
 
 import com.example.nordicelectronics.entity.validators.CouponValidator;
-import com.example.nordicelectronics.entity.enums.DiscountType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

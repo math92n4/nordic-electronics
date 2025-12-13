@@ -47,18 +47,22 @@ public class Product extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
     @JsonIgnore
+    @Builder.Default
     private Set<Category> categories = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "warranty_id", referencedColumnName = "warranty_id")
+    @JsonIgnore
     private Warranty warranty;
 
     @ManyToOne
     @JoinColumn(name="brand_id", nullable = false)
+    @JsonIgnore
     private Brand brand;
 
     @OneToMany(mappedBy = "product")
     @JsonManagedReference
+    @Builder.Default
     private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 
 //        @Transient
@@ -70,6 +74,7 @@ public class Product extends BaseEntity {
 
     @OneToMany(mappedBy = "product")
     @JsonIgnore
+    @Builder.Default
     private Set<Review> reviews = new HashSet<>();
 
 }
