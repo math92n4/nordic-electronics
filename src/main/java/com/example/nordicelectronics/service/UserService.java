@@ -65,7 +65,6 @@ public class UserService {
     }
 
     private void validateUserSignup(String email, String password, String phone, LocalDate dateOfBirth) {
-        //TODO DOB
         EmailValidator.validateEmail(email);
         PasswordValidator.validatePassword(password);
         if(!DanishPhoneValidator.isValidDanishMobile(phone)) {
