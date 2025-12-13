@@ -1,14 +1,18 @@
 name: CD - Deploy to Production
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI Pipeline"]
     branches: [main]
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
   deploy:
     name: Deploy to Production Server
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Deploy via SSH

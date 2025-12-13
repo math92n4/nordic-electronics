@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Types;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,7 @@ public class OrderService {
         return orderRepository.findAll().stream()
                 .filter(order -> order.getUser() != null && order.getUser().getUserId().equals(userId))
                 .filter(order -> order.getDeletedAt() == null)
+                .sorted(Comparator.comparing(Order::getOrderDate, Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
     }
 
