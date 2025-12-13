@@ -6,6 +6,7 @@ import com.example.nordicelectronics.entity.validator.UserValidator.DateOfBirthV
 import com.example.nordicelectronics.entity.validator.UserValidator.EmailValidator;
 import com.example.nordicelectronics.entity.validator.UserValidator.PasswordValidator;
 import com.example.nordicelectronics.repositories.sql.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class UserService {
         validateUserSignup(email, password, phoneNumber, dateOfBirth);
 
         if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("User already exists with email: " + email);
+            throw new IllegalStateException("User already exists with email: " + email);
         }
 
         User user = User.builder()
@@ -51,12 +52,12 @@ public class UserService {
 
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
     }
 
     public User findById(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
     }
 
     public User save(User user) {

@@ -76,7 +76,15 @@ class ProductServiceTest {
                 .thenReturn(Optional.of(existingProduct));
 
         // Act & Assert
-        assertThatThrownBy(() -> productService.save(ProductRequestDTO.builder().sku("OLD-SKU-001").build()))
+        assertThatThrownBy(() -> productService.save(ProductRequestDTO.builder()
+                        .sku("OLD-SKU-001")
+                        .name("name")
+                        .description("description")
+                        .price(new BigDecimal("99.99"))
+                        .brandId(UUID.randomUUID())
+                        .warrantyId(UUID.randomUUID())
+                        .categoryIds(List.of(UUID.randomUUID()))
+                        .build()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("SKU already exists");
 

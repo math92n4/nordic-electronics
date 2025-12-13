@@ -8,6 +8,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
@@ -26,11 +27,11 @@ public class AddressService {
 
         User user = userService.findById(userId);
 
-        if (user.getAddress() == null) {
+        if (user.getAddress() == null || user.getAddress().isEmpty()) {
             throw new EntityNotFoundException("User does not have an address");
         }
 
-        return getById(user.getAddress().stream().findFirst().get().getAddressId());
+        return getById(user.getAddress().stream().findFirst().orElseThrow(() -> new EntityNotFoundException("User does not have an address")).getAddressId());
     }
 
     public Address getByUserEmail(String email) {
@@ -45,7 +46,7 @@ public class AddressService {
     public Address saveForUser(String email, AddressRequestDTO address) {
         User user = userService.findByEmail(email);
 
-        if (user.getAddress() != null) {
+        if (user.getAddress() != null && !user.getAddress().isEmpty()) {
             throw new IllegalStateException("User already has an address.");
         }
 
@@ -54,11 +55,18 @@ public class AddressService {
                 .zip(address.getZip())
                 .street(address.getStreet())
                 .streetNumber(address.getStreetNumber())
+                .user(user)
                 .build();
 
         addressRepository.save(saved);
 
-        user.setAddress(java.util.Collections.singletonList(saved));
+        // Don't replace the collection - modify the existing one to avoid Hibernate orphan removal issues
+        if (user.getAddress() == null) {
+            user.setAddress(new ArrayList<>());
+        } else {
+            user.getAddress().clear();
+        }
+        user.getAddress().add(saved);
         userService.save(user);
 
         return saved;

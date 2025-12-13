@@ -7,6 +7,7 @@ import com.example.nordicelectronics.entity.enums.DiscountType;
 import com.example.nordicelectronics.entity.mapper.CouponMapper;
 import com.example.nordicelectronics.entity.validators.CouponValidator;
 import com.example.nordicelectronics.repositories.sql.CouponRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +25,7 @@ public class CouponService {
 
     public CouponResponseDTO getCouponById(UUID couponId) {
         Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new RuntimeException("Coupon not found with id: " + couponId));
+                .orElseThrow(() -> new EntityNotFoundException("Coupon not found with id: " + couponId));
         return CouponMapper.toResponseDTO(coupon);
     }
 
@@ -49,13 +50,9 @@ public class CouponService {
 
     public CouponResponseDTO save(CouponRequestDTO dto) {
         Coupon coupon = CouponMapper.toEntity(dto);
-        try {
-            validateCoupon(coupon);
-            Coupon saved = couponRepository.save(coupon);
-            return CouponMapper.toResponseDTO(saved);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Coupon is not saved, not valid");
-        }
+        validateCoupon(coupon);
+        Coupon saved = couponRepository.save(coupon);
+        return CouponMapper.toResponseDTO(saved);
     }
 
     private static void validateCoupon(Coupon coupon) {
@@ -66,6 +63,7 @@ public class CouponService {
         CouponValidator.validateCouponCode(coupon.getCode());
         CouponValidator.validateMinimumOrderValue(coupon.getMinimumOrderValue());
         CouponValidator.validateDiscountValue(coupon.getDiscountValue());
+        CouponValidator.validateUsageLimit(coupon.getUsageLimit());
 
         CouponValidator.validateNextUse(coupon.getUsageLimit(), coupon.getTimesUsed());
 

@@ -133,6 +133,28 @@ public class ProductService {
 
     @Transactional
     public ProductResponseDTO save(ProductRequestDTO dto) {
+        // Validate required fields
+        if (dto.getSku() == null || dto.getSku().isBlank()) {
+            throw new IllegalArgumentException("SKU is required");
+        }
+        if (dto.getName() == null || dto.getName().isBlank()) {
+            throw new IllegalArgumentException("Product name is required");
+        }
+        if (dto.getDescription() == null || dto.getDescription().isBlank()) {
+            throw new IllegalArgumentException("Product description is required");
+        }
+        if (dto.getPrice() == null) {
+            throw new IllegalArgumentException("Product price is required");
+        }
+        if (dto.getBrandId() == null) {
+            throw new IllegalArgumentException("Brand ID is required");
+        }
+        if (dto.getWarrantyId() == null) {
+            throw new IllegalArgumentException("Warranty ID is required");
+        }
+        if (dto.getCategoryIds() == null || dto.getCategoryIds().isEmpty()) {
+            throw new IllegalArgumentException("At least one category ID is required");
+        }
         if (productRepository.findBySku(dto.getSku()).isPresent()) {
             throw new IllegalArgumentException("SKU already exists: " + dto.getSku());
         }

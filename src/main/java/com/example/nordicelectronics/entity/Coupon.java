@@ -28,7 +28,7 @@ public class Coupon extends BaseEntity {
     private UUID couponId;
 
     @Column(name = "code", nullable = false, unique = true)
-    @Size(min = 3, max = 20)
+    @Size(min = 3, max = 20) // BVA: 3-20 characters
     private String code;
 
     @Enumerated(EnumType.STRING)

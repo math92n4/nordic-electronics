@@ -77,6 +77,16 @@ public final class CouponValidator {
         }
     }
 
+    public static void validateUsageLimit(int usageLimit) {
+        if (usageLimit < 1) {
+            throw new IllegalArgumentException("Usage limit must be at least 1");
+        }
+
+        if (usageLimit > 50) {
+            throw new IllegalArgumentException("Usage limit cannot exceed 50");
+        }
+    }
+
     public static void validateNextUse(int usageLimit, int timesUsed) {
         if (usageLimit <= 0) {
             throw new IllegalArgumentException("Usage limit must be greater than 0");

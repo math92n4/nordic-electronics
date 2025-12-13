@@ -395,13 +395,12 @@ class ProductControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should throw EntityNotFoundException for non-existent product ID")
-        void shouldThrowExceptionForNonExistentId() throws Exception {
+        @DisplayName("Should give 404 for non-existent product ID")
+        void shouldGive404ForNonExistentId() throws Exception {
             UUID nonExistentId = UUID.randomUUID();
-            // The application throws EntityNotFoundException which is not handled by a global exception handler
-            assertThrows(jakarta.servlet.ServletException.class, () -> {
-                mockMvc.perform(get(BASE_URL + "/" + nonExistentId));
-            });
+
+            mockMvc.perform(get(BASE_URL + "/" + nonExistentId))
+                    .andExpect(status().isNotFound());
         }
 
         @Test
@@ -549,8 +548,8 @@ class ProductControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should throw EntityNotFoundException when updating non-existent product")
-        void shouldThrowExceptionWhenUpdatingNonExistentProduct() throws Exception {
+        @DisplayName("Should give 404 when updating non-existent product")
+        void shouldGive404WhenUpdatingNonExistentProduct() throws Exception {
             UUID nonExistentId = UUID.randomUUID();
             ProductRequestDTO request = ProductRequestDTO.builder()
                     .sku("SKU-NONEXISTENT")
@@ -561,13 +560,11 @@ class ProductControllerIT extends BaseIntegrationTest {
                     .build();
 
             String requestJson = objectMapper.writeValueAsString(request);
-            
-            // The application throws EntityNotFoundException which is not handled by a global exception handler
-            assertThrows(jakarta.servlet.ServletException.class, () -> {
-                mockMvc.perform(put(BASE_URL + "/" + nonExistentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestJson));
-            });
+
+            mockMvc.perform(put(BASE_URL + "/" + nonExistentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestJson))
+                    .andExpect(status().isNotFound());
         }
     }
 
@@ -595,14 +592,12 @@ class ProductControllerIT extends BaseIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should throw EntityNotFoundException when deleting non-existent product")
-        void shouldThrowExceptionWhenDeletingNonExistentProduct() throws Exception {
+        @DisplayName("Should give 404 when deleting non-existent product")
+        void shouldGive404WhenDeletingNonExistentProduct() throws Exception {
             UUID nonExistentId = UUID.randomUUID();
-            
-            // The application throws EntityNotFoundException which is not handled by a global exception handler
-            assertThrows(jakarta.servlet.ServletException.class, () -> {
-                mockMvc.perform(delete(BASE_URL + "/" + nonExistentId));
-            });
+
+            mockMvc.perform(delete(BASE_URL + "/" + nonExistentId))
+                    .andExpect(status().isNotFound());
         }
     }
 

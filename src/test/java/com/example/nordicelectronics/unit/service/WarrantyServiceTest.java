@@ -116,7 +116,7 @@ class WarrantyServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
             () -> warrantyService.getById(nonExistentId));
 
-        assertEquals("Brand not found", exception.getMessage());
+        assertEquals("Warranty not found", exception.getMessage());
         verify(warrantyRepository).findById(nonExistentId);
     }
 
@@ -204,7 +204,7 @@ class WarrantyServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
             () -> warrantyService.update(nonExistentId, updateData));
 
-        assertEquals("Brand not found", exception.getMessage());
+        assertEquals("Warranty not found", exception.getMessage());
         verify(warrantyRepository).findById(nonExistentId);
         verify(warrantyRepository, never()).save(any(Warranty.class));
     }
