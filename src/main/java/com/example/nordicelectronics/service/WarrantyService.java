@@ -1,6 +1,5 @@
 package com.example.nordicelectronics.service;
 
-import com.example.nordicelectronics.entity.Brand;
 import com.example.nordicelectronics.entity.Warranty;
 import com.example.nordicelectronics.entity.validator.WarrantyValidator.WarrantyValidator;
 import com.example.nordicelectronics.repositories.sql.WarrantyRepository;

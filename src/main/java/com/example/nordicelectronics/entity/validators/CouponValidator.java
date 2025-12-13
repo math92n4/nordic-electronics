@@ -1,7 +1,5 @@
 package com.example.nordicelectronics.entity.validators;
 
-import com.example.nordicelectronics.entity.enums.DiscountType;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

@@ -3,7 +3,6 @@ package com.example.nordicelectronics.integration.controller;
 import com.example.nordicelectronics.controller.postgresql.StripeController;
 import com.example.nordicelectronics.entity.*;
 import com.example.nordicelectronics.integration.BaseIntegrationTest;
-import com.example.nordicelectronics.repositories.sql.ProductRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,9 +41,6 @@ class StripeControllerIT extends BaseIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private ProductRepository productRepository;
 
     @Autowired
     private StripeController stripeController;

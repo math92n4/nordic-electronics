@@ -10,6 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
 @SuperBuilder
