@@ -154,6 +154,7 @@ public class ProductService {
         }
         if (dto.getCategoryIds() == null || dto.getCategoryIds().isEmpty()) {
             throw new IllegalArgumentException("At least one category ID is required");
+        }
         if (productRepository.findBySku(dto.getSku()).isPresent()) {
             throw new IllegalArgumentException("SKU already exists: " + dto.getSku());
         }
