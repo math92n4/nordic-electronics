@@ -1,5 +1,3 @@
-// E2E tests for the Nordic Electronics SPA using Cypress
-
 const URL = 'http://localhost:3000';
 
 const navTitles = ["Home", "Brand", "Categories", "Brands", "Login"];
