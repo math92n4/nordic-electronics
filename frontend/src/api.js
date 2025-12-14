@@ -52,8 +52,7 @@ export const apiClient = {
       try {
         const error = await response.json();
         // Backend returns { error: "message" } format
-        errorMessage =
-          error.error || error.message || error || "Request failed";
+        errorMessage = error.message || error || "Request failed";
       } catch (e) {
         // If JSON parsing fails, try to get text
         try {

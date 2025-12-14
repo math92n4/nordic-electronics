@@ -479,7 +479,7 @@ public class PostgresSeeder implements CommandLineRunner {
                     .expiryDate(LocalDate.now().plusMonths(random.nextInt(12) + 1))
                     .usageLimit(usageLimit)
                     .timesUsed(timesUsed)
-                    .isActive(random.nextBoolean())
+                    .isActive(true)
                     .build();
 
             coupons.add(couponRepository.save(coupon));
