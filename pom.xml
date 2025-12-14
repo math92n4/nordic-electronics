@@ -247,6 +247,7 @@
                         <exclude>**/service/WarehouseProductService.class</exclude>
                         <exclude>**/service/CategoryService.class</exclude>
                         <exclude>**/service/BrandService.class</exclude>
+                        <exclude>**/exception/GlobalExceptionHandler.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
