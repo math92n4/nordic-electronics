@@ -34,11 +34,6 @@ class StripeControllerIT extends BaseIntegrationTest {
 
     private static final String URL = "/api/postgresql/stripe";
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private StripeController stripeController;
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private StripeController stripeController;
