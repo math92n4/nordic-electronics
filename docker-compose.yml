@@ -108,14 +108,33 @@ services:
       retries: 20
 
   # TO START RUN DOCKER NORMALLY - THEN MAKE SURE SPRING APP HAS SEEDED AND IS READY:
-  # THEN RUN "docker compose run --rm k6"
-  k6:
+  # THEN RUN ONE OF:
+  #   docker compose run --rm k6-load
+  #   docker compose run --rm k6-spike
+  #   docker compose run --rm k6-stress
+  k6-load:
     image: grafana/k6
-    container_name: k6
+    container_name: k6-load
     profiles: ["loadtest"]
     volumes:
       - ./k6-tests:/scripts
     entrypoint: ["k6", "run", "/scripts/product_load_test.js"]
+
+  k6-spike:
+    image: grafana/k6
+    container_name: k6-spike
+    profiles: ["loadtest"]
+    volumes:
+      - ./k6-tests:/scripts
+    entrypoint: ["k6", "run", "/scripts/product_spike_test.js"]
+
+  k6-stress:
+    image: grafana/k6
+    container_name: k6-stress
+    profiles: ["loadtest"]
+    volumes:
+      - ./k6-tests:/scripts
+    entrypoint: ["k6", "run", "/scripts/product_stress_test.js"]
 
   frontend:
     build:

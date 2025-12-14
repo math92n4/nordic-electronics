@@ -35,12 +35,16 @@ function selectEndpoint() {
     return endpoints[0].path; // Fallback
 }
 
-// Load Test: Maintain steady load over time
+// Stress Test: Gradually increase load to find breaking point
 export let options = {
     stages: [
-        { duration: '30s', target: 50 },   // Ramp up to target load
-        { duration: '2m', target: 50 },    // Maintain steady load
-        { duration: '30s', target: 0 },    // Ramp down
+        { duration: '10s', target: 10 },
+        { duration: '10s', target: 50 },
+        { duration: '10s', target: 100 },
+        { duration: '10s', target: 200 },
+        { duration: '10s', target: 300 },
+        { duration: '10s', target: 400 },
+        { duration: '10s', target: 500 },
     ],
     thresholds: {
         http_req_failed: ['rate<0.01'],    // fail test if >1% requests fail
@@ -80,7 +84,7 @@ export function handleSummary(data) {
     const rps = metrics.http_reqs?.values?.rate || 0;
     const failures = metrics.http_req_failed?.values?.rate ? metrics.http_req_failed.values.rate * 100 : 0;
 
-    console.log("\n================= PERFORMANCE SUMMARY =================");
+    console.log("\n================= STRESS TEST SUMMARY =================");
     console.log(`Requests per second:      ${rps.toFixed(2)} RPS`);
     console.log(`Avg request duration:     ${avg.toFixed(2)} seconds`);
     console.log(`Min request duration:     ${min.toFixed(2)} seconds`);

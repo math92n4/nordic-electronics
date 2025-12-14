@@ -15,11 +15,11 @@ const BASE_URL = 'http://spring-app:8080';
 
 // Define endpoints with weighted distribution (simulating realistic user behavior)
 const endpoints = [
-    { path: '/api/postgresql/products/best-reviewed', weight: 30 }, // Reviews
-    { path: '/api/postgresql/products/best-selling', weight: 30 }, // Popular products
-    { path: '/api/postgresql/products/paginated?page=0&size=24&sortBy=name&sortDirection=asc', weight: 20 }, // Paginated products
-    { path: '/api/postgresql/categories', weight: 10 }, // Category browsing
-    { path: '/api/postgresql/brands', weight: 10 }, // Brand browsing
+    { path: '/api/postgresql/products/paginated?page=0&size=24&sortBy=name&sortDirection=asc', weight: 40 }, // Most common - browsing
+    { path: '/api/postgresql/products/best-selling', weight: 25 }, // Popular products
+    { path: '/api/postgresql/categories', weight: 15 }, // Category browsing
+    { path: '/api/postgresql/brands', weight: 12 }, // Brand browsing
+    { path: '/api/postgresql/products/best-reviewed', weight: 8 }, // Reviews
 ];
 
 // Helper function to select endpoint based on weighted distribution
@@ -35,16 +35,19 @@ function selectEndpoint() {
     return endpoints[0].path; // Fallback
 }
 
-// Load Test: Maintain steady load over time
+// Spike Test: Sudden spike in load, then rapid drop
 export let options = {
     stages: [
-        { duration: '30s', target: 50 },   // Ramp up to target load
-        { duration: '2m', target: 50 },    // Maintain steady load
-        { duration: '30s', target: 0 },    // Ramp down
+        { duration: '5s', target: 0 },
+        { duration: '30s', target: 50 },   // Normal load
+        { duration: '30s', target: 1000 },  // Sudden spike
+        { duration: '30s', target: 50 },  // Rapid drop back
+        { duration: '5s', target: 0 },
+
     ],
     thresholds: {
-        http_req_failed: ['rate<0.01'],    // fail test if >1% requests fail
-        http_req_duration: ['p(95)<1000'], // fail if p95 > 1s
+        http_req_failed: ['rate<0.05'],    // Allow higher failure rate during spike (5%)
+        http_req_duration: ['p(95)<2000'], // Allow higher p95 during spike (2s)
     }
 };
 
@@ -57,7 +60,7 @@ export default function () {
     check(res, { 'status was 200': r => r.status === 200 });
 
     // Track slow requests
-    if (res.timings.duration > 1000) { // 1 second threshold
+    if (res.timings.duration > 2000) { // 2 second threshold
         slowRequests.add(1);
         slowVUs.add(__VU);
     }
@@ -80,7 +83,7 @@ export function handleSummary(data) {
     const rps = metrics.http_reqs?.values?.rate || 0;
     const failures = metrics.http_req_failed?.values?.rate ? metrics.http_req_failed.values.rate * 100 : 0;
 
-    console.log("\n================= PERFORMANCE SUMMARY =================");
+    console.log("\n================= SPIKE TEST SUMMARY =================");
     console.log(`Requests per second:      ${rps.toFixed(2)} RPS`);
     console.log(`Avg request duration:     ${avg.toFixed(2)} seconds`);
     console.log(`Min request duration:     ${min.toFixed(2)} seconds`);
@@ -88,7 +91,7 @@ export function handleSummary(data) {
     console.log(`Failure rate:             ${failures.toFixed(2)} %`);
 
     console.log("\n================= SLOW REQUEST SUMMARY =================");
-    console.log(`Total slow requests (>1s):      ${slowCount}`);
+    console.log(`Total slow requests (>2s):      ${slowCount}`);
     console.log(`Avg VU for slow requests:        ${avgVU}`);
     console.log("=======================================================\n");
 
