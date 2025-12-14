@@ -54,7 +54,7 @@ public class ProductSpecification {
      * Combine all filters into a single specification
      */
     public static Specification<Product> withFilters(String search, UUID categoryId, UUID brandId) {
-        Specification<Product> spec = Specification.where(null);
+        Specification<Product> spec = Specification.allOf();
 
         if (search != null && !search.trim().isEmpty()) {
             spec = spec.and(searchByNameOrDescription(search));

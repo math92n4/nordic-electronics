@@ -1,8 +1,6 @@
 package com.example.nordicelectronics.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -34,5 +32,6 @@ public class Category extends BaseEntity {
 
     @ManyToMany(mappedBy = "categories")
     @JsonIgnore
+    @Builder.Default
     private Set<Product> products = new HashSet<>();
 }

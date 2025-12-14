@@ -2,6 +2,7 @@ package com.example.nordicelectronics.config;
 
 import org.testcontainers.containers.PostgreSQLContainer;
 
+@SuppressWarnings("resource")
 public class TestDatabaseContainer {
 
     private static final PostgreSQLContainer<?> POSTGRES_CONTAINER;
@@ -10,9 +11,7 @@ public class TestDatabaseContainer {
         POSTGRES_CONTAINER = new PostgreSQLContainer<>("postgres:17")
                 .withDatabaseName("nordic_test")
                 .withUsername("test_user")
-                .withPassword("test_pass")
-                .withReuse(true);                 // Reuse container between test runs
-                //.withInitScript("db/test-schema.sql");  // Load your schema
+                .withPassword("test_pass");
 
         POSTGRES_CONTAINER.start();
 
