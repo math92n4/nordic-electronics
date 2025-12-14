@@ -155,6 +155,7 @@ export function ProductRow({ title, products, isLoading, icon }) {
                             <div
                                 key={pid}
                                 className="product-card clickable"
+                                data-cy="product-card"
                                 onClick={() => handleCardClick(product)}
                             >
                                 <div className="product-image">

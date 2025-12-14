@@ -106,3 +106,18 @@ describe('Should be able to login and place an order', () => {
     });
 })
 
+describe("Product Modal contains correct properties", () => {
+    it("Open a product modal and check if the properties exists", () => {
+        cy.get('[data-cy="product-card"]').first().click()
+
+        cy.get('[data-cy="product-image"]').should('not.be.empty');
+        cy.get('[data-cy="product-title"]').should('not.be.empty');
+        cy.get('[data-cy="product-description"]').should('not.be.empty');
+        cy.get('[data-cy="product-price"]').should('not.be.empty');
+        cy.get('[data-cy="product-review-count"]').should('not.be.empty');
+        cy.get('[data-cy="product-category"]').should('not.be.empty');
+        cy.get('[data-cy="product-SKU"]').should('not.be.empty');
+        cy.get('[data-cy="product-weight"]').should('not.be.empty');
+        cy.get('[data-cy="product-review-section"]').should('exist');
+    })
+})

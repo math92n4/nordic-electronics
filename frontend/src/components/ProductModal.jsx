@@ -109,7 +109,8 @@ export function ProductModal({ isOpen, onClose, productId }) {
     return (
         <div 
             id="product-modal" 
-            className="modal" 
+            className="modal"
+            data-cy="product-modal"
             style={{ display: isOpen ? 'flex' : 'none' }}
             onClick={(e) => e.target.id === 'product-modal' && onClose()}
         >
@@ -122,14 +123,14 @@ export function ProductModal({ isOpen, onClose, productId }) {
                     </div>
                 ) : product ? (
                     <div className="product-modal-body">
-                        <div className="product-modal-image">
+                        <div className="product-modal-image" data-cy="product-image">
                             <i className="fas fa-mobile-alt"></i>
                         </div>
                         
                         <div className="product-modal-info">
-                            <h2 className="product-modal-title">{product.name || 'Unnamed Product'}</h2>
+                            <h2 className="product-modal-title" data-cy="product-title">{product.name || 'Unnamed Product'}</h2>
                             
-                            <div className="product-modal-price">
+                            <div className="product-modal-price" data-cy="product-price">
                                 ${priceVal.toFixed(2)}
                             </div>
 
@@ -137,7 +138,7 @@ export function ProductModal({ isOpen, onClose, productId }) {
                             {averageRating > 0 && (
                                 <div className="product-modal-rating">
                                     <StarRating rating={averageRating} />
-                                    <span className="review-count">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
+                                    <span className="review-count" data-cy="product-review-count">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
                                 </div>
                             )}
                             
@@ -147,7 +148,7 @@ export function ProductModal({ isOpen, onClose, productId }) {
                                     <span className="categories-label">Categories:</span>
                                     <div className="categories-tags">
                                         {productCategories.map((cat, idx) => (
-                                            <span key={cat.categoryId || cat.id || idx} className="category-tag">
+                                            <span key={cat.categoryId || cat.id || idx} className="category-tag" data-cy="product-category">
                                                 {cat.name}
                                             </span>
                                         ))}
@@ -155,7 +156,7 @@ export function ProductModal({ isOpen, onClose, productId }) {
                                 </div>
                             )}
                             
-                            <div className="product-modal-description">
+                            <div className="product-modal-description" data-cy="product-description">
                                 <h3>Description</h3>
                                 <p>{product.description || 'No description available'}</p>
                             </div>
@@ -163,18 +164,18 @@ export function ProductModal({ isOpen, onClose, productId }) {
                             <div className="product-modal-details">
                                 <div className="product-detail-item">
                                     <span className="detail-label">SKU:</span>
-                                    <span className="detail-value">{product.sku || 'N/A'}</span>
+                                    <span className="detail-value" data-cy="product-SKU">{product.sku || 'N/A'}</span>
                                 </div>
                                 {product.weight && (
                                     <div className="product-detail-item">
                                         <span className="detail-label">Weight:</span>
-                                        <span className="detail-value">{parseFloat(product.weight).toFixed(2)} kg</span>
+                                        <span className="detail-value" data-cy="product-weight">{parseFloat(product.weight).toFixed(2)} kg</span>
                                     </div>
                                 )}
                             </div>
 
                             {/* Reviews Section */}
-                            <div className="product-modal-reviews">
+                            <div className="product-modal-reviews" data-cy="product-review-section">
                                 <h3>Customer Reviews</h3>
                                 {reviewsLoading ? (
                                     <p className="loading">Loading reviews...</p>
