@@ -1,19 +1,21 @@
 package com.example.nordicelectronics.service;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.example.nordicelectronics.entity.User;
 import com.example.nordicelectronics.entity.validator.UserValidator.DanishPhoneValidator;
 import com.example.nordicelectronics.entity.validator.UserValidator.DateOfBirthValidator;
 import com.example.nordicelectronics.entity.validator.UserValidator.EmailValidator;
 import com.example.nordicelectronics.entity.validator.UserValidator.PasswordValidator;
 import com.example.nordicelectronics.repositories.sql.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class UserService {
@@ -66,7 +68,6 @@ public class UserService {
 
     private void validateUserSignup(String email, String password, String phone, LocalDate dateOfBirth) {
         EmailValidator.validateEmail(email);
-        PasswordValidator.validatePassword(password);
         if(!DanishPhoneValidator.isValidDanishMobile(phone)) {
             throw new IllegalArgumentException("Invalid phone number");
         }
