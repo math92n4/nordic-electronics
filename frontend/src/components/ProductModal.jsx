@@ -156,7 +156,7 @@ export function ProductModal({ isOpen, onClose, productId }) {
                                 </div>
                             )}
                             
-                            <div className="product-modal-description" data-cy="product-description">
+                            <div className="product-modal-descriptions" data-cy="product-description">
                                 <h3>Description</h3>
                                 <p>{product.description || 'No description available'}</p>
                             </div>

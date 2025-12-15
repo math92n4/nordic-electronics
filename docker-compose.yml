@@ -118,7 +118,8 @@ services:
     profiles: ["loadtest"]
     volumes:
       - ./k6-tests:/scripts
-    entrypoint: ["k6", "run", "/scripts/product_load_test.js"]
+      - ./k6-results:/results
+    entrypoint: ["k6", "run", "--out", "json=/results/load-test-results.json", "/scripts/product_load_test.js"]
 
   k6-spike:
     image: grafana/k6
@@ -126,7 +127,8 @@ services:
     profiles: ["loadtest"]
     volumes:
       - ./k6-tests:/scripts
-    entrypoint: ["k6", "run", "/scripts/product_spike_test.js"]
+      - ./k6-results:/results
+    entrypoint: ["k6", "run", "--out", "json=/results/spike-test-results.json", "/scripts/product_spike_test.js"]
 
   k6-stress:
     image: grafana/k6
@@ -134,7 +136,8 @@ services:
     profiles: ["loadtest"]
     volumes:
       - ./k6-tests:/scripts
-    entrypoint: ["k6", "run", "/scripts/product_stress_test.js"]
+      - ./k6-results:/results
+    entrypoint: ["k6", "run", "--out", "json=/results/stress-test-results.json", "/scripts/product_stress_test.js"]
 
   frontend:
     build:

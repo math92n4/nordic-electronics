@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { sleep, check } from 'k6';
 import { Trend, Counter } from 'k6/metrics';
+import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
 
 // Track active VUs per request
 const vusTrend = new Trend('vus_active');
@@ -38,12 +39,12 @@ function selectEndpoint() {
 // Spike Test: Sudden spike in load, then rapid drop
 export let options = {
     stages: [
-        { duration: '5s', target: 0 },
         { duration: '30s', target: 50 },   // Normal load
-        { duration: '30s', target: 1000 },  // Sudden spike
-        { duration: '30s', target: 50 },  // Rapid drop back
-        { duration: '5s', target: 0 },
-
+        { duration: '10s', target: 500 },  // Sudden spike
+        { duration: '1m', target: 500 },   // Maintain spike
+        { duration: '10s', target: 50 },  // Rapid drop back
+        { duration: '30s', target: 50 },  // Normal load recovery
+        { duration: '30s', target: 0 },   // Ramp down
     ],
     thresholds: {
         http_req_failed: ['rate<0.05'],    // Allow higher failure rate during spike (5%)
@@ -60,7 +61,7 @@ export default function () {
     check(res, { 'status was 200': r => r.status === 200 });
 
     // Track slow requests
-    if (res.timings.duration > 2000) { // 2 second threshold
+    if (res.timings.duration > 1000) { // 1 second threshold
         slowRequests.add(1);
         slowVUs.add(__VU);
     }
@@ -79,21 +80,45 @@ export function handleSummary(data) {
     const avg = metrics.http_req_duration?.values?.avg ? metrics.http_req_duration.values.avg / 1000 : 0;
     const max = metrics.http_req_duration?.values?.max ? metrics.http_req_duration.values.max / 1000 : 0;
     const min = metrics.http_req_duration?.values?.min ? metrics.http_req_duration.values.min / 1000 : 0;
+    const p95 = metrics.http_req_duration?.values?.['p(95)'] ? metrics.http_req_duration.values['p(95)'] / 1000 : 0;
+    const p99 = metrics.http_req_duration?.values?.['p(99)'] ? metrics.http_req_duration.values['p(99)'] / 1000 : 0;
 
     const rps = metrics.http_reqs?.values?.rate || 0;
+    const totalRequests = metrics.http_reqs?.values?.count || 0;
     const failures = metrics.http_req_failed?.values?.rate ? metrics.http_req_failed.values.rate * 100 : 0;
+    const totalFailures = metrics.http_req_failed?.values?.count || 0;
+
+    // VU metrics
+    const maxVUs = metrics.vus_max?.values?.value || 0;
+    const avgVUs = metrics.vus?.values?.avg || 0;
 
     console.log("\n================= SPIKE TEST SUMMARY =================");
+    console.log(`Test Type:                Spike Test (Sudden Traffic Surge)`);
+    console.log(`Total Requests:           ${totalRequests}`);
     console.log(`Requests per second:      ${rps.toFixed(2)} RPS`);
-    console.log(`Avg request duration:     ${avg.toFixed(2)} seconds`);
-    console.log(`Min request duration:     ${min.toFixed(2)} seconds`);
-    console.log(`Max request duration:     ${max.toFixed(2)} seconds`);
-    console.log(`Failure rate:             ${failures.toFixed(2)} %`);
+    console.log(`Max Virtual Users:        ${maxVUs}`);
+    console.log(`Avg Virtual Users:        ${avgVUs.toFixed(2)}`);
+    
+    console.log("\n================= RESPONSE TIME METRICS =================");
+    console.log(`Min request duration:     ${min.toFixed(3)}s`);
+    console.log(`Avg request duration:     ${avg.toFixed(3)}s`);
+    console.log(`P95 request duration:    ${p95.toFixed(3)}s`);
+    console.log(`P99 request duration:    ${p99.toFixed(3)}s`);
+    console.log(`Max request duration:     ${max.toFixed(3)}s`);
+
+    console.log("\n================= ERROR METRICS =================");
+    console.log(`Total failures:           ${totalFailures}`);
+    console.log(`Failure rate:             ${failures.toFixed(2)}%`);
 
     console.log("\n================= SLOW REQUEST SUMMARY =================");
-    console.log(`Total slow requests (>2s):      ${slowCount}`);
+    console.log(`Total slow requests (>1s):      ${slowCount}`);
     console.log(`Avg VU for slow requests:        ${avgVU}`);
     console.log("=======================================================\n");
 
-    return {};
+    // Return JSON summary for programmatic access
+    return {
+        'stdout': textSummary(data, { indent: ' ', enableColors: true }),
+        'k6-results-spike-test.json': JSON.stringify(data, null, 2),
+    };
 }
+
