@@ -1,5 +1,6 @@
 package com.example.nordicelectronics.entity.neo4j;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -39,6 +40,7 @@ public class WarrantyNode extends BaseNode {
     private UUID productId;
 
     @Relationship(type = "HAS_WARRANTY", direction = Relationship.Direction.INCOMING)
+    @JsonIgnore
     private ProductNode product;
 }
 

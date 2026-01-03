@@ -1,5 +1,6 @@
 package com.example.nordicelectronics.entity.neo4j;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -35,6 +36,7 @@ public class BrandNode extends BaseNode {
 
     @Relationship(type = "MANUFACTURED_BY", direction = Relationship.Direction.INCOMING)
     @Builder.Default
+    @JsonIgnore
     private Set<ProductNode> products = new HashSet<>();
 }
 
