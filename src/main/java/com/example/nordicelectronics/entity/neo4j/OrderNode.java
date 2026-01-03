@@ -1,6 +1,7 @@
 package com.example.nordicelectronics.entity.neo4j;
 
 import com.example.nordicelectronics.entity.enums.OrderStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -64,6 +65,7 @@ public class OrderNode extends BaseNode {
     private UUID couponId;
 
     @Relationship(type = "PLACED_BY", direction = Relationship.Direction.OUTGOING)
+    @JsonIgnore
     private UserNode user;
 
     @Relationship(type = "SHIPPED_TO", direction = Relationship.Direction.OUTGOING)

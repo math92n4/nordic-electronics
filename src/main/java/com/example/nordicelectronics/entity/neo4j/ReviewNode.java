@@ -1,5 +1,6 @@
 package com.example.nordicelectronics.entity.neo4j;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -50,6 +51,7 @@ public class ReviewNode extends BaseNode {
     private UserNode user;
 
     @Relationship(type = "HAS_REVIEW", direction = Relationship.Direction.OUTGOING)
+    @JsonIgnore
     private ProductNode product;
 }
 

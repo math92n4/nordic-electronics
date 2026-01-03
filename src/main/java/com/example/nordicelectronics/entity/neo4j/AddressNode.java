@@ -1,5 +1,6 @@
 package com.example.nordicelectronics.entity.neo4j;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -43,6 +44,7 @@ public class AddressNode extends BaseNode {
     private String city;
 
     @Relationship(type = "BELONGS_TO", direction = Relationship.Direction.OUTGOING)
+    @JsonIgnore
     private UserNode user;
 }
 

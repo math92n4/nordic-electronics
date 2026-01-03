@@ -1,5 +1,6 @@
 package com.example.nordicelectronics.entity.neo4j;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
@@ -51,10 +52,12 @@ public class UserNode extends BaseNode {
 
     @Relationship(type = "BELONGS_TO", direction = Relationship.Direction.INCOMING)
     @Builder.Default
+    @JsonIgnore
     private List<AddressNode> addresses = new ArrayList<>();
 
     @Relationship(type = "PLACED_BY", direction = Relationship.Direction.INCOMING)
     @Builder.Default
+    @JsonIgnore
     private List<OrderNode> orders = new ArrayList<>();
 }
 
