@@ -744,3 +744,129 @@ SELECT cron.schedule(
                '0 3 * * *', -- Daily at 3 AM
                'SELECT fn_refresh_materialized_views();'
        );
+
+-- ==============================================
+-- DATABASE USERS AND PRIVILEGES
+-- ==============================================
+
+-- ======================
+-- Application User
+-- ======================
+-- User for the CRUD application with minimum required privileges
+CREATE USER nordic_app_user WITH PASSWORD 'appuser123';
+
+-- Grant USAGE on schema
+GRANT USAGE ON SCHEMA public TO nordic_app_user;
+
+-- Grant privileges on all tables (SELECT, INSERT, UPDATE, DELETE)
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO nordic_app_user;
+
+-- Grant privileges on sequences (for SERIAL columns like audit_log.audit_id)
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO nordic_app_user;
+
+-- Grant EXECUTE on all functions and procedures
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO nordic_app_user;
+GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA public TO nordic_app_user;
+
+-- Grant SELECT on materialized views
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO nordic_app_user; -- Includes materialized views
+
+-- Grant USAGE on custom types (ENUMs)
+GRANT USAGE ON TYPE discount_type_enum TO nordic_app_user;
+GRANT USAGE ON TYPE order_type_enum TO nordic_app_user;
+GRANT USAGE ON TYPE payment_type_enum TO nordic_app_user;
+GRANT USAGE ON TYPE status_type_enum TO nordic_app_user;
+
+-- Set default privileges for future objects
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO nordic_app_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO nordic_app_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO nordic_app_user;
+
+-- ======================
+-- Database Admin User
+-- ======================
+-- User with full database admin privileges
+CREATE USER nordic_admin WITH PASSWORD 'adminuser123' SUPERUSER;
+
+-- Grant all privileges on database
+GRANT ALL PRIVILEGES ON DATABASE postgres TO nordic_admin;
+
+-- Grant all privileges on schema
+GRANT ALL PRIVILEGES ON SCHEMA public TO nordic_admin;
+
+-- Grant all privileges on all tables
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO nordic_admin;
+
+-- Grant all privileges on all sequences
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO nordic_admin;
+
+-- Grant all privileges on all functions and procedures
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO nordic_admin;
+GRANT ALL PRIVILEGES ON ALL PROCEDURES IN SCHEMA public TO nordic_admin;
+
+-- Set default privileges for future objects
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO nordic_admin;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO nordic_admin;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON FUNCTIONS TO nordic_admin;
+
+-- ======================
+-- Read-Only User
+-- ======================
+-- User with read-only privileges on all data
+CREATE USER nordic_readonly WITH PASSWORD 'readonlyuser123';
+
+-- Grant USAGE on schema
+GRANT USAGE ON SCHEMA public TO nordic_readonly;
+
+-- Grant SELECT on all tables and materialized views
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO nordic_readonly;
+
+-- Grant EXECUTE on read-only functions (functions that don't modify data)
+GRANT EXECUTE ON FUNCTION fn_calculate_order_total(UUID) TO nordic_readonly;
+GRANT EXECUTE ON FUNCTION fn_check_product_availability(UUID, INTEGER, UUID) TO nordic_readonly;
+GRANT EXECUTE ON FUNCTION fn_get_product_rating(UUID) TO nordic_readonly;
+GRANT EXECUTE ON FUNCTION fn_refresh_materialized_views() TO nordic_readonly;
+
+-- Grant USAGE on custom types (ENUMs) for reading
+GRANT USAGE ON TYPE discount_type_enum TO nordic_readonly;
+GRANT USAGE ON TYPE order_type_enum TO nordic_readonly;
+GRANT USAGE ON TYPE payment_type_enum TO nordic_readonly;
+GRANT USAGE ON TYPE status_type_enum TO nordic_readonly;
+
+-- Set default privileges for future objects (read-only)
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO nordic_readonly;
+
+-- ======================
+-- Restricted Read-Only User
+-- ======================
+-- User with restricted reading privileges (cannot see sensitive data)
+CREATE USER nordic_restricted_readonly WITH PASSWORD 'restricteduser123';
+
+-- Grant USAGE on schema
+GRANT USAGE ON SCHEMA public TO nordic_restricted_readonly;
+
+-- Grant SELECT on non-sensitive tables only
+-- Product catalog and related data
+GRANT SELECT ON TABLE brand TO nordic_restricted_readonly;
+GRANT SELECT ON TABLE category TO nordic_restricted_readonly;
+GRANT SELECT ON TABLE product TO nordic_restricted_readonly;
+GRANT SELECT ON TABLE warranty TO nordic_restricted_readonly;
+GRANT SELECT ON TABLE product_category TO nordic_restricted_readonly;
+GRANT SELECT ON TABLE warehouse TO nordic_restricted_readonly;
+GRANT SELECT ON TABLE warehouse_product TO nordic_restricted_readonly;
+GRANT SELECT ON TABLE review TO nordic_restricted_readonly;
+GRANT SELECT ON TABLE coupon TO nordic_restricted_readonly;
+
+-- Grant SELECT on materialized views (public product analytics)
+GRANT SELECT ON TABLE mv_best_selling_products TO nordic_restricted_readonly;
+GRANT SELECT ON TABLE mv_best_reviewed_products TO nordic_restricted_readonly;
+
+-- Grant EXECUTE on read-only functions that don't expose sensitive data
+GRANT EXECUTE ON FUNCTION fn_get_product_rating(UUID) TO nordic_restricted_readonly;
+GRANT EXECUTE ON FUNCTION fn_check_product_availability(UUID, INTEGER, UUID) TO nordic_restricted_readonly;
+
+-- Grant USAGE on custom types (ENUMs) for reading
+GRANT USAGE ON TYPE discount_type_enum TO nordic_restricted_readonly;
+GRANT USAGE ON TYPE order_type_enum TO nordic_restricted_readonly;
+GRANT USAGE ON TYPE payment_type_enum TO nordic_restricted_readonly;
+GRANT USAGE ON TYPE status_type_enum TO nordic_restricted_readonly;
