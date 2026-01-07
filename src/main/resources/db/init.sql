@@ -753,7 +753,13 @@ SELECT cron.schedule(
 -- Application User
 -- ======================
 -- User for the CRUD application with minimum required privileges
-CREATE USER nordic_app_user WITH PASSWORD 'appuser123';
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'nordic_app_user') THEN
+        CREATE USER nordic_app_user WITH PASSWORD 'appuser123';
+    END IF;
+END
+$$;
 
 -- Grant USAGE on schema
 GRANT USAGE ON SCHEMA public TO nordic_app_user;
@@ -786,7 +792,13 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO nordic_a
 -- Database Admin User
 -- ======================
 -- User with full database admin privileges
-CREATE USER nordic_admin WITH PASSWORD 'adminuser123' SUPERUSER;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'nordic_admin') THEN
+        CREATE USER nordic_admin WITH PASSWORD 'adminuser123' SUPERUSER;
+    END IF;
+END
+$$;
 
 -- Grant all privileges on database
 GRANT ALL PRIVILEGES ON DATABASE postgres TO nordic_admin;
@@ -813,7 +825,13 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON FUNCTIONS TO n
 -- Read-Only User
 -- ======================
 -- User with read-only privileges on all data
-CREATE USER nordic_readonly WITH PASSWORD 'readonlyuser123';
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'nordic_readonly') THEN
+        CREATE USER nordic_readonly WITH PASSWORD 'readonlyuser123';
+    END IF;
+END
+$$;
 
 -- Grant USAGE on schema
 GRANT USAGE ON SCHEMA public TO nordic_readonly;
@@ -840,7 +858,13 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO nordic_reado
 -- Restricted Read-Only User
 -- ======================
 -- User with restricted reading privileges (cannot see sensitive data)
-CREATE USER nordic_restricted_readonly WITH PASSWORD 'restricteduser123';
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'nordic_restricted_readonly') THEN
+        CREATE USER nordic_restricted_readonly WITH PASSWORD 'restricteduser123';
+    END IF;
+END
+$$;
 
 -- Grant USAGE on schema
 GRANT USAGE ON SCHEMA public TO nordic_restricted_readonly;
