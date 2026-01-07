@@ -774,6 +774,9 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO nordic_app_user;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO nordic_app_user;
 GRANT EXECUTE ON ALL PROCEDURES IN SCHEMA public TO nordic_app_user;
 
+ALTER MATERIALIZED VIEW mv_best_selling_products OWNER TO nordic_app_user;
+ALTER MATERIALIZED VIEW mv_best_reviewed_products OWNER TO nordic_app_user;
+
 -- Grant SELECT on materialized views
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO nordic_app_user; -- Includes materialized views
 
@@ -880,6 +883,9 @@ GRANT SELECT ON TABLE warehouse TO nordic_restricted_readonly;
 GRANT SELECT ON TABLE warehouse_product TO nordic_restricted_readonly;
 GRANT SELECT ON TABLE review TO nordic_restricted_readonly;
 GRANT SELECT ON TABLE coupon TO nordic_restricted_readonly;
+
+GRANT SELECT ON mv_best_selling_products TO nordic_app_user;
+GRANT SELECT ON mv_best_reviewed_products TO nordic_app_user;
 
 -- Grant SELECT on materialized views (public product analytics)
 GRANT SELECT ON TABLE mv_best_selling_products TO nordic_restricted_readonly;
